@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-E20401V5WB"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-E20401V5WB');
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Lead-Dev Kit, Cohort &amp; Agent OS Install | Mangrove Tools</title>
@@ -52,6 +61,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/site.css" />
+    <link rel="stylesheet" href="/studio.css" />
     <link rel="stylesheet" href="./styles.css" />
 
     <script type="application/ld+json">
@@ -158,9 +168,133 @@
           framework chaos.
         </p>
         <p class="cta-row">
-          <a class="btn" href="/method/">Free: read the method</a>
+          <a class="btn" href="#offer-fit">Find your fit</a>
+          <a class="text-cta" href="/method/">Free: read the method</a>
           <a class="text-cta" href="#offers">Compare offers</a>
         </p>
+      </section>
+
+      <section class="section-block" id="offer-fit" aria-labelledby="offer-fit-title">
+        <h2 id="offer-fit-title">Offer Fit</h2>
+        <p class="section-intro">
+          Six honest questions. One primary recommendation — including “read the
+          method first” or “not DWY yet” when that is the right answer.
+        </p>
+        <form id="offer-fit-form" class="field-stack" novalidate>
+          <div class="field">
+            <label id="fit-repo-label">Do you have a real repo you’ll work in?</label>
+            <div class="choice-grid" role="group" aria-labelledby="fit-repo-label">
+              <label class="choice">
+                <input type="radio" name="repo" value="yes" required />
+                <span><strong>Yes</strong><span>App, tool site, or product repo exists</span></span>
+              </label>
+              <label class="choice">
+                <input type="radio" name="repo" value="soon" />
+                <span><strong>Starting soon</strong><span>I can open a repo this month</span></span>
+              </label>
+              <label class="choice">
+                <input type="radio" name="repo" value="no" />
+                <span><strong>No</strong><span>I want ideas without touching code</span></span>
+              </label>
+            </div>
+          </div>
+          <div class="field">
+            <label id="fit-time-label">Focused hours you can put in this month</label>
+            <div class="choice-grid" role="group" aria-labelledby="fit-time-label">
+              <label class="choice">
+                <input type="radio" name="time" value="low" required />
+                <span><strong>Under 5</strong><span>Templates only is realistic</span></span>
+              </label>
+              <label class="choice">
+                <input type="radio" name="time" value="mid" />
+                <span><strong>5–20</strong><span>Enough for a self-paced path</span></span>
+              </label>
+              <label class="choice">
+                <input type="radio" name="time" value="high" />
+                <span><strong>20+</strong><span>Ready to run phases on a real repo</span></span>
+              </label>
+            </div>
+          </div>
+          <div class="field">
+            <label id="fit-help-label">What kind of help do you want?</label>
+            <div class="choice-grid" role="group" aria-labelledby="fit-help-label">
+              <label class="choice">
+                <input type="radio" name="help" value="templates" required />
+                <span><strong>Templates</strong><span>I’ll adapt AGENTS.md myself</span></span>
+              </label>
+              <label class="choice">
+                <input type="radio" name="help" value="guided" />
+                <span><strong>Guided path</strong><span>Assignments + checklists on my schedule</span></span>
+              </label>
+              <label class="choice">
+                <input type="radio" name="help" value="install" />
+                <span><strong>Installed for me</strong><span>Custom OS + Phase 1 pass by email</span></span>
+              </label>
+            </div>
+          </div>
+          <div class="field">
+            <label id="fit-budget-label">Budget comfort right now</label>
+            <div class="choice-grid" role="group" aria-labelledby="fit-budget-label">
+              <label class="choice">
+                <input type="radio" name="budget" value="kit" required />
+                <span><strong>Around $79</strong><span>Kit band</span></span>
+              </label>
+              <label class="choice">
+                <input type="radio" name="budget" value="cohort" />
+                <span><strong>Around $497</strong><span>Cohort band</span></span>
+              </label>
+              <label class="choice">
+                <input type="radio" name="budget" value="dwy" />
+                <span><strong>$499–$2,500</strong><span>Done-with-you band</span></span>
+              </label>
+            </div>
+          </div>
+          <div class="field">
+            <label id="fit-contract-label">Will you write a short product contract?</label>
+            <div class="choice-grid" role="group" aria-labelledby="fit-contract-label">
+              <label class="choice">
+                <input type="radio" name="contract" value="yes" required />
+                <span><strong>Yes</strong><span>Goals, non-goals, DoD</span></span>
+              </label>
+              <label class="choice">
+                <input type="radio" name="contract" value="maybe" />
+                <span><strong>Maybe</strong><span>If a template makes it easy</span></span>
+              </label>
+              <label class="choice">
+                <input type="radio" name="contract" value="no" />
+                <span><strong>No</strong><span>I want magic without constraints</span></span>
+              </label>
+            </div>
+          </div>
+          <div class="field">
+            <label id="fit-mess-label">How messy is the current product?</label>
+            <div class="choice-grid" role="group" aria-labelledby="fit-mess-label">
+              <label class="choice">
+                <input type="radio" name="mess" value="green" required />
+                <span><strong>Greenfield / tidy</strong><span>I mainly need a constitution</span></span>
+              </label>
+              <label class="choice">
+                <input type="radio" name="mess" value="messy" />
+                <span><strong>Messy but mine</strong><span>Needs sequencing before expansion</span></span>
+              </label>
+              <label class="choice">
+                <input type="radio" name="mess" value="blocked" />
+                <span><strong>Stuck / sprawling</strong><span>I keep prompting without shipping</span></span>
+              </label>
+            </div>
+          </div>
+          <div class="studio-actions">
+            <button class="btn" type="submit">Show my recommendation</button>
+            <button class="btn btn-secondary" type="reset">Reset</button>
+          </div>
+        </form>
+        <div class="studio-result" id="offer-fit-result" hidden>
+          <p class="result-status" id="offer-fit-status"></p>
+          <h3 id="offer-fit-headline"></h3>
+          <p id="offer-fit-why"></p>
+          <p id="offer-fit-avoid"></p>
+          <p class="cta-row" id="offer-fit-ctas"></p>
+        </div>
       </section>
 
       <section class="section-block" aria-labelledby="who-title">
@@ -189,8 +323,7 @@
         <p class="section-intro">
           Launch order we recommend: Kit first, then the self-serve cohort,
           then email about done-with-you if you want installation done for you.
-          Prices shown as bands from the product source docs until checkout is
-          configured.
+          Not sure? Use <a href="#offer-fit">Offer Fit</a> above.
         </p>
 
         <div class="offer-grid">
@@ -355,10 +488,25 @@
         </p>
       </section>
 
+      <section class="section-block" aria-labelledby="studio-title">
+        <h2 id="studio-title">Free Lead-Dev studio</h2>
+        <p class="section-intro">
+          Use these before or after a purchase — they productize the same
+          sequencing rules as the Kit and cohort.
+        </p>
+        <ul class="prose" style="margin-top: 0">
+          <li><a href="/constitution/">Constitution Builder</a> — starter AGENTS.md</li>
+          <li><a href="/phasegate/">Phase Gate</a> — expand-or-wait diagnostic</li>
+          <li><a href="/nichegate/">Niche Gate</a> — build at most one idea</li>
+          <li><a href="/walkthrough/">Method Walkthrough</a> — Needle + Mangrove forks</li>
+        </ul>
+      </section>
+
       <div class="page-path">
         <p>Start free, then pick a paid path when you’re ready.</p>
         <p class="cta-row">
           <a class="btn" href="/method/">Read the method</a>
+          <a class="text-cta" href="#offer-fit">Offer Fit</a>
           <a class="text-cta" href="/contact/">Contact</a>
           <a class="text-cta" href="/">Free tools</a>
         </p>
@@ -379,12 +527,16 @@
             <li><a href="/letterroi/">LetterROI</a></li>
             <li><a href="/sponsorquote/">SponsorQuote</a></li>
             <li><a href="/subtarget/">SubTarget</a></li>
+            <li><a href="/mediakit/">Media Kit</a></li>
+            <li><a href="/inventory/">Inventory</a></li>
           </ul>
         </div>
         <div class="foot-col">
           <h2>Lead-Dev</h2>
           <ul>
             <li><a href="/method/">Method</a></li>
+            <li><a href="/constitution/">Constitution</a></li>
+            <li><a href="/phasegate/">Phase Gate</a></li>
             <li><a href="/lead-dev/">Offers</a></li>
             <li><a href="/faq/">FAQ</a></li>
           </ul>

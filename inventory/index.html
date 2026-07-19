@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-E20401V5WB"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-E20401V5WB');
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Newsletter Sponsorship Inventory Planner | Mangrove Tools</title>
+    <meta
+      name="description"
+      content="Free newsletter sponsorship inventory planner. Model slots per issue, cadence, fill rate, and exclusivity — booked revenue, open capacity, and sold-out timing."
+    />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="theme-color" content="#F7F4EF" />
+    <link rel="canonical" href="https://mangrovetools.com/inventory/" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Mangrove Tools" />
+    <meta property="og:title" content="Newsletter Sponsorship Inventory Planner" />
+    <meta property="og:description" content="Calendar economics for sponsor slots — not another single-issue CPM." />
+    <meta property="og:url" content="https://mangrovetools.com/inventory/" />
+    <meta property="og:image" content="https://mangrovetools.com/og.jpg" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Sponsorship Inventory Planner" />
+    <meta name="twitter:description" content="Slots × cadence × fill × exclusivity → capacity and booked revenue." />
+    <meta name="twitter:image" content="https://mangrovetools.com/og.jpg" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Outfit:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/site.css" />
+    <link rel="stylesheet" href="/studio.css" />
+    <link rel="stylesheet" href="./styles.css" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Inventory Planner",
+        "url": "https://mangrovetools.com/inventory/",
+        "isAccessibleForFree": true,
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "description": "Plans newsletter sponsorship inventory over time from slots, cadence, fill, and exclusivity."
+      }
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="atmosphere" aria-hidden="true"></div>
+
+    <header class="top">
+      <a class="brand" href="/">
+        <img class="brand-logo" src="/mangrove-tools-logo.svg" alt="Mangrove Tools" width="170" height="155" />
+      </a>
+      <nav class="site-nav" aria-label="Primary">
+        <a href="/">Tools</a>
+        <a href="/method/">Method</a>
+        <a href="/lead-dev/">Lead-Dev</a>
+        <a href="/about/">About</a>
+      </nav>
+    </header>
+
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <ol>
+        <li><a href="/">Mangrove Tools</a></li>
+        <li aria-current="page">Inventory</li>
+      </ol>
+    </nav>
+
+    <main class="shell" id="main">
+      <section class="hero">
+        <p class="eyebrow">Creator tool · Free</p>
+        <h1>Inventory Planner</h1>
+        <p class="lede">
+          Model sponsor inventory over time: slots per issue × issues per month ×
+          fill × exclusivity. Get booked revenue, open capacity, and a directional
+          sold-out estimate — not a single-issue CPM redo.
+        </p>
+      </section>
+
+      <div class="studio-layout">
+        <form id="inventory-form" class="field-stack" novalidate>
+          <div class="field">
+            <label for="issues-month">Issues per month</label>
+            <input id="issues-month" type="number" min="0.25" step="0.25" value="4" />
+          </div>
+          <div class="field">
+            <label for="slots-issue">Sponsor slots per issue</label>
+            <input id="slots-issue" type="number" min="1" step="1" value="2" />
+          </div>
+          <div class="field">
+            <label for="fill-rate">Expected fill rate (%)</label>
+            <input id="fill-rate" type="number" min="0" max="100" step="1" value="70" />
+          </div>
+          <div class="field">
+            <label for="exclusive-share">Share of booked slots that are exclusive (%)</label>
+            <input id="exclusive-share" type="number" min="0" max="100" step="1" value="20" />
+          </div>
+          <div class="field">
+            <label for="primary-rate">Standard slot rate ($)</label>
+            <input id="primary-rate" type="number" min="0" step="1" />
+            <span class="hint">Pair with <a href="/sponsorquote/">SponsorQuote</a> or your <a href="/mediakit/">media kit</a>.</span>
+          </div>
+          <div class="field">
+            <label for="exclusive-premium">Exclusive premium (%)</label>
+            <input id="exclusive-premium" type="number" min="0" max="200" step="1" value="25" />
+            <span class="hint">Added on top of standard rate for exclusive slots.</span>
+          </div>
+          <div class="field">
+            <label for="horizon">Planning horizon (months)</label>
+            <input id="horizon" type="number" min="1" max="24" step="1" value="3" />
+          </div>
+          <p class="field-error" id="inv-error" hidden></p>
+          <div class="studio-actions">
+            <button class="btn" type="submit">Plan inventory</button>
+            <button class="btn btn-secondary" type="reset">Reset</button>
+          </div>
+        </form>
+
+        <div>
+          <div class="studio-result" id="inventory-result" hidden>
+            <p class="result-status is-green">Monthly model</p>
+            <h3>Capacity &amp; revenue</h3>
+            <div class="metric-grid">
+              <div class="metric"><span class="label">Slot capacity</span><span class="value" id="m-capacity">—</span></div>
+              <div class="metric"><span class="label">Booked slots</span><span class="value" id="m-booked">—</span></div>
+              <div class="metric"><span class="label">Open slots</span><span class="value" id="m-open">—</span></div>
+              <div class="metric"><span class="label">Booked revenue</span><span class="value" id="m-revenue">—</span></div>
+              <div class="metric"><span class="label">Open @ standard</span><span class="value" id="m-open-rev">—</span></div>
+              <div class="metric"><span class="label">Exclusive booked</span><span class="value" id="m-exclusive" style="font-size:1.05rem">—</span></div>
+            </div>
+            <p><strong>Horizon:</strong> <span id="m-horizon-slots"></span> booked/capacity · <span id="m-horizon-rev"></span> booked revenue</p>
+            <p><strong>Sold-out estimate:</strong> <span id="m-soldout"></span></p>
+            <p style="font-size: 0.9rem">
+              Directional planning only. Does not invoice, hold calendar holds, or promise fill.
+            </p>
+          </div>
+          <div class="soft-cta" id="affiliate-cta" hidden>
+            <p>Optional beehiiv partner link after the model is useful.</p>
+            <p class="cta-row">
+              <a class="btn" id="affiliate-link" href="https://www.beehiiv.com/?via=inventory" target="_blank" rel="sponsored noopener noreferrer">Explore beehiiv</a>
+              <a class="text-cta" href="/mediakit/">Compose a media kit</a>
+              <a class="text-cta" href="/letterroi/">LetterROI</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="foot">
+      <div class="foot-grid">
+        <div>
+          <p class="foot-brand">Mangrove Tools</p>
+          <p class="foot-note">Free niche tools from Naples, Florida. Client-side only.</p>
+        </div>
+        <div class="foot-col">
+          <h2>Tools</h2>
+          <ul>
+            <li><a href="/letterroi/">LetterROI</a></li>
+            <li><a href="/sponsorquote/">SponsorQuote</a></li>
+            <li><a href="/mediakit/">Media Kit</a></li>
+            <li><a href="/inventory/">Inventory</a></li>
+          </ul>
+        </div>
+        <div class="foot-col">
+          <h2>Lead-Dev</h2>
+          <ul>
+            <li><a href="/method/">Method</a></li>
+            <li><a href="/lead-dev/">Offers</a></li>
+          </ul>
+        </div>
+        <div class="foot-col">
+          <h2>Site</h2>
+          <ul>
+            <li><a href="/about/">About</a></li>
+            <li><a href="/privacy/">Privacy</a></li>
+            <li><a href="/contact/">Contact</a></li>
+            <li><a href="/llms.txt">llms.txt</a></li>
+          </ul>
+        </div>
+      </div>
+    </footer>
+    <script src="./config.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>

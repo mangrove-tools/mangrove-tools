@@ -82,7 +82,7 @@ If uncertain, choose the safer reversible path and document the assumption.
 
 1. Tools are free in-browser; no accounts for core use.
 2. Static HTML/CSS/vanilla JS — no React/Next/Vue unless approved.
-3. No analytics SDKs / ad networks / backends unless approved.
+3. No ad networks / backends unless approved. Google Analytics (`G-E20401V5WB`) is approved site-wide; do not add additional analytics SDKs without approval.
 4. Client-side calculation only; never POST user inputs.
 5. Tool monetization = affiliate / soft CTA after value; never hard-paywall calculator results.
 6. Lead-Dev monetization = product page + placeholder or live CTAs; never invent live checkout links.
@@ -95,9 +95,10 @@ If uncertain, choose the safer reversible path and document the assumption.
 | --- | --- |
 | Hosting | Netlify (`netlify.toml`) |
 | Home | `index.html`, `site.css`, brand SVGs |
-| Tools | `letterroi/`, `sponsorquote/` (`index.html`, `styles.css`, `app.js`, `config.js`) |
-| Method | `method/` (public methodology article) |
-| Lead-Dev | `lead-dev/` (product suite + `config.js` placeholders) |
+| Tools | `letterroi/`, `sponsorquote/`, `subtarget/`, `mediakit/`, `inventory/` |
+| Method | `method/`, `walkthrough/` |
+| Lead-Dev studio | `constitution/`, `phasegate/`, `nichegate/` (+ Offer Fit on `lead-dev/`) |
+| Lead-Dev | `lead-dev/` (product suite + `config.js` checkout URLs) |
 | Trust | `about/`, `privacy/`, `contact/` |
 | Discoverability | `robots.txt`, `sitemap.xml`, `llms.txt` |
 | Ops (not public) | `docs/ops/`, `docs/setup/` |

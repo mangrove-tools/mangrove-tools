@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-E20401V5WB"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-E20401V5WB');
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Privacy — Mangrove Tools</title>
@@ -20,7 +29,7 @@
     <meta property="og:title" content="Privacy — Mangrove Tools" />
     <meta
       property="og:description"
-      content="Calculator inputs stay in your browser. Affiliate links are disclosed. No analytics SDKs on the core tools."
+      content="Calculator inputs stay in your browser. Affiliate links are disclosed. Google Analytics is used for aggregate traffic measurement."
     />
     <meta property="og:url" content="https://mangrovetools.com/privacy/" />
     <meta property="og:image" content="https://mangrovetools.com/og.jpg" />
@@ -106,9 +115,23 @@
         <p>
           Like most websites, our host may process standard request logs (for
           example IP address, user agent, and requested URL) to serve pages and
-          maintain the site. We do not run third-party analytics SDKs on the
-          core tool experience unless that changes with an explicit product
-          decision and disclosure update.
+          maintain the site.
+        </p>
+
+        <h2>Analytics</h2>
+        <p>
+          We use Google Analytics (Google tag
+          <code>G-E20401V5WB</code>) to understand aggregate traffic and page
+          use. Google may process data such as IP address, device/browser
+          information, and pages visited under
+          <a
+            href="https://policies.google.com/privacy"
+            rel="noopener noreferrer"
+            target="_blank"
+            >Google’s privacy policy</a
+          >. Calculator inputs you type are still not POSTed to Mangrove Tools
+          servers as part of the tool math — they stay in your browser for
+          on-page calculation.
         </p>
 
         <h2>Affiliate links</h2>
@@ -122,10 +145,9 @@
 
         <h2>Lead-Dev product pages</h2>
         <p>
-          Checkout or email links on Lead-Dev pages — when
-          configured — are provided by third-party vendors chosen by the site
-          owner. Until those links are live, buttons remain placeholders and do
-          not send payment or personal data.
+          Checkout is handled by Stripe; done-with-you inquiries use email.
+          Those vendors process payment or message data under their own privacy
+          policies when you use their links or inbox.
         </p>
 
         <h2>Contact</h2>

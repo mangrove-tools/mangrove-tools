@@ -30,8 +30,9 @@ Legend: **Auto** = Cursor may execute; **Approval** = human gate.
 
 | ID | Title | Notes | Auto? |
 | --- | --- | --- | --- |
-| P2-01 | SubTarget tool | Decision: `docs/ops/NEXT_TOOL_SUBTARGET.md` | Auto |
+| P2-01 | SubTarget tool | Decision: `docs/ops/NEXT_TOOL_SUBTARGET.md` | Auto / done |
 | P2-01b | Design shell (Httpster craft) | Home index + motion + foot grid | Auto / done 2026-07-19 |
+| P2-04 | Lead-Dev studio + unique expansion | Offer Fit, Constitution, Phase Gate, Niche Gate, Walkthrough, Media Kit, Inventory — `docs/ops/EXPANSION_LEAD_DEV_TOOLS_2026-07.md` | Auto / done 2026-07-19 |
 | P2-02 | Case-study depth page | Only with owner-approved metrics | Approval for claims |
 | P2-03 | Email waitlist vendor | UI ok; live vendor activation gated | Approval to activate |
 

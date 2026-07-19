@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-E20401V5WB"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-E20401V5WB');
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Niche Gate — Expansion Idea Filter | Mangrove Tools</title>
+    <meta
+      name="description"
+      content="Free niche product idea filter. Score three expansion ideas against Lead-Dev uniqueness, monetization, and phase-readiness — build at most one."
+    />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="theme-color" content="#F7F4EF" />
+    <link rel="canonical" href="https://mangrovetools.com/nichegate/" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Mangrove Tools" />
+    <meta property="og:title" content="Niche Gate — Expansion Idea Filter" />
+    <meta property="og:description" content="Critique three ideas. Ship at most one — or none." />
+    <meta property="og:url" content="https://mangrovetools.com/nichegate/" />
+    <meta property="og:image" content="https://mangrovetools.com/og.jpg" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Niche Gate — Expansion Idea Filter" />
+    <meta name="twitter:description" content="Assignment-04 style expansion filter, free in your browser." />
+    <meta name="twitter:image" content="https://mangrovetools.com/og.jpg" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Outfit:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/site.css" />
+    <link rel="stylesheet" href="/studio.css" />
+    <link rel="stylesheet" href="./styles.css" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Niche Gate",
+        "url": "https://mangrovetools.com/nichegate/",
+        "isAccessibleForFree": true,
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "description": "Filters product expansion ideas against uniqueness, monetization fit, and phase readiness."
+      }
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="atmosphere" aria-hidden="true"></div>
+
+    <header class="top">
+      <a class="brand" href="/">
+        <img class="brand-logo" src="/mangrove-tools-logo.svg" alt="Mangrove Tools" width="170" height="155" />
+      </a>
+      <nav class="site-nav" aria-label="Primary">
+        <a href="/">Tools</a>
+        <a href="/method/">Method</a>
+        <a href="/lead-dev/">Lead-Dev</a>
+        <a href="/about/">About</a>
+      </nav>
+    </header>
+
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <ol>
+        <li><a href="/">Mangrove Tools</a></li>
+        <li><a href="/lead-dev/">Lead-Dev</a></li>
+        <li aria-current="page">Niche Gate</li>
+      </ol>
+    </nav>
+
+    <main class="shell" id="main">
+      <section class="hero">
+        <p class="eyebrow">Lead-Dev studio · Free</p>
+        <h1>Niche Gate</h1>
+        <p class="lede">
+          Propose three expansion ideas. The gate scores uniqueness, clone-hardness,
+          monetization fit, and phase readiness — then recommends at most one (or none).
+        </p>
+      </section>
+
+      <form id="nichegate-form" class="field-stack" novalidate>
+        <div class="field">
+          <label for="phase-ready">Are Phases 1–3 green enough to expand?</label>
+          <select id="phase-ready" name="phaseReady" required>
+            <option value="">Choose…</option>
+            <option value="yes">Yes — Phase Gate was green / yellow-high</option>
+            <option value="no">No — still fixing Phases 1–3</option>
+          </select>
+          <span class="hint">Unsure? Run <a href="/phasegate/">Phase Gate</a> first.</span>
+        </div>
+
+        <div class="idea-card">
+          <h3>Idea A</h3>
+          <div class="field-stack">
+            <div class="field"><label for="name1">Name / slug</label><input id="name1" name="name1" type="text" /></div>
+            <div class="field"><label for="keyword1">Primary keyword</label><input id="keyword1" name="keyword1" type="text" /></div>
+            <div class="field"><label for="unique1">Why unique (clone-hard)</label><textarea id="unique1" name="unique1"></textarea></div>
+            <div class="field"><label for="io1">Inputs → outputs</label><textarea id="io1" name="io1"></textarea></div>
+            <div class="field">
+              <label for="money1">Monetization</label>
+              <select id="money1" name="money1">
+                <option value="">Choose…</option>
+                <option value="affiliate">Soft affiliate CTA</option>
+                <option value="lead-dev">Lead-Dev upsell</option>
+                <option value="both">Both</option>
+                <option value="none-fit">None that fits</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="clone1">Clone-hardness</label>
+              <select id="clone1" name="clone1">
+                <option value="">Choose…</option>
+                <option value="hard">Hard in 10 minutes</option>
+                <option value="medium">Medium</option>
+                <option value="easy">Easy / thin</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="phase1">Phase readiness for this idea</label>
+              <select id="phase1" name="phase1">
+                <option value="">Choose…</option>
+                <option value="yes">Phases 1–3 support shipping this</option>
+                <option value="no">Would distract from unfinished phases</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="idea-card">
+          <h3>Idea B <span class="hint">(optional)</span></h3>
+          <div class="field-stack">
+            <div class="field"><label for="name2">Name / slug</label><input id="name2" name="name2" type="text" /></div>
+            <div class="field"><label for="keyword2">Primary keyword</label><input id="keyword2" name="keyword2" type="text" /></div>
+            <div class="field"><label for="unique2">Why unique</label><textarea id="unique2" name="unique2"></textarea></div>
+            <div class="field"><label for="io2">Inputs → outputs</label><textarea id="io2" name="io2"></textarea></div>
+            <div class="field">
+              <label for="money2">Monetization</label>
+              <select id="money2" name="money2">
+                <option value="">Choose…</option>
+                <option value="affiliate">Soft affiliate CTA</option>
+                <option value="lead-dev">Lead-Dev upsell</option>
+                <option value="both">Both</option>
+                <option value="none-fit">None that fits</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="clone2">Clone-hardness</label>
+              <select id="clone2" name="clone2">
+                <option value="">Choose…</option>
+                <option value="hard">Hard in 10 minutes</option>
+                <option value="medium">Medium</option>
+                <option value="easy">Easy / thin</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="phase2">Phase readiness</label>
+              <select id="phase2" name="phase2">
+                <option value="">Choose…</option>
+                <option value="yes">Supports shipping</option>
+                <option value="no">Distracts from phases</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="idea-card">
+          <h3>Idea C <span class="hint">(optional)</span></h3>
+          <div class="field-stack">
+            <div class="field"><label for="name3">Name / slug</label><input id="name3" name="name3" type="text" /></div>
+            <div class="field"><label for="keyword3">Primary keyword</label><input id="keyword3" name="keyword3" type="text" /></div>
+            <div class="field"><label for="unique3">Why unique</label><textarea id="unique3" name="unique3"></textarea></div>
+            <div class="field"><label for="io3">Inputs → outputs</label><textarea id="io3" name="io3"></textarea></div>
+            <div class="field">
+              <label for="money3">Monetization</label>
+              <select id="money3" name="money3">
+                <option value="">Choose…</option>
+                <option value="affiliate">Soft affiliate CTA</option>
+                <option value="lead-dev">Lead-Dev upsell</option>
+                <option value="both">Both</option>
+                <option value="none-fit">None that fits</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="clone3">Clone-hardness</label>
+              <select id="clone3" name="clone3">
+                <option value="">Choose…</option>
+                <option value="hard">Hard in 10 minutes</option>
+                <option value="medium">Medium</option>
+                <option value="easy">Easy / thin</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="phase3">Phase readiness</label>
+              <select id="phase3" name="phase3">
+                <option value="">Choose…</option>
+                <option value="yes">Supports shipping</option>
+                <option value="no">Distracts from phases</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="studio-actions">
+          <button class="btn" type="submit">Run Niche Gate</button>
+          <button class="btn btn-secondary" type="reset">Reset</button>
+        </div>
+      </form>
+
+      <div class="studio-result" id="nichegate-result" hidden style="margin-top: 2rem">
+        <p class="result-status" id="ng-status"></p>
+        <h3 id="ng-headline"></h3>
+        <p id="ng-summary"></p>
+        <div id="ng-cards"></div>
+        <p id="ng-pick"></p>
+        <p class="cta-row" id="ng-ctas"></p>
+      </div>
+    </main>
+
+    <footer class="foot">
+      <div class="foot-grid">
+        <div>
+          <p class="foot-brand">Mangrove Tools</p>
+          <p class="foot-note">Free niche tools from Naples, Florida. Client-side only.</p>
+        </div>
+        <div class="foot-col">
+          <h2>Tools</h2>
+          <ul>
+            <li><a href="/letterroi/">LetterROI</a></li>
+            <li><a href="/sponsorquote/">SponsorQuote</a></li>
+            <li><a href="/subtarget/">SubTarget</a></li>
+          </ul>
+        </div>
+        <div class="foot-col">
+          <h2>Lead-Dev</h2>
+          <ul>
+            <li><a href="/method/">Method</a></li>
+            <li><a href="/phasegate/">Phase Gate</a></li>
+            <li><a href="/nichegate/">Niche Gate</a></li>
+            <li><a href="/lead-dev/">Offers</a></li>
+          </ul>
+        </div>
+        <div class="foot-col">
+          <h2>Site</h2>
+          <ul>
+            <li><a href="/about/">About</a></li>
+            <li><a href="/privacy/">Privacy</a></li>
+            <li><a href="/contact/">Contact</a></li>
+            <li><a href="/llms.txt">llms.txt</a></li>
+          </ul>
+        </div>
+      </div>
+    </footer>
+    <script src="./app.js"></script>
+  </body>
+</html>

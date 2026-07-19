@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-E20401V5WB"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-E20401V5WB');
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>FAQ — Free Calculators, Privacy &amp; Lead-Dev | Mangrove Tools</title>
@@ -65,7 +74,7 @@
             "name": "Do calculators send my data anywhere?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "No. LetterROI, SponsorQuote, SubTarget, and other in-browser calculators do not POST your inputs to Mangrove Tools servers. Values you type are used locally to compute results on the page."
+              "text": "No. LetterROI, SponsorQuote, SubTarget, and other in-browser calculators do not POST your inputs to Mangrove Tools servers. Values you type are used locally to compute results on the page. The site uses Google Analytics for aggregate traffic measurement; see the privacy page."
             }
           },
           {
@@ -73,7 +82,7 @@
             "name": "What calculators does Mangrove Tools offer?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "LetterROI (newsletter revenue calculator), SponsorQuote (newsletter sponsorship rate calculator), and SubTarget (paid newsletter subscriber goal calculator). All run free in your browser."
+              "text": "LetterROI, SponsorQuote, SubTarget, Media Kit Composer, and Inventory Planner for creators; plus Lead-Dev studio tools Constitution Builder, Phase Gate, Niche Gate, and Method Walkthrough. All run free in your browser."
             }
           },
           {
@@ -174,9 +183,9 @@
             <p>
               Like most websites, our host may process standard request logs (for
               example IP address, user agent, and requested URL) to serve pages.
-              We do not run third-party analytics SDKs on the core tool
-              experience unless that changes with an explicit product decision
-              and disclosure update. See the
+              We also use Google Analytics for aggregate traffic measurement.
+              Calculator inputs are still not POSTed for tool math — they stay
+              in your browser. See the
               <a href="/privacy/">privacy page</a> for details.
             </p>
           </div>
@@ -194,6 +203,18 @@
             </p>
           </div>
         </details>
+        <details>
+          <summary>What are Media Kit Composer and Inventory Planner?</summary>
+          <div class="faq-answer">
+            <p>
+              <a href="/mediakit/">Media Kit Composer</a> builds a print-ready
+              one-page media kit from audience stats and rates.
+              <a href="/inventory/">Inventory Planner</a> models sponsorship
+              capacity over time (slots × cadence × fill × exclusivity). Both
+              stay in your browser.
+            </p>
+          </div>
+        </details>
       </div>
 
       <div class="prose">
@@ -202,12 +223,27 @@
           Lead-Dev Prompting is a system for shipping real products with coding
           agents: constitution files, phased execution, and niche expansion —
           without framework chaos. Read the free
-          <a href="/method/">methodology article</a> first, then compare paid
-          offers on the <a href="/lead-dev/">Lead-Dev page</a>.
+          <a href="/method/">methodology article</a> or try the
+          <a href="/walkthrough/">interactive walkthrough</a>, use the free
+          studio tools, then compare paid offers on the
+          <a href="/lead-dev/">Lead-Dev page</a> (including
+          <a href="/lead-dev/#offer-fit">Offer Fit</a>).
         </p>
       </div>
 
       <div class="faq-list" aria-label="Lead-Dev offers">
+        <details>
+          <summary>What free Lead-Dev studio tools exist?</summary>
+          <div class="faq-answer">
+            <ul>
+              <li><a href="/constitution/">Constitution Builder</a> — starter AGENTS.md</li>
+              <li><a href="/phasegate/">Phase Gate</a> — Phases 1–3 readiness</li>
+              <li><a href="/nichegate/">Niche Gate</a> — expansion idea filter</li>
+              <li><a href="/walkthrough/">Method Walkthrough</a> — case-path forks</li>
+              <li><a href="/lead-dev/#offer-fit">Offer Fit</a> — which paid offer matches</li>
+            </ul>
+          </div>
+        </details>
         <details>
           <summary>What is the Lead-Dev Kit?</summary>
           <div class="faq-answer">

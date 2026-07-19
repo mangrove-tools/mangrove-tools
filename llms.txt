@@ -22,7 +22,7 @@
 
 ## About
 
-- [About](https://mangrovetools.com/about/)
+- [About Mangrove Tools](https://mangrovetools.com/about/): Who we are — Naples, Florida library of free creator calculators + Lead-Dev OS; dual model (affiliate utilities + paid Lead-Dev)
 - [FAQ](https://mangrovetools.com/faq/): Tools privacy, Lead-Dev offers, pricing, affiliate disclosure
 - [Privacy](https://mangrovetools.com/privacy/)
 - [Contact](https://mangrovetools.com/contact/)

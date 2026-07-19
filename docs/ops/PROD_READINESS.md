@@ -29,7 +29,7 @@
 | Live production `mangrovetools.com` | MANUAL — agent fetch returned 403 earlier |
 | Netlify deploy of this branch | Not done — approval required |
 | Live checkout / booking URLs | Intentionally empty — see `docs/setup/LEAD_DEV_REVENUE.md` |
-| `hello@mangrovetools.com` inbox | Owner must verify or change |
+| Contact inbox | Set to `needlesearchapp@protonmail.com` |
 
 ## Findings
 

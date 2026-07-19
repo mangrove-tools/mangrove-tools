@@ -6,6 +6,7 @@
 
 - [LetterROI](https://mangrovetools.com/letterroi/): Newsletter revenue calculator for ads, sponsorships, and paid subscriptions
 - [SponsorQuote](https://mangrovetools.com/sponsorquote/): Newsletter sponsorship rate calculator (flat rate + implied CPM + rate-card band)
+- [SubTarget](https://mangrovetools.com/subtarget/): Paid newsletter subscriber goal calculator (revenue target → paying subs needed + band)
 - [Home](https://mangrovetools.com/): Tool directory
 
 ## Lead-Dev
@@ -16,6 +17,7 @@
 ## About
 
 - [About](https://mangrovetools.com/about/)
+- [FAQ](https://mangrovetools.com/faq/): Tools privacy, Lead-Dev offers, pricing bands, checkout status, affiliate disclosure
 - [Privacy](https://mangrovetools.com/privacy/)
 - [Contact](https://mangrovetools.com/contact/)
 

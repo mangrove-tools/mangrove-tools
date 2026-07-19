@@ -9,5 +9,5 @@ window.LeadDevConfig = {
   KIT_CHECKOUT_URL: "",
   COHORT_SIGNUP_URL: "",
   DWY_BOOKING_URL: "",
-  CONTACT_EMAIL: "hello@mangrovetools.com",
+  CONTACT_EMAIL: "needlesearchapp@protonmail.com",
 };

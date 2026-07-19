@@ -6,7 +6,7 @@
     <title>Mangrove Tools — Free Calculators &amp; Micro-Tools</title>
     <meta
       name="description"
-      content="Free single-purpose calculators from Mangrove Tools in Naples, Florida. LetterROI for newsletter revenue, SponsorQuote for sponsorship rates, plus the Lead-Dev method."
+      content="Free single-purpose calculators from Mangrove Tools in Naples, Florida. LetterROI for newsletter revenue, SponsorQuote for sponsorship rates, SubTarget for paid subscriber goals, plus the Lead-Dev method."
     />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="theme-color" content="#F7F4EF" />
@@ -23,7 +23,7 @@
     />
     <meta
       property="og:description"
-      content="Free single-purpose calculators for creators. LetterROI, SponsorQuote, and a Lead-Dev system for shipping with AI agents."
+      content="Free single-purpose calculators for creators. LetterROI, SponsorQuote, SubTarget, and a Lead-Dev system for shipping with AI agents."
     />
     <meta property="og:url" content="https://mangrovetools.com/" />
     <meta property="og:image" content="https://mangrovetools.com/og.jpg" />
@@ -41,7 +41,7 @@
     />
     <meta
       name="twitter:description"
-      content="Free single-purpose calculators for creators: LetterROI and SponsorQuote."
+      content="Free single-purpose calculators for creators: LetterROI, SponsorQuote, and SubTarget."
     />
     <meta name="twitter:image" content="https://mangrovetools.com/og.jpg" />
     <meta
@@ -101,6 +101,12 @@
                 "position": 2,
                 "name": "SponsorQuote",
                 "item": "https://mangrovetools.com/sponsorquote/"
+              },
+              {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "SubTarget",
+                "item": "https://mangrovetools.com/subtarget/"
               }
             ]
           }
@@ -111,14 +117,14 @@
   <body>
     <div class="atmosphere" aria-hidden="true"></div>
 
-    <header class="top">
+    <header class="top is-home">
       <a class="brand" href="/">
         <img
           class="brand-logo"
           src="/mangrove-tools-logo.svg"
           alt="Mangrove Tools"
-          width="170"
-          height="155"
+          width="220"
+          height="200"
         />
       </a>
       <nav class="site-nav" aria-label="Primary">
@@ -130,38 +136,69 @@
     </header>
 
     <main class="shell">
-      <section class="hero">
+      <section class="hero reveal">
+        <p class="hero-meta">
+          <span>Naples, Florida</span>
+          <span>Free in-browser</span>
+          <span>One job each</span>
+        </p>
         <h1>Free calculators for one job each</h1>
         <p class="lede">
-          Mangrove Tools is a small library of free, in-browser utilities from
-          Naples, Florida. Pick a tool, get an answer, leave when you’re done.
+          A small, curated library of utilities. Pick a tool, get an answer,
+          leave when you’re done.
+        </p>
+        <p class="cta-row">
+          <a class="btn" href="#tools">Browse tools</a>
+          <a class="text-cta" href="/method/">Read the method</a>
         </p>
       </section>
 
-      <section class="tool-list" aria-labelledby="tools-title">
-        <h2 id="tools-title">Tools</h2>
+      <section class="tool-list reveal reveal-delay-1" id="tools" aria-labelledby="tools-title">
+        <div class="tool-list-head">
+          <h2 id="tools-title">Index</h2>
+          <p class="tool-count">03 tools</p>
+        </div>
         <a class="tool-link" href="/letterroi/">
-          <span class="tool-name">LetterROI</span>
-          <span class="tool-desc"
-            >Estimate monthly newsletter revenue from ads, sponsorships, and
-            paid subscriptions</span
-          >
+          <span class="tool-index" aria-hidden="true">01</span>
+          <span class="tool-copy">
+            <span class="tool-name">LetterROI</span>
+            <span class="tool-desc"
+              >Estimate monthly newsletter revenue from ads, sponsorships, and
+              paid subscriptions</span
+            >
+          </span>
+          <span class="tool-go" aria-hidden="true">Open →</span>
         </a>
         <a class="tool-link" href="/sponsorquote/">
-          <span class="tool-name">SponsorQuote</span>
-          <span class="tool-desc"
-            >Build a newsletter sponsorship rate card from list size, open
-            rate, and niche CPM</span
-          >
+          <span class="tool-index" aria-hidden="true">02</span>
+          <span class="tool-copy">
+            <span class="tool-name">SponsorQuote</span>
+            <span class="tool-desc"
+              >Build a newsletter sponsorship rate card from list size, open
+              rate, and niche CPM</span
+            >
+          </span>
+          <span class="tool-go" aria-hidden="true">Open →</span>
+        </a>
+        <a class="tool-link" href="/subtarget/">
+          <span class="tool-index" aria-hidden="true">03</span>
+          <span class="tool-copy">
+            <span class="tool-name">SubTarget</span>
+            <span class="tool-desc"
+              >Work backward from a monthly revenue goal to paying subscribers
+              needed after platform fees</span
+            >
+          </span>
+          <span class="tool-go" aria-hidden="true">Open →</span>
         </a>
       </section>
 
-      <section class="section-block" aria-labelledby="path-title">
+      <section class="section-block reveal reveal-delay-2" aria-labelledby="path-title">
+        <p class="section-kicker">Also from Mangrove</p>
         <h2 id="path-title">Ship with a lead-dev agent</h2>
         <p class="section-intro">
-          The same operating system behind this site — constitution files,
-          phased execution, niche expansion — is available as a free method
-          article and paid offers.
+          The operating system behind this site — constitution files, phased
+          execution, niche expansion — as a free article and paid offers.
         </p>
         <p class="cta-row">
           <a class="text-cta" href="/method/">Read the method</a>
@@ -171,25 +208,39 @@
     </main>
 
     <footer class="foot">
-      <p>
-        <a href="/">Mangrove Tools</a>
-        · Naples, Florida ·
-        <a href="/letterroi/">LetterROI</a>
-        ·
-        <a href="/sponsorquote/">SponsorQuote</a>
-        ·
-        <a href="/method/">Method</a>
-        ·
-        <a href="/lead-dev/">Lead-Dev</a>
-        ·
-        <a href="/about/">About</a>
-        ·
-        <a href="/privacy/">Privacy</a>
-        ·
-        <a href="/contact/">Contact</a>
-        ·
-        <a href="/llms.txt">llms.txt</a>
-      </p>
+      <div class="foot-grid">
+        <div>
+          <p class="foot-brand">Mangrove Tools</p>
+          <p class="foot-note">
+            Free niche calculators from Naples, Florida. Client-side only.
+          </p>
+        </div>
+        <div class="foot-col">
+          <h2>Tools</h2>
+          <ul>
+            <li><a href="/letterroi/">LetterROI</a></li>
+            <li><a href="/sponsorquote/">SponsorQuote</a></li>
+            <li><a href="/subtarget/">SubTarget</a></li>
+          </ul>
+        </div>
+        <div class="foot-col">
+          <h2>Lead-Dev</h2>
+          <ul>
+            <li><a href="/method/">Method</a></li>
+            <li><a href="/lead-dev/">Offers</a></li>
+            <li><a href="/faq/">FAQ</a></li>
+          </ul>
+        </div>
+        <div class="foot-col">
+          <h2>Site</h2>
+          <ul>
+            <li><a href="/about/">About</a></li>
+            <li><a href="/privacy/">Privacy</a></li>
+            <li><a href="/contact/">Contact</a></li>
+            <li><a href="/llms.txt">llms.txt</a></li>
+          </ul>
+        </div>
+      </div>
     </footer>
   </body>
 </html>

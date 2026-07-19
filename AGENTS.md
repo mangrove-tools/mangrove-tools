@@ -22,6 +22,7 @@ Work in this order. Do **not** invent five new tools before the existing site is
 
 ### 2) Make it professional, modern, and easy to use
 - Elevate visual polish within Mangrove brand (paper / pine / terracotta, Fraunces + Outfit).
+- Craft inspiration: curated indexes like [httpster.net](https://httpster.net/) — brand-forward hero, numbered work lists, calm type, intentional motion — without copying foreign palettes. See `docs/ops/DESIGN_DIRECTION.md`.
 - Simplify IA and copy so a first-time visitor understands the site in seconds.
 - Improve form clarity, results hierarchy, CTAs, spacing, typography — **easy to use** over clever.
 - Avoid spammy “make money online” aesthetics and generic AI purple gradients.

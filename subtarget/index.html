@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>
+      Paid Newsletter Subscriber Goal Calculator | SubTarget by Mangrove Tools
+    </title>
+    <meta
+      name="description"
+      content="Free paid newsletter subscriber goal calculator. Turn a monthly revenue target, subscription price, and platform fee into paying subscribers needed — with a low/high band."
+    />
+    <meta name="author" content="Mangrove Tools" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="theme-color" content="#F7F4EF" />
+    <link rel="canonical" href="https://mangrovetools.com/subtarget/" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Mangrove Tools" />
+    <meta property="og:locale" content="en_US" />
+    <meta
+      property="og:title"
+      content="Paid Newsletter Subscriber Goal Calculator | SubTarget"
+    />
+    <meta
+      property="og:description"
+      content="How many paying newsletter subscribers do you need? Set a monthly revenue goal, price, and platform fee for a directional subscriber count."
+    />
+    <meta property="og:url" content="https://mangrovetools.com/subtarget/" />
+    <meta
+      property="og:image"
+      content="https://mangrovetools.com/og.jpg"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="SubTarget paid newsletter subscriber goal calculator by Mangrove Tools"
+    />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="Paid Newsletter Subscriber Goal Calculator | SubTarget"
+    />
+    <meta
+      name="twitter:description"
+      content="Turn a monthly revenue goal and subscription price into paying subscribers needed."
+    />
+    <meta
+      name="twitter:image"
+      content="https://mangrovetools.com/og.jpg"
+    />
+    <meta
+      name="twitter:image:alt"
+      content="SubTarget paid newsletter subscriber goal calculator by Mangrove Tools"
+    />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Outfit:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://mangrovetools.com/#website",
+            "url": "https://mangrovetools.com/",
+            "name": "Mangrove Tools",
+            "publisher": {
+              "@type": "Organization",
+              "name": "Mangrove Tools",
+              "url": "https://mangrovetools.com/"
+            },
+            "inLanguage": "en"
+          },
+          {
+            "@type": "WebApplication",
+            "@id": "https://mangrovetools.com/subtarget/#app",
+            "name": "SubTarget Paid Newsletter Subscriber Goal Calculator",
+            "url": "https://mangrovetools.com/subtarget/",
+            "applicationCategory": "BusinessApplication",
+            "operatingSystem": "Any",
+            "browserRequirements": "Requires JavaScript",
+            "isAccessibleForFree": true,
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "description": "Free calculator that estimates how many paying newsletter subscribers you need to hit a monthly revenue goal after platform fees, with optional annual mix and churn.",
+            "isPartOf": { "@id": "https://mangrovetools.com/#website" },
+            "featureList": [
+              "Paying subscribers needed",
+              "Low/high subscriber band",
+              "Net revenue per sub",
+              "Optional annual plan mix",
+              "Optional churn replacements"
+            ]
+          },
+          {
+            "@type": "WebPage",
+            "@id": "https://mangrovetools.com/subtarget/#webpage",
+            "url": "https://mangrovetools.com/subtarget/",
+            "name": "Paid Newsletter Subscriber Goal Calculator | SubTarget by Mangrove Tools",
+            "isPartOf": { "@id": "https://mangrovetools.com/#website" },
+            "primaryImageOfPage": {
+              "@type": "ImageObject",
+              "url": "https://mangrovetools.com/og.jpg",
+              "width": 1200,
+              "height": 630
+            },
+            "description": "Estimate how many paying newsletter subscribers you need for a monthly revenue goal.",
+            "inLanguage": "en",
+            "breadcrumb": {
+              "@id": "https://mangrovetools.com/subtarget/#breadcrumb"
+            }
+          },
+          {
+            "@type": "BreadcrumbList",
+            "@id": "https://mangrovetools.com/subtarget/#breadcrumb",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Mangrove Tools",
+                "item": "https://mangrovetools.com/"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "SubTarget",
+                "item": "https://mangrovetools.com/subtarget/"
+              }
+            ]
+          },
+          {
+            "@type": "HowTo",
+            "name": "How to estimate paying newsletter subscribers needed",
+            "description": "Use SubTarget to work backward from a monthly revenue goal in under a minute.",
+            "totalTime": "PT1M",
+            "step": [
+              {
+                "@type": "HowToStep",
+                "position": 1,
+                "name": "Set your revenue goal",
+                "text": "Enter the monthly paid subscription revenue you want to reach."
+              },
+              {
+                "@type": "HowToStep",
+                "position": 2,
+                "name": "Add price and platform fee",
+                "text": "Enter your monthly subscription price and platform fee percentage."
+              },
+              {
+                "@type": "HowToStep",
+                "position": 3,
+                "name": "Optional annual mix and churn",
+                "text": "Add annual plan share and price, or monthly churn, if they apply."
+              },
+              {
+                "@type": "HowToStep",
+                "position": 4,
+                "name": "Read the subscriber count",
+                "text": "Review paying subscribers needed, net per sub, low/high band, and implied annual run rate."
+              }
+            ]
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "How many paid newsletter subscribers do I need?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Divide your monthly revenue goal by net revenue per paying subscriber after platform fees. SubTarget rounds up and shows a ±15% band for planning."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "How does SubTarget differ from LetterROI?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "LetterROI estimates forward revenue from list size and conversion benchmarks. SubTarget is the inverse: you set a paid revenue goal and price, then get the subscriber count required."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Are SubTarget subscriber counts guaranteed?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "No. Outputs are directional planning math. Actual conversion, churn, upgrades, and platform fees vary by offer and audience."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "What newsletter platform supports paid subscriptions?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "If you want paid tiers alongside growth tools, Beehiiv is a strong option for many creators. Model your subscriber goal here first, then launch when the number looks achievable."
+                }
+              }
+            ]
+          }
+        ]
+      }
+    </script>
+  </head>
+  <body>
+    <div class="atmosphere" aria-hidden="true"></div>
+
+    <header class="top">
+      <div class="brand">
+        <a class="brand-mark-link" href="/" aria-label="Mangrove Tools home">
+          <img
+            class="brand-mark-img"
+            src="/favicon.svg"
+            alt=""
+            width="36"
+            height="36"
+          />
+        </a>
+        <a class="brand-name" href="/subtarget/">SubTarget</a>
+      </div>
+      <p class="brand-aside">
+        <a class="brand-parent" href="/">Mangrove Tools</a>
+      </p>
+    </header>
+
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <ol>
+        <li><a href="/">Mangrove Tools</a></li>
+        <li aria-current="page">SubTarget</li>
+      </ol>
+    </nav>
+
+    <main class="shell">
+      <section class="hero" aria-labelledby="hero-title">
+        <h1 id="hero-title">Paid newsletter subscriber goal calculator</h1>
+        <p class="lede">
+          Work backward from a monthly revenue target. Enter subscription price
+          and platform fee to see paying subscribers needed — with net per sub,
+          a low/high band, and optional annual mix or churn.
+        </p>
+      </section>
+
+      <section class="workspace" aria-label="Subscriber goal calculator">
+        <form id="calc-form" class="inputs" novalidate onsubmit="return false">
+          <div class="field field-wide">
+            <label for="target-revenue">Target monthly revenue ($)</label>
+            <input
+              id="target-revenue"
+              name="targetRevenue"
+              type="number"
+              inputmode="decimal"
+              min="0.01"
+              max="10000000"
+              step="1"
+              value="5000"
+              required
+            />
+            <p class="field-error" id="target-revenue-error" role="alert"></p>
+          </div>
+
+          <div class="field">
+            <label for="monthly-price">Monthly sub price ($)</label>
+            <input
+              id="monthly-price"
+              name="monthlyPrice"
+              type="number"
+              inputmode="decimal"
+              min="0.01"
+              max="10000"
+              step="0.5"
+              value="10"
+              required
+            />
+            <p class="field-error" id="monthly-price-error" role="alert"></p>
+          </div>
+
+          <div class="field">
+            <label for="platform-fee">Platform fee (%)</label>
+            <input
+              id="platform-fee"
+              name="platformFee"
+              type="number"
+              inputmode="decimal"
+              min="0"
+              max="99"
+              step="0.1"
+              value="10"
+              required
+            />
+            <p class="field-error" id="platform-fee-error" role="alert"></p>
+          </div>
+
+          <p class="optional-kicker">Optional</p>
+
+          <div class="field">
+            <label for="annual-share">Annual plan share (%)</label>
+            <input
+              id="annual-share"
+              name="annualShare"
+              type="number"
+              inputmode="decimal"
+              min="0"
+              max="100"
+              step="1"
+            />
+            <p class="field-hint">Leave blank for monthly-only pricing.</p>
+            <p class="field-error" id="annual-share-error" role="alert"></p>
+          </div>
+
+          <div class="field">
+            <label for="annual-price">Annual plan price ($)</label>
+            <input
+              id="annual-price"
+              name="annualPrice"
+              type="number"
+              inputmode="decimal"
+              min="0.01"
+              max="120000"
+              step="1"
+            />
+            <p class="field-hint">Required when annual share is above 0.</p>
+            <p class="field-error" id="annual-price-error" role="alert"></p>
+          </div>
+
+          <div class="field field-wide">
+            <label for="churn-rate">Monthly churn (%)</label>
+            <input
+              id="churn-rate"
+              name="churnRate"
+              type="number"
+              inputmode="decimal"
+              min="0"
+              max="100"
+              step="0.1"
+            />
+            <p class="field-hint">
+              Steady-state replacements needed each month to hold subscriber count.
+            </p>
+            <p class="field-error" id="churn-rate-error" role="alert"></p>
+          </div>
+
+          <button type="submit" class="primary">Calculate subscribers</button>
+        </form>
+
+        <div class="results" id="results">
+          <p class="results-kicker">Paying subscribers needed</p>
+          <p class="total" id="total-range" aria-live="polite">—</p>
+          <p class="results-note" id="results-note">
+            Enter your revenue goal and subscription price, then calculate.
+          </p>
+
+          <ul class="streams" id="streams">
+            <li>
+              <span>Point estimate</span>
+              <strong id="subs-value" aria-live="polite">—</strong>
+            </li>
+            <li>
+              <span>Net per paying sub</span>
+              <strong id="net-value" aria-live="polite">—</strong>
+            </li>
+            <li>
+              <span>Implied annual run rate</span>
+              <strong id="run-rate-value" aria-live="polite">—</strong>
+            </li>
+            <li id="churn-row" hidden>
+              <span>Monthly churn replacements</span>
+              <strong id="churn-value" aria-live="polite">—</strong>
+            </li>
+          </ul>
+
+          <aside class="cta" id="cta">
+            <h2>Ready to chase that subscriber count?</h2>
+            <p>
+              Beehiiv supports paid tiers alongside growth and send tools. Model
+              your goal here, then launch when the number looks achievable.
+            </p>
+            <a
+              class="cta-link"
+              id="beehiiv-link"
+              href="https://www.beehiiv.com/?via=letterroi"
+              target="_blank"
+              rel="noopener noreferrer sponsored"
+            >
+              Start free on Beehiiv
+            </a>
+            <p class="cta-fine">
+              Affiliate disclosure: we may earn a commission if you upgrade —
+              at no extra cost to you.
+            </p>
+          </aside>
+        </div>
+      </section>
+
+      <section class="content-block" aria-labelledby="how-title">
+        <h2 id="how-title">How the subscriber goal estimate works</h2>
+        <p>
+          SubTarget is the inverse of LetterROI’s paid stream. You set a monthly
+          revenue goal and subscription economics — not list size or conversion
+          benchmarks:
+        </p>
+        <ul class="plain-list">
+          <li>
+            <strong>Net per sub</strong> — monthly price × (1 − platform fee%),
+            blended with annual plan share when provided.
+          </li>
+          <li>
+            <strong>Subscribers needed</strong> — revenue goal ÷ net per sub,
+            rounded up.
+          </li>
+          <li>
+            <strong>Planning band</strong> — ±15% around the point estimate for
+            conservative vs stretch planning.
+          </li>
+          <li>
+            <strong>Churn replacements</strong> — optional steady-state new subs
+            per month to offset monthly churn.
+          </li>
+        </ul>
+        <p>
+          Figures are directional planning math, not guarantees. Conversion,
+          upgrades, refunds, and churn vary by niche and offer.
+        </p>
+        <p class="related-tools">
+          Related:
+          <a href="/letterroi/">LetterROI</a> estimates forward revenue from
+          list size ·
+          <a href="/sponsorquote/">SponsorQuote</a> prices sponsorships.
+        </p>
+      </section>
+
+      <section class="content-block" aria-labelledby="faq-title">
+        <h2 id="faq-title">Paid subscriber goal FAQ</h2>
+
+        <details class="faq-item" open>
+          <summary>How many paid newsletter subscribers do I need?</summary>
+          <p>
+            Divide your monthly revenue goal by net revenue per paying subscriber
+            after platform fees. SubTarget rounds up and shows a ±15% band so you
+            can plan conservatively or stretch.
+          </p>
+        </details>
+
+        <details class="faq-item">
+          <summary>How does SubTarget differ from LetterROI?</summary>
+          <p>
+            LetterROI projects forward revenue from list size, open rate, and
+            niche benchmarks. SubTarget starts with your paid revenue goal and
+            price, then tells you how many paying subscribers that requires.
+          </p>
+        </details>
+
+        <details class="faq-item">
+          <summary>Are SubTarget subscriber counts guaranteed?</summary>
+          <p>
+            No. The model uses your inputs and simple fee math. Treat the output
+            as planning guidance, not a promise you will convert or retain that
+            many subscribers.
+          </p>
+        </details>
+
+        <details class="faq-item">
+          <summary>What newsletter platform supports paid subscriptions?</summary>
+          <p>
+            If you want paid tiers with growth tools in one product,
+            <a
+              id="faq-beehiiv-link"
+              href="https://www.beehiiv.com/?via=letterroi"
+              target="_blank"
+              rel="noopener noreferrer sponsored"
+              >Beehiiv</a
+            >
+            is a strong option for many creators. Model your goal here first,
+            then launch when the number looks achievable.
+          </p>
+        </details>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <p>
+        <a href="/">Mangrove Tools</a>
+        ·
+        <strong>SubTarget</strong>
+        · paid newsletter subscriber goal calculator ·
+        <a href="/letterroi/">LetterROI</a>
+        ·
+        <a href="/sponsorquote/">SponsorQuote</a>
+        ·
+        <a href="/method/">Method</a>
+        ·
+        <a href="/lead-dev/">Lead-Dev</a>
+        ·
+        <a href="/about/">About</a>
+        ·
+        <a href="/faq/">FAQ</a>
+        ·
+        <a href="/privacy/">Privacy</a>
+        ·
+        <a href="/contact/">Contact</a>
+        ·
+        <a href="/llms.txt">llms.txt</a>
+      </p>
+    </footer>
+
+    <script src="./config.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>

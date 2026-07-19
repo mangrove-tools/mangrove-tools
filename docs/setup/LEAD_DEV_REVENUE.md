@@ -11,7 +11,7 @@ Contact page email: `contact/index.html` (keep in sync)
 | `KIT_CHECKOUT_URL` | `lead-dev/config.js` | Lead-Dev Kit payment link | Gumroad / Stripe Payment Link / Lemon Squeezy |
 | `COHORT_SIGNUP_URL` | `lead-dev/config.js` | Cohort checkout or waitlist | Checkout URL or form |
 | `DWY_BOOKING_URL` | `lead-dev/config.js` | DWY intake calendar | Calendly / SavvyCal / etc. |
-| `CONTACT_EMAIL` | `lead-dev/config.js` + contact page | Public inbox | `hello@mangrovetools.com` |
+| `CONTACT_EMAIL` | `lead-dev/config.js` + contact page | Public inbox | `needlesearchapp@protonmail.com` |
 
 ## Pricing (source bands — do not invent outside these without approval)
 

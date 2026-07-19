@@ -46,8 +46,24 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/site.css" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "name": "Privacy — Mangrove Tools",
+        "url": "https://mangrovetools.com/privacy/",
+        "description": "Mangrove Tools privacy practices: calculator inputs stay in your browser and are not posted to our servers.",
+        "isPartOf": {
+          "@type": "WebSite",
+          "name": "Mangrove Tools",
+          "url": "https://mangrovetools.com/"
+        }
+      }
+    </script>
   </head>
   <body>
+    <a class="skip-link" href="#main">Skip to content</a>
     <div class="atmosphere" aria-hidden="true"></div>
 
     <header class="top">
@@ -68,7 +84,7 @@
       </nav>
     </header>
 
-    <main class="shell">
+    <main class="shell" id="main">
       <section class="hero">
         <p class="eyebrow">Privacy</p>
         <h1>Your calculator inputs stay with you</h1>
@@ -81,9 +97,9 @@
       <div class="prose">
         <h2>What we do not collect from tools</h2>
         <p>
-          LetterROI, SponsorQuote, and other in-browser calculators do not POST
-          your inputs to Mangrove Tools servers. Values you type are used
-          locally to compute results on the page.
+          LetterROI, SponsorQuote, SubTarget, and other in-browser calculators
+          do not POST your inputs to Mangrove Tools servers. Values you type are
+          used locally to compute results on the page.
         </p>
 
         <h2>Hosting and logs</h2>
@@ -123,27 +139,39 @@
     </main>
 
     <footer class="foot">
-      <p>
-        <a href="/">Mangrove Tools</a>
-        · Naples, Florida ·
-        <a href="/letterroi/">LetterROI</a>
-        ·
-        <a href="/sponsorquote/">SponsorQuote</a>
-        ·
-        <a href="/method/">Method</a>
-        ·
-        <a href="/lead-dev/">Lead-Dev</a>
-        ·
-        <a href="/about/">About</a>
-        ·
-        <a href="/faq/">FAQ</a>
-        ·
-        <a href="/privacy/">Privacy</a>
-        ·
-        <a href="/contact/">Contact</a>
-        ·
-        <a href="/llms.txt">llms.txt</a>
-      </p>
+      <div class="foot-grid">
+        <div>
+          <p class="foot-brand">Mangrove Tools</p>
+          <p class="foot-note">
+            Free niche calculators from Naples, Florida. Client-side only.
+          </p>
+        </div>
+        <div class="foot-col">
+          <h2>Tools</h2>
+          <ul>
+            <li><a href="/letterroi/">LetterROI</a></li>
+            <li><a href="/sponsorquote/">SponsorQuote</a></li>
+            <li><a href="/subtarget/">SubTarget</a></li>
+          </ul>
+        </div>
+        <div class="foot-col">
+          <h2>Lead-Dev</h2>
+          <ul>
+            <li><a href="/method/">Method</a></li>
+            <li><a href="/lead-dev/">Offers</a></li>
+            <li><a href="/faq/">FAQ</a></li>
+          </ul>
+        </div>
+        <div class="foot-col">
+          <h2>Site</h2>
+          <ul>
+            <li><a href="/about/">About</a></li>
+            <li><a href="/privacy/">Privacy</a></li>
+            <li><a href="/contact/">Contact</a></li>
+            <li><a href="/llms.txt">llms.txt</a></li>
+          </ul>
+        </div>
+      </div>
     </footer>
   </body>
 </html>

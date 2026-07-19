@@ -46,8 +46,60 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/site.css" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "AboutPage",
+            "@id": "https://mangrovetools.com/about/#webpage",
+            "url": "https://mangrovetools.com/about/",
+            "name": "About Mangrove Tools — Naples, Florida",
+            "description": "Mangrove Tools builds free single-purpose calculators for creators, plus a Lead-Dev system for shipping with AI agents.",
+            "mainEntity": {
+              "@id": "https://mangrovetools.com/#organization"
+            },
+            "breadcrumb": {
+              "@id": "https://mangrovetools.com/about/#breadcrumb"
+            }
+          },
+          {
+            "@type": "Organization",
+            "@id": "https://mangrovetools.com/#organization",
+            "name": "Mangrove Tools",
+            "url": "https://mangrovetools.com/",
+            "logo": "https://mangrovetools.com/favicon.svg",
+            "description": "Free micro-tools and calculators for creators and builders.",
+            "areaServed": {
+              "@type": "Place",
+              "name": "Naples, Florida"
+            }
+          },
+          {
+            "@type": "BreadcrumbList",
+            "@id": "https://mangrovetools.com/about/#breadcrumb",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Mangrove Tools",
+                "item": "https://mangrovetools.com/"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "About",
+                "item": "https://mangrovetools.com/about/"
+              }
+            ]
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
+    <a class="skip-link" href="#main">Skip to content</a>
     <div class="atmosphere" aria-hidden="true"></div>
 
     <header class="top">
@@ -68,7 +120,7 @@
       </nav>
     </header>
 
-    <main class="shell">
+    <main class="shell" id="main">
       <section class="hero reveal">
         <p class="hero-meta">
           <span>About</span>
@@ -85,9 +137,12 @@
       <div class="prose">
         <h2>What we make</h2>
         <p>
-          Each tool does one job well: estimate newsletter revenue, build a
-          sponsorship rate card, and more as the library grows. Calculations run
-          in your browser. No accounts. No hard paywall on results.
+          Each tool does one job well: estimate newsletter revenue
+          (<a href="/letterroi/">LetterROI</a>), build a sponsorship rate card
+          (<a href="/sponsorquote/">SponsorQuote</a>), work backward from a paid
+          subscriber goal (<a href="/subtarget/">SubTarget</a>), and more as the
+          library grows. Calculations run in your browser. No accounts. No hard
+          paywall on results.
         </p>
 
         <h2>How we grow</h2>
@@ -116,27 +171,39 @@
     </main>
 
     <footer class="foot">
-      <p>
-        <a href="/">Mangrove Tools</a>
-        · Naples, Florida ·
-        <a href="/letterroi/">LetterROI</a>
-        ·
-        <a href="/sponsorquote/">SponsorQuote</a>
-        ·
-        <a href="/method/">Method</a>
-        ·
-        <a href="/lead-dev/">Lead-Dev</a>
-        ·
-        <a href="/about/">About</a>
-        ·
-        <a href="/faq/">FAQ</a>
-        ·
-        <a href="/privacy/">Privacy</a>
-        ·
-        <a href="/contact/">Contact</a>
-        ·
-        <a href="/llms.txt">llms.txt</a>
-      </p>
+      <div class="foot-grid">
+        <div>
+          <p class="foot-brand">Mangrove Tools</p>
+          <p class="foot-note">
+            Free niche calculators from Naples, Florida. Client-side only.
+          </p>
+        </div>
+        <div class="foot-col">
+          <h2>Tools</h2>
+          <ul>
+            <li><a href="/letterroi/">LetterROI</a></li>
+            <li><a href="/sponsorquote/">SponsorQuote</a></li>
+            <li><a href="/subtarget/">SubTarget</a></li>
+          </ul>
+        </div>
+        <div class="foot-col">
+          <h2>Lead-Dev</h2>
+          <ul>
+            <li><a href="/method/">Method</a></li>
+            <li><a href="/lead-dev/">Offers</a></li>
+            <li><a href="/faq/">FAQ</a></li>
+          </ul>
+        </div>
+        <div class="foot-col">
+          <h2>Site</h2>
+          <ul>
+            <li><a href="/about/">About</a></li>
+            <li><a href="/privacy/">Privacy</a></li>
+            <li><a href="/contact/">Contact</a></li>
+            <li><a href="/llms.txt">llms.txt</a></li>
+          </ul>
+        </div>
+      </div>
     </footer>
   </body>
 </html>

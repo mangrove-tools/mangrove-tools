@@ -56,25 +56,59 @@
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "Article",
-        "headline": "Lead-Dev Prompting: How to Ship Real Products With AI Agents",
-        "description": "A practical methodology for turning AI coding agents into a sequenced lead developer.",
-        "author": {
-          "@type": "Organization",
-          "name": "Mangrove Tools",
-          "url": "https://mangrovetools.com/"
-        },
-        "publisher": {
-          "@type": "Organization",
-          "name": "Mangrove Tools",
-          "url": "https://mangrovetools.com/"
-        },
-        "mainEntityOfPage": "https://mangrovetools.com/method/",
-        "image": "https://mangrovetools.com/og.jpg"
+        "@graph": [
+          {
+            "@type": "Article",
+            "@id": "https://mangrovetools.com/method/#article",
+            "headline": "Lead-Dev Prompting: How to Ship Real Products With AI Agents",
+            "description": "A practical methodology for turning AI coding agents into a sequenced lead developer—with AGENTS.md, phased execution, and niche expansion.",
+            "author": {
+              "@type": "Organization",
+              "name": "Mangrove Tools",
+              "url": "https://mangrovetools.com/"
+            },
+            "publisher": {
+              "@type": "Organization",
+              "name": "Mangrove Tools",
+              "url": "https://mangrovetools.com/",
+              "logo": {
+                "@type": "ImageObject",
+                "url": "https://mangrovetools.com/favicon.svg"
+              }
+            },
+            "mainEntityOfPage": {
+              "@type": "WebPage",
+              "@id": "https://mangrovetools.com/method/"
+            },
+            "image": "https://mangrovetools.com/og.jpg",
+            "datePublished": "2026-07-19",
+            "dateModified": "2026-07-19",
+            "inLanguage": "en"
+          },
+          {
+            "@type": "BreadcrumbList",
+            "@id": "https://mangrovetools.com/method/#breadcrumb",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Mangrove Tools",
+                "item": "https://mangrovetools.com/"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Method",
+                "item": "https://mangrovetools.com/method/"
+              }
+            ]
+          }
+        ]
       }
     </script>
   </head>
   <body>
+    <a class="skip-link" href="#main">Skip to content</a>
     <div class="atmosphere" aria-hidden="true"></div>
 
     <header class="top">
@@ -95,10 +129,17 @@
       </nav>
     </header>
 
-    <main class="shell">
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <ol>
+        <li><a href="/">Mangrove Tools</a></li>
+        <li aria-current="page">Method</li>
+      </ol>
+    </nav>
+
+    <main class="shell" id="main">
       <article>
         <section class="hero">
-          <p class="eyebrow">Methodology</p>
+          <p class="eyebrow">Methodology · AI lead developer prompting</p>
           <h1>Lead-Dev Prompting: How to Ship Real Products With AI Agents</h1>
           <p class="lede">
             A practical methodology for turning AI coding agents into a sequenced
@@ -321,27 +362,39 @@
     </main>
 
     <footer class="foot">
-      <p>
-        <a href="/">Mangrove Tools</a>
-        · Naples, Florida ·
-        <a href="/letterroi/">LetterROI</a>
-        ·
-        <a href="/sponsorquote/">SponsorQuote</a>
-        ·
-        <a href="/method/">Method</a>
-        ·
-        <a href="/lead-dev/">Lead-Dev</a>
-        ·
-        <a href="/about/">About</a>
-        ·
-        <a href="/faq/">FAQ</a>
-        ·
-        <a href="/privacy/">Privacy</a>
-        ·
-        <a href="/contact/">Contact</a>
-        ·
-        <a href="/llms.txt">llms.txt</a>
-      </p>
+      <div class="foot-grid">
+        <div>
+          <p class="foot-brand">Mangrove Tools</p>
+          <p class="foot-note">
+            Free niche calculators from Naples, Florida. Client-side only.
+          </p>
+        </div>
+        <div class="foot-col">
+          <h2>Tools</h2>
+          <ul>
+            <li><a href="/letterroi/">LetterROI</a></li>
+            <li><a href="/sponsorquote/">SponsorQuote</a></li>
+            <li><a href="/subtarget/">SubTarget</a></li>
+          </ul>
+        </div>
+        <div class="foot-col">
+          <h2>Lead-Dev</h2>
+          <ul>
+            <li><a href="/method/">Method</a></li>
+            <li><a href="/lead-dev/">Offers</a></li>
+            <li><a href="/faq/">FAQ</a></li>
+          </ul>
+        </div>
+        <div class="foot-col">
+          <h2>Site</h2>
+          <ul>
+            <li><a href="/about/">About</a></li>
+            <li><a href="/privacy/">Privacy</a></li>
+            <li><a href="/contact/">Contact</a></li>
+            <li><a href="/llms.txt">llms.txt</a></li>
+          </ul>
+        </div>
+      </div>
     </footer>
   </body>
 </html>

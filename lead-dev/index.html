@@ -53,8 +53,74 @@
     />
     <link rel="stylesheet" href="/site.css" />
     <link rel="stylesheet" href="./styles.css" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebPage",
+            "@id": "https://mangrovetools.com/lead-dev/#webpage",
+            "url": "https://mangrovetools.com/lead-dev/",
+            "name": "Lead-Dev Kit, Cohort & Agent OS Install | Mangrove Tools",
+            "description": "Lead-Dev Kit, Ship With a Lead-Dev Agent cohort, and done-with-you Agent OS Install — constitution files, phased execution, niche expansion.",
+            "isPartOf": {
+              "@type": "WebSite",
+              "name": "Mangrove Tools",
+              "url": "https://mangrovetools.com/"
+            },
+            "breadcrumb": {
+              "@id": "https://mangrovetools.com/lead-dev/#breadcrumb"
+            }
+          },
+          {
+            "@type": "BreadcrumbList",
+            "@id": "https://mangrovetools.com/lead-dev/#breadcrumb",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Mangrove Tools",
+                "item": "https://mangrovetools.com/"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Lead-Dev",
+                "item": "https://mangrovetools.com/lead-dev/"
+              }
+            ]
+          },
+          {
+            "@type": "ItemList",
+            "name": "Lead-Dev offers",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Lead-Dev Kit",
+                "description": "Template pack with filled AGENTS.md and lead prompts. Price band $49–$149. Checkout setup required."
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Ship With a Lead-Dev Agent",
+                "description": "4-week cohort or self-paced with reviews. Price band $297–$997. Signup setup required."
+              },
+              {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "Agent OS Install",
+                "description": "Done-with-you custom repo setup. Price band $499–$2,500. Booking setup required."
+              }
+            ]
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
+    <a class="skip-link" href="#main">Skip to content</a>
     <div class="atmosphere" aria-hidden="true"></div>
 
     <header class="top">
@@ -75,9 +141,16 @@
       </nav>
     </header>
 
-    <main class="shell">
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <ol>
+        <li><a href="/">Mangrove Tools</a></li>
+        <li aria-current="page">Lead-Dev</li>
+      </ol>
+    </nav>
+
+    <main class="shell" id="main">
       <section class="hero">
-        <p class="eyebrow">Lead-Dev</p>
+        <p class="eyebrow">Lead-Dev · AI agent operating system</p>
         <h1>Stop prompting AI like a slot machine. Run it like a lead developer.</h1>
         <p class="lede">
           A proven system for shipping real products with coding agents:
@@ -293,27 +366,39 @@
     </main>
 
     <footer class="foot">
-      <p>
-        <a href="/">Mangrove Tools</a>
-        · Naples, Florida ·
-        <a href="/letterroi/">LetterROI</a>
-        ·
-        <a href="/sponsorquote/">SponsorQuote</a>
-        ·
-        <a href="/method/">Method</a>
-        ·
-        <a href="/lead-dev/">Lead-Dev</a>
-        ·
-        <a href="/about/">About</a>
-        ·
-        <a href="/faq/">FAQ</a>
-        ·
-        <a href="/privacy/">Privacy</a>
-        ·
-        <a href="/contact/">Contact</a>
-        ·
-        <a href="/llms.txt">llms.txt</a>
-      </p>
+      <div class="foot-grid">
+        <div>
+          <p class="foot-brand">Mangrove Tools</p>
+          <p class="foot-note">
+            Free niche calculators from Naples, Florida. Client-side only.
+          </p>
+        </div>
+        <div class="foot-col">
+          <h2>Tools</h2>
+          <ul>
+            <li><a href="/letterroi/">LetterROI</a></li>
+            <li><a href="/sponsorquote/">SponsorQuote</a></li>
+            <li><a href="/subtarget/">SubTarget</a></li>
+          </ul>
+        </div>
+        <div class="foot-col">
+          <h2>Lead-Dev</h2>
+          <ul>
+            <li><a href="/method/">Method</a></li>
+            <li><a href="/lead-dev/">Offers</a></li>
+            <li><a href="/faq/">FAQ</a></li>
+          </ul>
+        </div>
+        <div class="foot-col">
+          <h2>Site</h2>
+          <ul>
+            <li><a href="/about/">About</a></li>
+            <li><a href="/privacy/">Privacy</a></li>
+            <li><a href="/contact/">Contact</a></li>
+            <li><a href="/llms.txt">llms.txt</a></li>
+          </ul>
+        </div>
+      </div>
     </footer>
 
     <script src="./config.js"></script>

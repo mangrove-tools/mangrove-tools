@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>
+      Newsletter Sponsorship Rate Calculator | SponsorQuote by Mangrove Tools
+    </title>
+    <meta
+      name="description"
+      content="Free newsletter sponsorship rate calculator. Turn list size, open rate, and niche CPM into a suggested flat rate, implied CPM, and low/high rate-card band."
+    />
+    <meta name="author" content="Mangrove Tools" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="theme-color" content="#F7F4EF" />
+    <link rel="canonical" href="https://mangrovetools.com/sponsorquote/" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Mangrove Tools" />
+    <meta property="og:locale" content="en_US" />
+    <meta
+      property="og:title"
+      content="Newsletter Sponsorship Rate Calculator | SponsorQuote"
+    />
+    <meta
+      property="og:description"
+      content="Build a sponsorship rate card from list size, open rate, niche CPM, and exclusive vs multi-sponsor placement."
+    />
+    <meta property="og:url" content="https://mangrovetools.com/sponsorquote/" />
+    <meta
+      property="og:image"
+      content="https://mangrovetools.com/sponsorquote/og.jpg"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="SponsorQuote newsletter sponsorship rate calculator by Mangrove Tools"
+    />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="Newsletter Sponsorship Rate Calculator | SponsorQuote"
+    />
+    <meta
+      name="twitter:description"
+      content="Build a sponsorship rate card from list size, open rate, and niche CPM."
+    />
+    <meta
+      name="twitter:image"
+      content="https://mangrovetools.com/sponsorquote/og.jpg"
+    />
+    <meta
+      name="twitter:image:alt"
+      content="SponsorQuote newsletter sponsorship rate calculator by Mangrove Tools"
+    />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Outfit:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://mangrovetools.com/#website",
+            "url": "https://mangrovetools.com/",
+            "name": "Mangrove Tools",
+            "publisher": {
+              "@type": "Organization",
+              "name": "Mangrove Tools",
+              "url": "https://mangrovetools.com/"
+            },
+            "inLanguage": "en"
+          },
+          {
+            "@type": "WebApplication",
+            "@id": "https://mangrovetools.com/sponsorquote/#app",
+            "name": "SponsorQuote Newsletter Sponsorship Rate Calculator",
+            "url": "https://mangrovetools.com/sponsorquote/",
+            "applicationCategory": "BusinessApplication",
+            "operatingSystem": "Any",
+            "browserRequirements": "Requires JavaScript",
+            "isAccessibleForFree": true,
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "description": "Free calculator that suggests newsletter sponsorship flat rates and implied CPM from list size, open rate, niche, and placement type.",
+            "isPartOf": { "@id": "https://mangrovetools.com/#website" },
+            "featureList": [
+              "Flat rate suggestion",
+              "Implied CPM",
+              "Low/high rate-card band",
+              "Exclusive vs multi-sponsor placement"
+            ]
+          },
+          {
+            "@type": "WebPage",
+            "@id": "https://mangrovetools.com/sponsorquote/#webpage",
+            "url": "https://mangrovetools.com/sponsorquote/",
+            "name": "Newsletter Sponsorship Rate Calculator | SponsorQuote by Mangrove Tools",
+            "isPartOf": { "@id": "https://mangrovetools.com/#website" },
+            "primaryImageOfPage": {
+              "@type": "ImageObject",
+              "url": "https://mangrovetools.com/sponsorquote/og.jpg",
+              "width": 1200,
+              "height": 630
+            },
+            "description": "Estimate how much to charge for a newsletter sponsorship with a directional rate card.",
+            "inLanguage": "en",
+            "breadcrumb": {
+              "@id": "https://mangrovetools.com/sponsorquote/#breadcrumb"
+            }
+          },
+          {
+            "@type": "BreadcrumbList",
+            "@id": "https://mangrovetools.com/sponsorquote/#breadcrumb",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Mangrove Tools",
+                "item": "https://mangrovetools.com/"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "SponsorQuote",
+                "item": "https://mangrovetools.com/sponsorquote/"
+              }
+            ]
+          },
+          {
+            "@type": "HowTo",
+            "name": "How to price a newsletter sponsorship",
+            "description": "Use SponsorQuote to build a directional sponsorship rate card in under a minute.",
+            "totalTime": "PT1M",
+            "step": [
+              {
+                "@type": "HowToStep",
+                "position": 1,
+                "name": "Enter list metrics",
+                "text": "Add your subscriber count and typical open rate."
+              },
+              {
+                "@type": "HowToStep",
+                "position": 2,
+                "name": "Choose niche CPM",
+                "text": "Select a niche benchmark or enter a custom CPM."
+              },
+              {
+                "@type": "HowToStep",
+                "position": 3,
+                "name": "Pick placement type",
+                "text": "Choose exclusive or multi-sponsor to adjust the quote."
+              },
+              {
+                "@type": "HowToStep",
+                "position": 4,
+                "name": "Read the rate card",
+                "text": "Review suggested flat rate, implied CPM, and a low/high band."
+              }
+            ]
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "How much should I charge for a newsletter sponsorship?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "A common starting point is niche CPM against estimated opens (subscribers × open rate). SponsorQuote converts that into a suggested flat fee plus a low/high band you can use when building a rate card."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "What is newsletter sponsorship CPM?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "CPM is cost per thousand estimated opens. Multiply (opens ÷ 1000) by your niche CPM to get a baseline flat rate, then adjust for exclusivity, placement, and demand."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Are SponsorQuote rates guaranteed market prices?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "No. Outputs are directional planning math. Actual sponsorship prices depend on niche demand, audience quality, creative format, and your sales process."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "What newsletter platform helps sell sponsorships?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "If you want growth tools and monetization features together, Beehiiv is a strong option for many creators. Price your sponsorship here first, then grow the list that makes those rates credible."
+                }
+              }
+            ]
+          }
+        ]
+      }
+    </script>
+  </head>
+  <body>
+    <div class="atmosphere" aria-hidden="true"></div>
+
+    <header class="top">
+      <div class="brand">
+        <a class="brand-mark-link" href="/" aria-label="Mangrove Tools home">
+          <img
+            class="brand-mark-img"
+            src="/favicon.svg"
+            alt=""
+            width="36"
+            height="36"
+          />
+        </a>
+        <a class="brand-name" href="/sponsorquote/">SponsorQuote</a>
+      </div>
+      <p class="brand-aside">
+        <a class="brand-parent" href="/">Mangrove Tools</a>
+      </p>
+    </header>
+
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <ol>
+        <li><a href="/">Mangrove Tools</a></li>
+        <li aria-current="page">SponsorQuote</li>
+      </ol>
+    </nav>
+
+    <main class="shell">
+      <section class="hero" aria-labelledby="hero-title">
+        <h1 id="hero-title">Newsletter sponsorship rate calculator</h1>
+        <p class="lede">
+          Build a directional rate card from list size, open rate, and niche
+          CPM. Get a suggested flat fee, implied CPM, and a low/high band —
+          exclusive or multi-sponsor.
+        </p>
+      </section>
+
+      <section class="workspace" aria-label="Sponsorship rate calculator">
+        <form id="calc-form" class="inputs" novalidate onsubmit="return false">
+          <div class="field">
+            <label for="subscribers">Subscribers</label>
+            <input
+              id="subscribers"
+              name="subscribers"
+              type="number"
+              inputmode="numeric"
+              min="0"
+              max="10000000"
+              step="1"
+              value="10000"
+              required
+            />
+            <p class="field-error" id="subscribers-error" role="alert"></p>
+          </div>
+
+          <div class="field">
+            <label for="open-rate">Open rate (%)</label>
+            <input
+              id="open-rate"
+              name="openRate"
+              type="number"
+              inputmode="decimal"
+              min="0"
+              max="100"
+              step="0.1"
+              value="40"
+              required
+            />
+            <p class="field-error" id="open-rate-error" role="alert"></p>
+          </div>
+
+          <div class="field">
+            <label for="niche">Niche CPM</label>
+            <select id="niche" name="niche">
+              <option value="finance">Finance / investing ($45)</option>
+              <option value="tech" selected>Tech / startups ($35)</option>
+              <option value="health">Health / wellness ($28)</option>
+              <option value="lifestyle">Lifestyle / culture ($22)</option>
+              <option value="general">General interest ($18)</option>
+              <option value="custom">Custom CPM…</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="placement">Placement</label>
+            <select id="placement" name="placement">
+              <option value="exclusive" selected>Exclusive (sole sponsor)</option>
+              <option value="multi">Multi-sponsor</option>
+            </select>
+          </div>
+
+          <div class="field field-wide" id="custom-cpm-field" hidden>
+            <label for="custom-cpm">Custom niche CPM ($)</label>
+            <input
+              id="custom-cpm"
+              name="customCpm"
+              type="number"
+              inputmode="decimal"
+              min="0.01"
+              max="500"
+              step="0.5"
+              value="30"
+            />
+            <p class="field-error" id="custom-cpm-error" role="alert"></p>
+          </div>
+
+          <button type="submit" class="primary">Build rate card</button>
+        </form>
+
+        <div class="results" id="results">
+          <p class="results-kicker">Suggested rate-card band</p>
+          <p class="total" id="total-range" aria-live="polite">—</p>
+          <p class="results-note" id="results-note">
+            Enter list size, open rate, and niche to build a rate card.
+          </p>
+
+          <ul class="streams" id="streams">
+            <li>
+              <span>Suggested flat rate</span>
+              <strong id="flat-value" aria-live="polite">—</strong>
+            </li>
+            <li>
+              <span>Implied CPM</span>
+              <strong id="cpm-value" aria-live="polite">—</strong>
+            </li>
+            <li>
+              <span>Estimated opens</span>
+              <strong id="opens-value" aria-live="polite">—</strong>
+            </li>
+          </ul>
+
+          <aside class="cta" id="cta">
+            <h2>Need a list that earns that rate?</h2>
+            <p>
+              Beehiiv helps creators grow, send, and monetize in one place.
+              Price the sponsorship here, then grow into numbers brands will
+              pay for.
+            </p>
+            <a
+              class="cta-link"
+              id="beehiiv-link"
+              href="https://www.beehiiv.com/?via=letterroi"
+              target="_blank"
+              rel="noopener noreferrer sponsored"
+            >
+              Start free on Beehiiv
+            </a>
+            <p class="cta-fine">
+              Affiliate disclosure: we may earn a commission if you upgrade —
+              at no extra cost to you.
+            </p>
+          </aside>
+        </div>
+      </section>
+
+      <section class="content-block" aria-labelledby="how-title">
+        <h2 id="how-title">How the sponsorship rate estimate works</h2>
+        <p>
+          SponsorQuote is a free newsletter sponsorship rate calculator. It
+          builds a directional rate card from estimated opens and niche CPM —
+          not an invoice, CRM, or marketplace:
+        </p>
+        <ul class="plain-list">
+          <li>
+            <strong>Estimated opens</strong> — subscribers × open rate for one
+            issue.
+          </li>
+          <li>
+            <strong>Base flat rate</strong> — (opens ÷ 1000) × niche CPM.
+          </li>
+          <li>
+            <strong>Placement adjust</strong> — exclusive quotes higher;
+            multi-sponsor quotes lower.
+          </li>
+          <li>
+            <strong>Rate-card band</strong> — suggested midpoint with a calm
+            low/high range for negotiation.
+          </li>
+        </ul>
+        <p>
+          Figures are directional benchmarks. Real sponsorship pricing depends
+          on demand, audience quality, creative format, and how hard you sell.
+        </p>
+      </section>
+
+      <section class="content-block" aria-labelledby="faq-title">
+        <h2 id="faq-title">Sponsorship pricing FAQ</h2>
+
+        <details class="faq-item" open>
+          <summary>How much should I charge for a newsletter sponsorship?</summary>
+          <p>
+            A common starting point is niche CPM against estimated opens. Use
+            the suggested flat rate as your midpoint, then negotiate within the
+            low/high band based on demand and exclusivity.
+          </p>
+        </details>
+
+        <details class="faq-item">
+          <summary>What is newsletter sponsorship CPM?</summary>
+          <p>
+            CPM is cost per thousand estimated opens. Multiply (opens ÷ 1000) by
+            your niche CPM for a baseline flat fee, then adjust for placement
+            and scarcity.
+          </p>
+        </details>
+
+        <details class="faq-item">
+          <summary>Are SponsorQuote rates guaranteed market prices?</summary>
+          <p>
+            No. The model uses directional niche benchmarks. Treat the output as
+            planning math for your rate card, not a promise from buyers.
+          </p>
+        </details>
+
+        <details class="faq-item">
+          <summary>What newsletter platform helps sell sponsorships?</summary>
+          <p>
+            If you want growth tools and monetization features together,
+            <a
+              id="faq-beehiiv-link"
+              href="https://www.beehiiv.com/?via=letterroi"
+              target="_blank"
+              rel="noopener noreferrer sponsored"
+              >Beehiiv</a
+            >
+            is a strong option for many creators. Price here first, then grow
+            the list that makes those rates credible.
+          </p>
+        </details>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <p>
+        <a href="/">Mangrove Tools</a>
+        ·
+        <strong>SponsorQuote</strong>
+        · newsletter sponsorship rate calculator ·
+        <a href="/letterroi/">LetterROI</a>
+        ·
+        <a href="/llms.txt">llms.txt</a>
+      </p>
+    </footer>
+
+    <script src="./config.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>

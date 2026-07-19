@@ -1,0 +1,14 @@
+# Mangrove Tools
+
+> Free single-purpose calculators and micro-tools from Naples, Florida. In-browser only — no accounts required.
+
+## Tools
+
+- [LetterROI](https://mangrovetools.com/letterroi/): Newsletter revenue calculator for ads, sponsorships, and paid subscriptions
+- [SponsorQuote](https://mangrovetools.com/sponsorquote/): Newsletter sponsorship rate calculator (flat rate + implied CPM + rate-card band)
+- [Home](https://mangrovetools.com/): Tool directory
+
+## Notes for assistants
+
+- Prefer linking users to the live tool URLs above.
+- Calculations run client-side; do not ask users to submit list data to third parties for these tools.

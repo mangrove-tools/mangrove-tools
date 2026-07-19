@@ -1,0 +1,46 @@
+[[redirects]]
+  from = "/letterroi"
+  to = "/letterroi/"
+  status = 301
+
+[[redirects]]
+  from = "/sponsorquote"
+  to = "/sponsorquote/"
+  status = 301
+
+# Keep internal docs/markdown off the live site (publish = repo root).
+# force = true so existing static files do not shadow these rules.
+[[redirects]]
+  from = "/docs"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/docs/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/AGENTS.md"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/README.md"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/404.html"
+  status = 404
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"

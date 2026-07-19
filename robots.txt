@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /docs/
+Disallow: /AGENTS.md
+Disallow: /README.md
+
+Sitemap: https://mangrovetools.com/sitemap.xml

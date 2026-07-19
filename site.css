@@ -1,0 +1,211 @@
+:root {
+  --ink: #14241c;
+  --ink-soft: #4a5d4e;
+  --paper: #f7f4ef;
+  --surface: #fdfbf7;
+  --line: rgba(20, 36, 28, 0.1);
+  --accent: #c87a53;
+  --pine: #1c2e24;
+  --font-display: "Fraunces", Georgia, serif;
+  --font-body: "Outfit", "Segoe UI", sans-serif;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 1.02rem;
+  line-height: 1.65;
+  background: var(--paper);
+}
+
+.atmosphere {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(900px 520px at 8% 0%, rgba(212, 220, 206, 0.9) 0%, transparent 55%),
+    radial-gradient(700px 480px at 96% 8%, rgba(200, 122, 83, 0.08) 0%, transparent 45%),
+    linear-gradient(180deg, #fdfbf7 0%, #f7f4ef 42%, #e8ebe3 100%);
+}
+
+.atmosphere::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+.top {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1.5rem 1.5rem 0;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  color: inherit;
+  text-decoration: none;
+}
+
+.brand-logo {
+  display: block;
+  width: min(170px, 54vw);
+  height: auto;
+}
+
+.shell {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2.75rem 1.5rem 4.5rem;
+}
+
+.hero h1 {
+  margin: 0 0 0.9rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.95rem, 4.8vw, 2.75rem);
+  letter-spacing: -0.03em;
+  line-height: 1.18;
+}
+
+.lede {
+  margin: 0;
+  max-width: 38ch;
+  color: var(--ink-soft);
+  font-size: 1.08rem;
+  line-height: 1.7;
+}
+
+.tool-list {
+  margin-top: 3.25rem;
+  padding-top: 0.25rem;
+}
+
+.tool-list h2 {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.tool-link {
+  display: grid;
+  gap: 0.35rem;
+  padding: 1.35rem 0;
+  border-top: 1px solid var(--line);
+  color: inherit;
+  text-decoration: none;
+  transition: transform 0.2s var(--ease);
+}
+
+.tool-link:last-of-type {
+  border-bottom: 1px solid var(--line);
+}
+
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+@media (hover: hover) {
+  .tool-link:hover {
+    transform: translateX(3px);
+  }
+
+  .tool-link:hover .tool-name {
+    text-decoration: underline;
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 0.14em;
+  }
+}
+
+.tool-name {
+  font-family: var(--font-display);
+  font-size: 1.65rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: var(--ink);
+}
+
+.tool-desc {
+  color: var(--ink-soft);
+  font-size: 0.98rem;
+  line-height: 1.55;
+  max-width: 42ch;
+}
+
+.tool-soon {
+  margin: 1.15rem 0 0;
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.foot {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 1.5rem 2.5rem;
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+}
+
+.foot a {
+  color: var(--ink-soft);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.foot a:hover {
+  color: var(--ink);
+}
+
+.eyebrow {
+  margin: 0 0 0.55rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 1.5rem;
+  margin: 1.75rem 0 0;
+}
+
+.text-cta {
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.text-cta:hover {
+  color: var(--pine);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+  }
+}

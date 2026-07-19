@@ -32,7 +32,7 @@
     <meta property="og:url" content="https://mangrovetools.com/subtarget/" />
     <meta
       property="og:image"
-      content="https://mangrovetools.com/og.jpg"
+      content="https://mangrovetools.com/subtarget/og.jpg"
     />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -52,7 +52,7 @@
     />
     <meta
       name="twitter:image"
-      content="https://mangrovetools.com/og.jpg"
+      content="https://mangrovetools.com/subtarget/og.jpg"
     />
     <meta
       name="twitter:image:alt"
@@ -115,7 +115,7 @@
             "isPartOf": { "@id": "https://mangrovetools.com/#website" },
             "primaryImageOfPage": {
               "@type": "ImageObject",
-              "url": "https://mangrovetools.com/og.jpg",
+              "url": "https://mangrovetools.com/subtarget/og.jpg",
               "width": 1200,
               "height": 630
             },
@@ -217,6 +217,7 @@
     </script>
   </head>
   <body>
+    <a class="skip-link" href="#main">Skip to content</a>
     <div class="atmosphere" aria-hidden="true"></div>
 
     <header class="top">
@@ -232,9 +233,12 @@
         </a>
         <a class="brand-name" href="/subtarget/">SubTarget</a>
       </div>
-      <p class="brand-aside">
-        <a class="brand-parent" href="/">Mangrove Tools</a>
-      </p>
+      <nav class="site-nav" aria-label="Primary">
+        <a href="/">Tools</a>
+        <a href="/method/">Method</a>
+        <a href="/lead-dev/">Lead-Dev</a>
+        <a href="/about/">About</a>
+      </nav>
     </header>
 
     <nav class="crumbs" aria-label="Breadcrumb">
@@ -244,7 +248,7 @@
       </ol>
     </nav>
 
-    <main class="shell">
+    <main class="shell" id="main">
       <section class="hero" aria-labelledby="hero-title">
         <h1 id="hero-title">Paid newsletter subscriber goal calculator</h1>
         <p class="lede">
@@ -491,29 +495,39 @@
     </main>
 
     <footer class="foot">
-      <p>
-        <a href="/">Mangrove Tools</a>
-        ·
-        <strong>SubTarget</strong>
-        · paid newsletter subscriber goal calculator ·
-        <a href="/letterroi/">LetterROI</a>
-        ·
-        <a href="/sponsorquote/">SponsorQuote</a>
-        ·
-        <a href="/method/">Method</a>
-        ·
-        <a href="/lead-dev/">Lead-Dev</a>
-        ·
-        <a href="/about/">About</a>
-        ·
-        <a href="/faq/">FAQ</a>
-        ·
-        <a href="/privacy/">Privacy</a>
-        ·
-        <a href="/contact/">Contact</a>
-        ·
-        <a href="/llms.txt">llms.txt</a>
-      </p>
+      <div class="foot-grid">
+        <div>
+          <p class="foot-brand">Mangrove Tools</p>
+          <p class="foot-note">
+            Free niche calculators from Naples, Florida. Client-side only.
+          </p>
+        </div>
+        <div class="foot-col">
+          <h2>Tools</h2>
+          <ul>
+            <li><a href="/letterroi/">LetterROI</a></li>
+            <li><a href="/sponsorquote/">SponsorQuote</a></li>
+            <li><a href="/subtarget/">SubTarget</a></li>
+          </ul>
+        </div>
+        <div class="foot-col">
+          <h2>Lead-Dev</h2>
+          <ul>
+            <li><a href="/method/">Method</a></li>
+            <li><a href="/lead-dev/">Offers</a></li>
+            <li><a href="/faq/">FAQ</a></li>
+          </ul>
+        </div>
+        <div class="foot-col">
+          <h2>Site</h2>
+          <ul>
+            <li><a href="/about/">About</a></li>
+            <li><a href="/privacy/">Privacy</a></li>
+            <li><a href="/contact/">Contact</a></li>
+            <li><a href="/llms.txt">llms.txt</a></li>
+          </ul>
+        </div>
+      </div>
     </footer>
 
     <script src="./config.js"></script>

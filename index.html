@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Mangrove Tools — Free Calculators &amp; Micro-Tools</title>
+    <title>Mangrove Tools — Free Newsletter &amp; Creator Calculators</title>
     <meta
       name="description"
-      content="Free single-purpose calculators from Mangrove Tools in Naples, Florida. LetterROI for newsletter revenue, SponsorQuote for sponsorship rates, SubTarget for paid subscriber goals, plus the Lead-Dev method."
+      content="Free in-browser calculators from Naples, Florida. Newsletter revenue calculator, sponsorship rate calculator, paid subscriber goal calculator — tools that earn their keep. Plus Lead-Dev prompting for AI agents."
     />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="theme-color" content="#F7F4EF" />
@@ -19,11 +19,11 @@
     <meta property="og:locale" content="en_US" />
     <meta
       property="og:title"
-      content="Mangrove Tools — Free Calculators &amp; Micro-Tools"
+      content="Mangrove Tools — Free Newsletter &amp; Creator Calculators"
     />
     <meta
       property="og:description"
-      content="Free single-purpose calculators for creators. LetterROI, SponsorQuote, SubTarget, and a Lead-Dev system for shipping with AI agents."
+      content="Tools that earn their keep. Free newsletter monetization calculators and a Lead-Dev system for shipping with AI agents — from Naples, Florida."
     />
     <meta property="og:url" content="https://mangrovetools.com/" />
     <meta property="og:image" content="https://mangrovetools.com/og.jpg" />
@@ -37,11 +37,11 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta
       name="twitter:title"
-      content="Mangrove Tools — Free Calculators &amp; Micro-Tools"
+      content="Mangrove Tools — Free Newsletter &amp; Creator Calculators"
     />
     <meta
       name="twitter:description"
-      content="Free single-purpose calculators for creators: LetterROI, SponsorQuote, and SubTarget."
+      content="LetterROI, SponsorQuote, SubTarget — free creator calculators. Tools that earn their keep."
     />
     <meta name="twitter:image" content="https://mangrovetools.com/og.jpg" />
     <meta
@@ -70,18 +70,19 @@
               "@type": "ImageObject",
               "url": "https://mangrovetools.com/favicon.svg"
             },
-            "description": "Free micro-tools and calculators for creators and builders.",
+            "description": "Free micro-tools and calculators for creators and builders, based in Naples, Florida.",
             "areaServed": {
               "@type": "Place",
               "name": "Naples, Florida"
-            }
+            },
+            "sameAs": []
           },
           {
             "@type": "WebSite",
             "@id": "https://mangrovetools.com/#website",
             "url": "https://mangrovetools.com/",
             "name": "Mangrove Tools",
-            "description": "Free single-purpose calculators and micro-tools.",
+            "description": "Free single-purpose calculators and micro-tools that earn their keep.",
             "publisher": { "@id": "https://mangrovetools.com/#organization" },
             "inLanguage": "en"
           },
@@ -89,24 +90,58 @@
             "@type": "ItemList",
             "@id": "https://mangrovetools.com/#tools",
             "name": "Mangrove Tools directory",
+            "numberOfItems": 3,
             "itemListElement": [
               {
                 "@type": "ListItem",
                 "position": 1,
-                "name": "LetterROI",
+                "name": "LetterROI — Newsletter Revenue Calculator",
+                "url": "https://mangrovetools.com/letterroi/",
                 "item": "https://mangrovetools.com/letterroi/"
               },
               {
                 "@type": "ListItem",
                 "position": 2,
-                "name": "SponsorQuote",
+                "name": "SponsorQuote — Newsletter Sponsorship Rate Calculator",
+                "url": "https://mangrovetools.com/sponsorquote/",
                 "item": "https://mangrovetools.com/sponsorquote/"
               },
               {
                 "@type": "ListItem",
                 "position": 3,
-                "name": "SubTarget",
+                "name": "SubTarget — Paid Newsletter Subscriber Goal Calculator",
+                "url": "https://mangrovetools.com/subtarget/",
                 "item": "https://mangrovetools.com/subtarget/"
+              }
+            ]
+          },
+          {
+            "@type": "FAQPage",
+            "@id": "https://mangrovetools.com/#faq",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "What is Mangrove Tools?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Mangrove Tools is a curated library of free, in-browser calculators for creators — based in Naples, Florida. Each tool does one job: newsletter revenue, sponsorship rates, paid subscriber goals, and more. Calculations stay in your browser."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Are the calculators free?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes. Core tools are free to use with no account and no hard paywall on results. Some pages may include optional affiliate links after the calculator has been useful."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Do calculators send my data anywhere?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "No. Inputs are not POSTed to Mangrove Tools servers. Values you type are used locally on the page. See the privacy page for details."
+                }
               }
             ]
           }
@@ -115,16 +150,17 @@
     </script>
   </head>
   <body>
+    <a class="skip-link" href="#main">Skip to content</a>
     <div class="atmosphere" aria-hidden="true"></div>
 
     <header class="top is-home">
-      <a class="brand" href="/">
+      <a class="brand" href="/" aria-current="page">
         <img
           class="brand-logo"
           src="/mangrove-tools-logo.svg"
           alt="Mangrove Tools"
-          width="220"
-          height="200"
+          width="236"
+          height="214"
         />
       </a>
       <nav class="site-nav" aria-label="Primary">
@@ -135,17 +171,19 @@
       </nav>
     </header>
 
-    <main class="shell">
-      <section class="hero reveal">
+    <main class="shell" id="main">
+      <section class="hero hero-home reveal">
         <p class="hero-meta">
           <span>Naples, Florida</span>
           <span>Free in-browser</span>
-          <span>One job each</span>
+          <span>Gulf Coast calm</span>
         </p>
-        <h1>Free calculators for one job each</h1>
+        <h1>Mangrove Tools</h1>
+        <p class="hero-tagline">Tools that earn their keep</p>
         <p class="lede">
-          A small, curated library of utilities. Pick a tool, get an answer,
-          leave when you’re done.
+          A small library of free micro-tools for creators. Pick a calculator,
+          get a clear answer, leave when you’re done — no accounts, no dashboard
+          theater.
         </p>
         <p class="cta-row">
           <a class="btn" href="#tools">Browse tools</a>
@@ -161,10 +199,11 @@
         <a class="tool-link" href="/letterroi/">
           <span class="tool-index" aria-hidden="true">01</span>
           <span class="tool-copy">
+            <span class="tool-intent">Newsletter revenue calculator</span>
             <span class="tool-name">LetterROI</span>
             <span class="tool-desc"
-              >Estimate monthly newsletter revenue from ads, sponsorships, and
-              paid subscriptions</span
+              >Estimate monthly income from ads, sponsorships, and paid
+              subscriptions using list size, open rate, and niche.</span
             >
           </span>
           <span class="tool-go" aria-hidden="true">Open →</span>
@@ -172,10 +211,11 @@
         <a class="tool-link" href="/sponsorquote/">
           <span class="tool-index" aria-hidden="true">02</span>
           <span class="tool-copy">
+            <span class="tool-intent">Sponsorship rate calculator</span>
             <span class="tool-name">SponsorQuote</span>
             <span class="tool-desc"
-              >Build a newsletter sponsorship rate card from list size, open
-              rate, and niche CPM</span
+              >Build a rate card from list size, open rate, and niche CPM —
+              flat fee, implied CPM, and a low/high band.</span
             >
           </span>
           <span class="tool-go" aria-hidden="true">Open →</span>
@@ -183,14 +223,34 @@
         <a class="tool-link" href="/subtarget/">
           <span class="tool-index" aria-hidden="true">03</span>
           <span class="tool-copy">
+            <span class="tool-intent">Paid subscriber goal calculator</span>
             <span class="tool-name">SubTarget</span>
             <span class="tool-desc"
               >Work backward from a monthly revenue goal to paying subscribers
-              needed after platform fees</span
+              needed after platform fees.</span
             >
           </span>
           <span class="tool-go" aria-hidden="true">Open →</span>
         </a>
+      </section>
+
+      <section class="home-support reveal reveal-delay-2" aria-labelledby="about-tools">
+        <h2 id="about-tools">Free newsletter monetization calculators</h2>
+        <p>
+          Creators use Mangrove Tools for practical planning math: a
+          <a href="/letterroi/">newsletter revenue calculator</a>, a
+          <a href="/sponsorquote/">newsletter sponsorship rate calculator</a>,
+          and a
+          <a href="/subtarget/">paid newsletter subscriber calculator</a>.
+          Together they cover the common newsletter monetization questions —
+          without accounts or uploading your list.
+        </p>
+        <p>
+          Every calculation runs client-side in your browser. Soft affiliate
+          links appear after the tool has been useful; results are never hard
+          paywalled. See the <a href="/faq/">FAQ</a> and
+          <a href="/privacy/">privacy page</a> for how data is handled.
+        </p>
       </section>
 
       <section class="section-block reveal reveal-delay-2" aria-labelledby="path-title">
@@ -198,11 +258,52 @@
         <h2 id="path-title">Ship with a lead-dev agent</h2>
         <p class="section-intro">
           The operating system behind this site — constitution files, phased
-          execution, niche expansion — as a free article and paid offers.
+          execution, niche expansion — as a free article and paid offers for
+          solo builders who want AI agents that ship like a lead developer.
         </p>
         <p class="cta-row">
           <a class="text-cta" href="/method/">Read the method</a>
           <a class="text-cta" href="/lead-dev/">See Lead-Dev offers</a>
+          <a class="text-cta" href="/about/">About Mangrove</a>
+        </p>
+      </section>
+
+      <section class="section-block reveal reveal-delay-3" aria-labelledby="home-faq-title">
+        <p class="section-kicker">Quick answers</p>
+        <h2 id="home-faq-title">FAQ</h2>
+        <div class="faq-list">
+          <details open>
+            <summary>What is Mangrove Tools?</summary>
+            <div class="faq-answer">
+              <p>
+                A Naples, Florida collection of free, single-purpose calculators
+                for creators — plus the Lead-Dev system used to ship them. Calm,
+                useful, tool-first.
+              </p>
+            </div>
+          </details>
+          <details>
+            <summary>Are the calculators free?</summary>
+            <div class="faq-answer">
+              <p>
+                Yes. No accounts. No hard paywall on results. Optional affiliate
+                links may appear after a tool has been useful.
+              </p>
+            </div>
+          </details>
+          <details>
+            <summary>Do calculators send my data anywhere?</summary>
+            <div class="faq-answer">
+              <p>
+                No. Inputs stay in your browser and are not POSTed to our
+                servers. Details on the <a href="/privacy/">privacy page</a>.
+              </p>
+            </div>
+          </details>
+        </div>
+        <p class="cta-row">
+          <a class="text-cta" href="/faq/">Full FAQ</a>
+          <a class="text-cta" href="/contact/">Contact</a>
         </p>
       </section>
     </main>
@@ -213,6 +314,7 @@
           <p class="foot-brand">Mangrove Tools</p>
           <p class="foot-note">
             Free niche calculators from Naples, Florida. Client-side only.
+            Tools that earn their keep.
           </p>
         </div>
         <div class="foot-col">

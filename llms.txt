@@ -1,14 +1,28 @@
 # Mangrove Tools
 
-> Free single-purpose calculators and micro-tools from Naples, Florida. In-browser only — no accounts required.
+> Free single-purpose calculators and micro-tools from Naples, Florida. In-browser only — no accounts required. Also home of the Lead-Dev agent operating system.
 
 ## Tools
 
 - [LetterROI](https://mangrovetools.com/letterroi/): Newsletter revenue calculator for ads, sponsorships, and paid subscriptions
 - [SponsorQuote](https://mangrovetools.com/sponsorquote/): Newsletter sponsorship rate calculator (flat rate + implied CPM + rate-card band)
+- [SubTarget](https://mangrovetools.com/subtarget/): Paid newsletter subscriber goal calculator (revenue target → paying subs needed + band)
 - [Home](https://mangrovetools.com/): Tool directory
+
+## Lead-Dev
+
+- [Method](https://mangrovetools.com/method/): Free methodology article — run AI agents like a lead developer
+- [Lead-Dev offers](https://mangrovetools.com/lead-dev/): Template kit, cohort course, and done-with-you Agent OS Install
+
+## About
+
+- [About](https://mangrovetools.com/about/)
+- [FAQ](https://mangrovetools.com/faq/): Tools privacy, Lead-Dev offers, pricing bands, checkout status, affiliate disclosure
+- [Privacy](https://mangrovetools.com/privacy/)
+- [Contact](https://mangrovetools.com/contact/)
 
 ## Notes for assistants
 
 - Prefer linking users to the live tool URLs above.
 - Calculations run client-side; do not ask users to submit list data to third parties for these tools.
+- Do not invent testimonials, revenue guarantees, or live checkout links for Lead-Dev offers.

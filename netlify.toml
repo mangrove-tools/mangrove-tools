@@ -8,6 +8,41 @@
   to = "/sponsorquote/"
   status = 301
 
+[[redirects]]
+  from = "/subtarget"
+  to = "/subtarget/"
+  status = 301
+
+[[redirects]]
+  from = "/method"
+  to = "/method/"
+  status = 301
+
+[[redirects]]
+  from = "/lead-dev"
+  to = "/lead-dev/"
+  status = 301
+
+[[redirects]]
+  from = "/about"
+  to = "/about/"
+  status = 301
+
+[[redirects]]
+  from = "/privacy"
+  to = "/privacy/"
+  status = 301
+
+[[redirects]]
+  from = "/contact"
+  to = "/contact/"
+  status = 301
+
+[[redirects]]
+  from = "/faq"
+  to = "/faq/"
+  status = 301
+
 # Keep internal docs/markdown off the live site (publish = repo root).
 # force = true so existing static files do not shadow these rules.
 [[redirects]]

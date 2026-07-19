@@ -92,6 +92,23 @@
     Cache-Control = "public, max-age=0, must-revalidate"
 
 [[headers]]
+  for = "/deliver/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+    Cache-Control = "private, max-age=0, must-revalidate"
+
+# Trailing-slash convenience for delivery thank-you pages
+[[redirects]]
+  from = "/deliver/kit"
+  to = "/deliver/kit/"
+  status = 301
+
+[[redirects]]
+  from = "/deliver/cohort"
+  to = "/deliver/cohort/"
+  status = 301
+
+[[headers]]
   for = "/*.css"
   [headers.values]
     Cache-Control = "public, max-age=604800"

@@ -1,6 +1,7 @@
 User-agent: *
 Allow: /
 Disallow: /docs/
+Disallow: /deliver/
 Disallow: /AGENTS.md
 Disallow: /README.md
 

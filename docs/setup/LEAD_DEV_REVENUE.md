@@ -40,14 +40,29 @@ Set **final** prices inside the bands in your checkout product, then update on-p
 2. Self-serve cohort product  
 3. DWY via email inquiries  
 
+## Digital delivery (live)
+
+Buyers are redirected after Stripe checkout:
+
+| Product | After-payment URL | Download |
+| --- | --- | --- |
+| Lead-Dev Kit | `https://mangrovetools.com/deliver/kit/` | `/deliver/lead-dev-kit.zip` |
+| Ship With a Lead-Dev Agent | `https://mangrovetools.com/deliver/cohort/` | `/deliver/lead-dev-cohort.zip` |
+
+Set each Payment Link → **After payment** → **Don’t show confirmation page** / redirect to the URL above (or “Redirect customers to…”).
+
+`/deliver/` is `noindex` and disallowed in `robots.txt` (not in sitemap). Links are for buyers via Stripe redirect — not linked from site nav.
+
+Rebuild zips from `docs/lead-dev-products/` when templates/course content changes.
+
 ## Before activating live payments
 
-- [ ] Create Kit + cohort products in your payment provider (self-serve)  
+- [x] Create Kit + cohort products in Stripe (self-serve)  
 - [ ] Confirm tax / payout settings with your provider (owner only)  
-- [ ] Paste `KIT_CHECKOUT_URL` and `COHORT_SIGNUP_URL` into `lead-dev/config.js`  
-- [ ] Verify Kit/cohort buttons leave “setup required” mode  
-- [ ] Confirm DWY button opens mailto to your inbox  
-- [ ] Add pack license terms before selling the kit  
+- [x] Paste `KIT_CHECKOUT_URL` and `COHORT_SIGNUP_URL` into `lead-dev/config.js`  
+- [x] Wire Stripe after-payment redirects to `/deliver/kit/` and `/deliver/cohort/`  
+- [x] Confirm DWY button opens mailto to your inbox  
+- [x] Pack license included in zip `LICENSE.txt`  
 - [ ] DWY: SOW + payment received before kickoff (only after email intake)  
 
 ## Approval boundaries

@@ -41,13 +41,17 @@ Live URLs:
 
 ## Affiliate
 
-- `letterroi/config.js` → `AFFILIATE_URL` (`via=letterroi`)
-- `sponsorquote/config.js` → same `via=letterroi`, distinct UTMs (`utm_campaign=sponsor_quote`)
+- `letterroi/config.js` → `via=letterroi`
+- `sponsorquote/config.js` → `via=sponsorquote`
+- `subtarget/config.js` → `via=subtarget`
+- Optional unused codes: `via=mangrove`, `via=leaddev` — see `docs/setup/AFFILIATE_VIA_CODES.md`
 - Do not change affiliate IDs without approval.
 
-## Lead-Dev checkout / booking
+## Lead-Dev checkout
 
-Configure URLs in `lead-dev/config.js`. Setup checklist: `docs/setup/LEAD_DEV_REVENUE.md`.
+Configure Kit + cohort checkout URLs in `lead-dev/config.js`. DWY is email-only.
+Setup checklist: `docs/setup/LEAD_DEV_REVENUE.md`.
+Affiliate via codes to create: `docs/setup/AFFILIATE_VIA_CODES.md`.
 
 ## Agent ops
 

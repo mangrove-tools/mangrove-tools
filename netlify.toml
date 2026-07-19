@@ -69,16 +69,27 @@
   status = 404
   force = true
 
-[[redirects]]
-  from = "/*"
-  to = "/404.html"
-  status = 404
+# Custom 404.html is served automatically for missing paths.
+# Do not add a catch-all /* → 404 redirect — it can interfere with
+# crawlers fetching /sitemap.xml and other static assets.
 
 [[headers]]
   for = "/*"
   [headers.values]
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
+
+[[headers]]
+  for = "/sitemap.xml"
+  [headers.values]
+    Content-Type = "application/xml; charset=utf-8"
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/robots.txt"
+  [headers.values]
+    Content-Type = "text/plain; charset=utf-8"
+    Cache-Control = "public, max-age=0, must-revalidate"
 
 [[headers]]
   for = "/*.css"

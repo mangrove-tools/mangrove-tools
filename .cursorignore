@@ -5,6 +5,7 @@
 *.p8
 *.p12
 *.crt
+*.log
 node_modules/
 .next/
 .nuxt/
@@ -12,5 +13,10 @@ node_modules/
 dist/
 build/
 coverage/
+.cache/
+.vite/
+.turbo/
 .vercel/
 .netlify/
+playwright-report/
+test-results/

@@ -103,7 +103,17 @@ body {
   position: absolute;
   inset: 0;
   opacity: 0.04;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  /* CSS-only grain — SVG feTurbulence data-URIs render inconsistently in Firefox */
+  background-image: repeating-radial-gradient(
+      circle at 20% 30%,
+      rgba(20, 36, 28, 0.045) 0 0.5px,
+      transparent 0.7px 3px
+    ),
+    repeating-radial-gradient(
+      circle at 80% 70%,
+      rgba(20, 36, 28, 0.035) 0 0.4px,
+      transparent 0.6px 2.5px
+    );
   pointer-events: none;
 }
 

@@ -5,7 +5,9 @@
 */
 
 body.tool-page {
-  overflow-x: hidden;
+  /* clip (not hidden): Firefox treats overflow-x:hidden as a scroll
+     container and breaks position:sticky on .results */
+  overflow-x: clip;
 }
 
 .brand-tool {

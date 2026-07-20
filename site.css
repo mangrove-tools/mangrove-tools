@@ -1,4 +1,10 @@
+/*
+  Mangrove design tokens — source of truth for the site shell.
+  Prefer these over arbitrary values. Calculator pages may mirror
+  a subset until shell unification (P1-14).
+*/
 :root {
+  /* Color roles */
   --ink: #14241c;
   --ink-soft: #4a5d4e;
   --paper: #f7f4ef;
@@ -9,10 +15,29 @@
   /* AA-safe terracotta for small text/links (≥4.5:1 on paper/surface) */
   --accent-text: #9a5838;
   --pine: #1c2e24;
+  --ok-text: #2f5d3a;
+  --danger-text: #8a3b2a;
+
+  /* Type */
   --font-display: "Fraunces", Georgia, serif;
   --font-body: "Outfit", "Segoe UI", sans-serif;
-  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Layout */
   --shell: 1040px;
+  --space-2xs: 0.35rem;
+  --space-xs: 0.55rem;
+  --space-sm: 0.85rem;
+  --space-md: 1.25rem;
+  --space-lg: 1.75rem;
+  --space-xl: 2.75rem;
+  --space-2xl: 3.75rem;
+  --radius: 2px;
+  --radius-sm: 2px;
+
+  /* Focus / motion */
+  --focus-ring: var(--accent);
+  --focus-offset: 3px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 *,
@@ -44,23 +69,23 @@ body {
 
 .skip-link {
   position: absolute;
-  left: 1rem;
+  left: var(--space-md);
   top: -3.5rem;
   z-index: 100;
-  padding: 0.55rem 0.85rem;
+  padding: var(--space-xs) var(--space-sm);
   background: var(--ink);
   color: var(--surface);
   font-size: 0.9rem;
   font-weight: 600;
   text-decoration: none;
-  border-radius: 2px;
+  border-radius: var(--radius);
   transition: top 0.2s var(--ease);
 }
 
 .skip-link:focus {
   top: 0.75rem;
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  outline: 2px solid var(--focus-ring);
+  outline-offset: var(--focus-offset);
 }
 
 .atmosphere {
@@ -87,7 +112,7 @@ body {
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem 1.75rem;
+  gap: var(--space-md) var(--space-lg);
   max-width: var(--shell);
   margin: 0 auto;
   padding: 1.35rem 1.5rem 1.1rem;
@@ -156,7 +181,7 @@ body {
 .shell {
   max-width: var(--shell);
   margin: 0 auto;
-  padding: 2.25rem 1.5rem 4.75rem;
+  padding: var(--space-xl) 1.5rem 4.75rem;
 }
 
 .hero {
@@ -303,9 +328,9 @@ body {
 a:focus-visible,
 button:focus-visible,
 summary:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
-  border-radius: 2px;
+  outline: 2px solid var(--focus-ring);
+  outline-offset: var(--focus-offset);
+  border-radius: var(--radius);
 }
 
 @media (hover: hover) {
@@ -493,7 +518,7 @@ summary:focus-visible {
   justify-content: center;
   padding: 0.72rem 1.2rem;
   border: 1px solid var(--ink);
-  border-radius: 2px;
+  border-radius: var(--radius);
   background: var(--ink);
   color: var(--surface);
   font-family: var(--font-body);
@@ -501,6 +526,11 @@ summary:focus-visible {
   font-weight: 600;
   text-decoration: none;
   transition: background 0.2s var(--ease), color 0.2s var(--ease), transform 0.25s var(--ease);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: var(--focus-offset);
 }
 
 .btn:hover {
@@ -660,7 +690,7 @@ summary:focus-visible {
 }
 
 .section-block {
-  margin-top: 3.75rem;
+  margin-top: var(--space-2xl);
   padding-top: 0.25rem;
 }
 
@@ -785,8 +815,8 @@ summary:focus-visible {
 }
 
 .home-support {
-  margin-top: 3.75rem;
-  padding-top: 2rem;
+  margin-top: var(--space-2xl);
+  padding-top: var(--space-xl);
   border-top: 1px solid var(--line);
   max-width: 62ch;
 }

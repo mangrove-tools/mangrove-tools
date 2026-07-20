@@ -1,8 +1,21 @@
 # UI Foundation Plan (Stage 7 — plan only)
 
-**Date:** 2026-07-20  
-**Status:** Plan — **do not implement until a backlog ID is approved**  
+**Date:** 2026-07-20 (updated with P1-10)  
+**Status:** Step A (token completeness) **implemented** in `site.css`. Later steps still need per-ID approval.  
 **Constraint:** Improve the existing CSS architecture; do not replace it with a component framework.
+
+## Tokens now in `site.css` `:root`
+
+| Group | Tokens |
+| --- | --- |
+| Color | `--ink`, `--ink-soft`, `--paper`, `--surface`, `--line`, `--line-strong`, `--accent`, `--accent-text`, `--pine`, `--ok-text`, `--danger-text` |
+| Type | `--font-display`, `--font-body` |
+| Space | `--space-2xs` … `--space-2xl` |
+| Radius | `--radius`, `--radius-sm` |
+| Focus / motion | `--focus-ring`, `--focus-offset`, `--ease` |
+| Layout | `--shell` |
+
+Pilot usage: skip-link, focus-visible, `.btn`, `.shell` / `.section-block` / `.home-support` spacing.
 
 ## Current styling approach (verified)
 

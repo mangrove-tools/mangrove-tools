@@ -70,7 +70,7 @@ Live payment activation, payout/tax settings, and paid vendor billing always req
 
 - Changing live Stripe Payment Link URLs, creating new paid products, subscriptions, paid ads/apps, or external vendor billing
 - Finalizing storefront payout/tax/account setup
-- Changing DNS, hosting, production deployment, domain, or analytics ownership
+- Changing DNS, hosting provider cutover, production custom-domain wiring, or analytics ownership
 - Changing live affiliate IDs / `AFFILIATE_URL`
 - Inventing testimonials, metrics, revenue guarantees, or legal terms
 - Changing pricing outside source-doc bands
@@ -91,13 +91,13 @@ If uncertain, choose the safer reversible path and document the assumption.
 5. Tool monetization = affiliate / soft CTA after value; never hard-paywall calculator results.
 6. Lead-Dev monetization = product page + CTAs from `lead-dev/config.js` only; never invent checkout links.
 7. Every page: professional UX + SEO-complete head/body + link back to Mangrove home.
-8. Deploy entire repo root as a static site (Cloudflare Pages or Netlify). Production DNS / custom-domain changes require approval.
+8. Deploy entire repo root as a static site (Porkbun Static Hosting, Cloudflare Pages, or Netlify backup). Production DNS / custom-domain changes require approval.
 
 ## Stack
 
 | Piece | Choice |
 | --- | --- |
-| Hosting | Netlify (`netlify.toml`) |
+| Hosting | Porkbun Static Hosting (leave Netlify): `docs/setup/PORKBUN_HOSTING.md`. Cloudflare Pages keeps `_redirects`/`_headers` if preferred. Netlify kept as backup (`netlify.toml`) |
 | Home | `index.html`, `site.css`, brand SVGs |
 | Tools | `letterroi/`, `sponsorquote/`, `subtarget/`, `mediakit/`, `inventory/` |
 | Method | `method/`, `walkthrough/` |
@@ -117,11 +117,11 @@ If uncertain, choose the safer reversible path and document the assumption.
 - Reuse Mangrove design tokens (`site.css`); page-specific `styles.css` OK.
 - No bundler/build step unless approved.
 - Local: `python3 -m http.server 5173` from repo root.
-- Keep `/docs/*`, `AGENTS.md`, `README.md` forced 404 on Netlify.
+- Keep `/docs/*`, `AGENTS.md`, `README.md` forced 404 when the host supports it (`_redirects` / Netlify). On Porkbun Static Hosting, treat docs as ops-only and prefer not relying on edge 404 rules.
 
 ## Routing / component / content conventions
 
-- Trailing-slash canonical routes; add Netlify 301 for bare slug → slash.
+- Trailing-slash canonical routes; host 301 for bare slug → slash when available (Netlify/`_redirects`, or Porkbun URL Forwarding).
 - Shared header: brand + primary nav (Tools home, Method, Lead-Dev, About).
 - Shared footer: home, tools, method, lead-dev, about, privacy, contact, llms.txt.
 - Copy is calm and specific; no spammy hype; no invented proof metrics.

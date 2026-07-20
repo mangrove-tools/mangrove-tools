@@ -30,11 +30,11 @@ python3 scripts/check-links.py
 
 Publish the **entire repo root** (not a tool subfolder). No build step.
 
-**Preferred when Netlify credits are exhausted:** [Cloudflare Pages](https://pages.cloudflare.com/) — see `docs/setup/CLOUDFLARE_PAGES.md` (`_redirects` + `_headers` included).
+**Leaving Netlify → Porkbun:** domain is already at Porkbun. Turn on Static Hosting + GitHub Connect to `main` — see `docs/setup/PORKBUN_HOSTING.md`.
 
-**Domain at Porkbun?** Keep Porkbun for DNS and host on Pages, or use Porkbun Static Hosting — see `docs/setup/PORKBUN_HOSTING.md`.
+**Stronger edge (CSP / redirects):** Porkbun DNS + [Cloudflare Pages](https://pages.cloudflare.com/) — see `docs/setup/CLOUDFLARE_PAGES.md`.
 
-**Also supported:** Netlify via `netlify.toml` (keep as backup).
+**Backup:** Netlify via `netlify.toml` (pause after Porkbun smoke-check).
 
 Production DNS / custom-domain cutover requires owner approval.
 

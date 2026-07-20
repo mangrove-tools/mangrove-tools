@@ -6,6 +6,8 @@
   --line: rgba(20, 36, 28, 0.12);
   --line-strong: rgba(20, 36, 28, 0.22);
   --accent: #c87a53;
+  /* AA-safe terracotta for small text/links (≥4.5:1 on paper/surface) */
+  --accent-text: #9a5838;
   --pine: #1c2e24;
   --font-display: "Fraunces", Georgia, serif;
   --font-body: "Outfit", "Segoe UI", sans-serif;
@@ -268,7 +270,7 @@ body {
 
 .tool-index {
   font-variant-numeric: tabular-nums;
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: 0.85rem;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -616,7 +618,7 @@ summary:focus-visible {
 .faq-list summary::after {
   content: "+";
   float: right;
-  color: var(--accent);
+  color: var(--accent-text);
   font-family: var(--font-body);
   font-weight: 500;
 }

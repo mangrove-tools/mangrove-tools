@@ -46,6 +46,22 @@ V1.0 ship items (P0-01…P0-10, SubTarget, studio expansion) are **done on produ
 | P2-14 | CSP headers | Security | Netlify CSP compatible with GA + fonts + Stripe links | Approval for strictness | M |
 | P2-15 | Method / About polish | Content/UX | Clarity only; no invented proof | Auto | S |
 | P2-16 | Expand link checker | Testing | Optional external HEAD checks in CI later | Auto | S |
+| **P2-20** | **SaaS-craft UI redesign (Mangrove filter)** | **UI redesign** | Elevate home + tools + Lead-Dev using [Dribbble SaaS](https://dribbble.com/tags/saas) craft cues (hierarchy, result-forward UI, refined controls) **without** purple/glass/dashboard clichés. Spec: `docs/ops/UI_REDESIGN_SAAS_CRAFT.md`. Prefer after P1-14. **Design approval required before implement.** | Auto after approve | L |
+
+### P2-20 detail
+
+| Field | Value |
+| --- | --- |
+| Problem | Site is solid but can feel more product-present and contemporary without abandoning brand |
+| User impact | Faster comprehension; tools feel “finished”; stronger first impression |
+| Business impact | Trust + conversion on tools and Lead-Dev |
+| Acceptance | Per `UI_REDESIGN_SAAS_CRAFT.md` — brand test pass; no purple SaaS; a11y/responsive; screenshots in PR |
+| Likely files | `index.html`, `site.css`, `studio.css`, `letterroi/*`, `sponsorquote/*`, `subtarget/*`, `lead-dev/*` |
+| Dependencies | Prefer **P1-14** first; may fold in **P1-11** |
+| Tech / UX risk | Med / High |
+| Design approval | **Yes** |
+| Content approval | Light copy only |
+| Deploy coordination | Preview recommended before prod |
 
 ---
 

@@ -28,8 +28,13 @@ python3 scripts/check-links.py
 
 ## Deploy
 
-Redeploy the **entire** project folder to Netlify (not just a tool subfolder).
-Production deploy requires owner approval.
+Publish the **entire repo root** (not a tool subfolder). No build step.
+
+**Preferred when Netlify credits are exhausted:** [Cloudflare Pages](https://pages.cloudflare.com/) — see `docs/setup/CLOUDFLARE_PAGES.md` (`_redirects` + `_headers` included).
+
+**Also supported:** Netlify via `netlify.toml` (keep as backup).
+
+Production DNS / custom-domain cutover requires owner approval.
 
 Live URLs:
 

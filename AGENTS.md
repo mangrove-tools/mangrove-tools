@@ -91,7 +91,7 @@ If uncertain, choose the safer reversible path and document the assumption.
 5. Tool monetization = affiliate / soft CTA after value; never hard-paywall calculator results.
 6. Lead-Dev monetization = product page + CTAs from `lead-dev/config.js` only; never invent checkout links.
 7. Every page: professional UX + SEO-complete head/body + link back to Mangrove home.
-8. Deploy entire repo root to Netlify (production deploy of risky changes requires approval).
+8. Deploy entire repo root as a static site (Cloudflare Pages or Netlify). Production DNS / custom-domain changes require approval.
 
 ## Stack
 

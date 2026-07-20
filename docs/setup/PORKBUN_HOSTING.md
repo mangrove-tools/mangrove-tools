@@ -29,6 +29,15 @@ Then continue with step 1. If hosting was already purchased and still errors, op
 
 Related: [CNAME/ALIAS already exists](https://kb.porkbun.com/article/239-cname-alias-record-with-that-host-already-exists-error).
 
+### If DNS is already clean and you still get “Could not add domain on remote server”
+
+That message is a **Porkbun hosting backend** failure (their panel couldn’t provision the domain on the static-hosting server). Repo/DNS cleanup can’t fix it.
+
+1. Domain Management → Website/hosting for `mangrovetools.com` → cancel any half-created Static Hosting / other hosting plan on that domain.  
+2. Wait a few minutes → try Static Hosting again.  
+3. If it still fails → Help bubble or `support@porkbun.com` with: domain `mangrovetools.com`, exact error, and that apex Netlify ALIAS was removed and NS are `*.ns.porkbun.com`.  
+4. **Meanwhile (recommended):** get the site back on **Cloudflare Pages** while keeping the domain at Porkbun — `docs/setup/CLOUDFLARE_PAGES.md`. Same registrar; working host.
+
 ### 1) Turn on Porkbun Static Hosting
 
 1. Log in at [porkbun.com](https://porkbun.com) → **Account** → **Domain Management**.

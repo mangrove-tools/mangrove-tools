@@ -15,7 +15,7 @@
     <title>AGENTS.md Constitution Builder | Mangrove Tools</title>
     <meta
       name="description"
-      content="Free interactive AGENTS.md builder. Generate a downloadable AI coding agent constitution and session brief shaped by Lead-Dev priority order — not a prompt pack."
+      content="Free interactive AGENTS.md builder. Generate a downloadable AI agent constitution and session brief shaped by Lead-Dev priority order."
     />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="theme-color" content="#F7F4EF" />
@@ -156,23 +156,27 @@
             <h2>Constraints &amp; approval gates</h2>
             <p class="section-intro">Check what the agent must obey. Unchecked items stay out of the constitution.</p>
             <div class="field">
-              <label>Product constraints</label>
-              <div class="check-list">
-                <label class="choice"><input type="checkbox" name="constraint" value="Tools are free in-browser; no accounts for core use" checked /><span><strong>No accounts for core use</strong></span></label>
-                <label class="choice"><input type="checkbox" name="constraint" value="Static HTML/CSS/vanilla JS — no React/Next unless approved" checked /><span><strong>Stay on the locked stack</strong></span></label>
-                <label class="choice"><input type="checkbox" name="constraint" value="Client-side calculation only; never POST user inputs" checked /><span><strong>Never POST calculator inputs</strong></span></label>
-                <label class="choice"><input type="checkbox" name="constraint" value="No ad networks / backends unless approved" checked /><span><strong>No backends or ad networks unless approved</strong></span></label>
-                <label class="choice"><input type="checkbox" name="constraint" value="Never invent testimonials, metrics, or revenue guarantees" checked /><span><strong>No invented proof</strong></span></label>
-              </div>
+              <fieldset>
+                <legend>Product constraints</legend>
+                <div class="check-list">
+                  <label class="choice"><input type="checkbox" name="constraint" value="Tools are free in-browser; no accounts for core use" checked /><span><strong>No accounts for core use</strong></span></label>
+                  <label class="choice"><input type="checkbox" name="constraint" value="Static HTML/CSS/vanilla JS — no React/Next unless approved" checked /><span><strong>Stay on the locked stack</strong></span></label>
+                  <label class="choice"><input type="checkbox" name="constraint" value="Client-side calculation only; never POST user inputs" checked /><span><strong>Never POST calculator inputs</strong></span></label>
+                  <label class="choice"><input type="checkbox" name="constraint" value="No ad networks / backends unless approved" checked /><span><strong>No backends or ad networks unless approved</strong></span></label>
+                  <label class="choice"><input type="checkbox" name="constraint" value="Never invent testimonials, metrics, or revenue guarantees" checked /><span><strong>No invented proof</strong></span></label>
+                </div>
+              </fieldset>
             </div>
             <div class="field" style="margin-top: 1.25rem">
-              <label>Approval gates</label>
-              <div class="check-list">
-                <label class="choice"><input type="checkbox" name="gate" value="Production deploy / DNS / hosting identity" checked /><span><strong>Production deploy</strong></span></label>
-                <label class="choice"><input type="checkbox" name="gate" value="Live payments, payouts, or tax settings" checked /><span><strong>Live payments</strong></span></label>
-                <label class="choice"><input type="checkbox" name="gate" value="Affiliate IDs / partner tracking codes" checked /><span><strong>Affiliate IDs</strong></span></label>
-                <label class="choice"><input type="checkbox" name="gate" value="Rebrand away from established identity" checked /><span><strong>Rebrand</strong></span></label>
-              </div>
+              <fieldset>
+                <legend>Approval gates</legend>
+                <div class="check-list">
+                  <label class="choice"><input type="checkbox" name="gate" value="Production deploy / DNS / hosting identity" checked /><span><strong>Production deploy</strong></span></label>
+                  <label class="choice"><input type="checkbox" name="gate" value="Live payments, payouts, or tax settings" checked /><span><strong>Live payments</strong></span></label>
+                  <label class="choice"><input type="checkbox" name="gate" value="Affiliate IDs / partner tracking codes" checked /><span><strong>Affiliate IDs</strong></span></label>
+                  <label class="choice"><input type="checkbox" name="gate" value="Rebrand away from established identity" checked /><span><strong>Rebrand</strong></span></label>
+                </div>
+              </fieldset>
             </div>
             <div class="studio-actions">
               <button class="btn btn-secondary" type="button" id="back-to-1">Back</button>

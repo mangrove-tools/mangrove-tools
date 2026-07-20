@@ -573,6 +573,10 @@ summary:focus-visible {
   color: var(--surface);
 }
 
+.btn:active {
+  transform: translateY(0);
+}
+
 @media (hover: hover) {
   .btn:hover {
     transform: translateY(-1px);
@@ -589,12 +593,23 @@ summary:focus-visible {
   color: var(--ink);
 }
 
+.btn-secondary:active {
+  background: rgba(20, 36, 28, 0.1);
+}
+
 .btn[aria-disabled="true"],
-.btn.is-disabled {
+.btn.is-disabled,
+.btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
   pointer-events: none;
   transform: none !important;
+}
+
+.text-cta:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: var(--focus-offset);
+  border-radius: var(--radius);
 }
 
 .prose {
@@ -789,6 +804,17 @@ summary:focus-visible {
   padding: 1.35rem 0 1.5rem;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
+  transition: background 0.25s var(--ease);
+}
+
+.offer-card:focus-within {
+  background: rgba(253, 251, 247, 0.72);
+}
+
+@media (hover: hover) {
+  .offer-card:hover {
+    background: rgba(253, 251, 247, 0.72);
+  }
 }
 
 .offer-card h3 {
@@ -846,6 +872,69 @@ summary:focus-visible {
   margin: 0 0 0.75rem;
   color: var(--ink-soft);
   max-width: 48ch;
+}
+
+/* Product vignette — result-forward proof without hero cards (P2-20) */
+.product-vignette {
+  margin: 0 0 var(--space-lg);
+  padding: var(--space-md) 0 var(--space-lg);
+  border-bottom: 1px solid var(--line);
+  max-width: 28rem;
+  animation: rise 0.7s var(--ease) 0.1s both;
+}
+
+.product-vignette-kicker {
+  margin: 0 0 var(--space-2xs);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.product-vignette-total {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.85rem, 4vw, 2.35rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: var(--ink);
+}
+
+.product-vignette-total span {
+  margin-left: 0.2em;
+  font-family: var(--font-body);
+  font-size: 0.55em;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--ink-soft);
+}
+
+.product-vignette-note {
+  margin: var(--space-xs) 0 var(--space-sm);
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+  line-height: 1.55;
+  max-width: 36ch;
+}
+
+.product-vignette-link {
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: none;
+  border-bottom: 1px solid var(--line-strong);
+}
+
+.product-vignette-link:hover {
+  color: var(--pine);
+  border-bottom-color: var(--pine);
+}
+
+.product-vignette-link:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: var(--focus-offset);
+  border-radius: var(--radius);
 }
 
 .home-support {
@@ -921,5 +1010,9 @@ summary:focus-visible {
   .tool-go {
     opacity: 1;
     transform: none;
+  }
+
+  .product-vignette {
+    animation: none !important;
   }
 }

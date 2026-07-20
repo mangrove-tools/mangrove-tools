@@ -24,11 +24,11 @@ V1.0 ship items (P0-01…P0-10, SubTarget, studio expansion) are **done on produ
 | ID | Title | Category | Problem | User impact | Business impact | Acceptance | Likely files | Tests / manual | Deps | Risk | Size | Parallel | Design | Content | Deploy |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | P1-10 | Token completeness | UI system | Incomplete spacing/radius/focus tokens | Consistency | Maintainability | **Done 2026-07-20** — tokens in `site.css` + pilot usage | `site.css`, `UI_FOUNDATION_PLAN.md` | Visual 390/1440 | None | Low | S | Unsafe w/ CSS | Yes | No | No |
-| P1-11 | Control state parity | UI system | Button/field/focus uneven | Clarity | Trust | Default/hover/focus/disabled/error documented in CSS | `site.css`, tool CSS | Keyboard focus check | P1-10 | Low | S | Unsafe w/ CSS | Yes | No | No |
+| P1-11 | Control state parity | UI system | Button/field/focus uneven | Clarity | Trust | **Done 2026-07-20** — btn/text-cta/input states in site + tool-shell | `site.css`, tool CSS | Keyboard focus check | P1-10 | Low | S | Unsafe w/ CSS | Yes | No | No |
 | P1-12 | Home craft pass | UX | Home good but can deepen craft | First impression | SEO bounce | **Done 2026-07-20** — hero rule, index craft, focus-within, token spacing | `index.html`, `site.css` | Mobile + reduced-motion | P1-10 preferred | Med UX | M | Unsafe w/ home | Yes | Light copy OK | No |
 | P1-13 | Calculator UX audit | UX | Extreme/empty edges uneven | Task success | Affiliate after value | **Done 2026-07-20** — see `CALC_UX_AUDIT.md` | `letterroi/app.js`, `sponsorquote/app.js`, `subtarget/app.js` | Manual edge cases | None | Low | M | Safe per tool if sequential | No | No | No |
-| P1-14 | Tool shell unification (pilot) | Architecture | CSS duplication / brand drift | Consistency | Dev speed | One calculator uses shared shell without visual regression | new `tool-shell.css` or `site.css`, one tool | Screenshot diff | P1-10 | Med | M | Unsafe across tools | Yes | No | No |
-| P1-15 | Lead-Dev conversion clarity | UX | Must stay honest about live checkout | Trust | Revenue | CTAs match live Stripe; DWY mailto clear; no fake urgency | `lead-dev/index.html`, `lead-dev/app.js` | Click-through to Stripe (no purchase) | None | Low | S | Safe | Light | Copy OK | No |
+| P1-14 | Tool shell unification (pilot) | Architecture | CSS duplication / brand drift | Consistency | Dev speed | **Done 2026-07-20** — `/tool-shell.css` + SubTarget/LetterROI/SponsorQuote on site shell | new `tool-shell.css` or `site.css`, one tool | Screenshot diff | P1-10 | Med | M | Unsafe across tools | Yes | No | No |
+| P1-15 | Lead-Dev conversion clarity | UX | Must stay honest about live checkout | Trust | Revenue | **Done 2026-07-20** — live Stripe + email DWY copy clarified | `lead-dev/index.html`, `lead-dev/app.js` | Click-through to Stripe (no purchase) | None | Low | S | Safe | Light | Copy OK | No |
 
 **UI-system prerequisites:** P1-10 → P1-11 → (P1-14 or P1-12).  
 **Can ship without visual changes:** P0-A, P0-B, P0-C, P1-13 (logic-only), SEO items below.
@@ -39,14 +39,14 @@ V1.0 ship items (P0-01…P0-10, SubTarget, studio expansion) are **done on produ
 
 | ID | Title | Category | Notes | Auto? | Size |
 | --- | --- | --- | --- | --- | --- |
-| P2-10 | Finish shell unification (LetterROI + SponsorQuote) | Architecture | After P1-14 pilot | Auto | M |
-| P2-11 | Studio SEO parity | SEO | `og:locale`, walkthrough JSON-LD | Auto | S |
-| P2-12 | Remove/replace stub CSS | Tech debt | `mediakit/styles.css`, `inventory/styles.css` | Auto | S |
-| P2-13 | Performance pass | Performance | Font strategy, `og.jpg`, third-party weight | Auto | M |
-| P2-14 | CSP headers | Security | Netlify CSP compatible with GA + fonts + Stripe links | Approval for strictness | M |
-| P2-15 | Method / About polish | Content/UX | Clarity only; no invented proof | Auto | S |
-| P2-16 | Expand link checker | Testing | Optional external HEAD checks in CI later | Auto | S |
-| **P2-20** | **SaaS-craft UI redesign (Mangrove filter)** | **UI redesign** | Elevate home + tools + Lead-Dev using [Dribbble SaaS](https://dribbble.com/tags/saas) craft cues (hierarchy, result-forward UI, refined controls) **without** purple/glass/dashboard clichés. Spec: `docs/ops/UI_REDESIGN_SAAS_CRAFT.md`. Prefer after P1-14. **Design approval required before implement.** | Auto after approve | L |
+| P2-10 | Finish shell unification (LetterROI + SponsorQuote) | Architecture | **Done with P1-14** — all three calculators share shell | Auto | M |
+| P2-11 | Studio SEO parity | SEO | **Done** — og:locale + walkthrough JSON-LD | Auto | S |
+| P2-12 | Remove/replace stub CSS | Tech debt | **Done** — stub files removed | Auto | S |
+| P2-13 | Performance pass | Performance | **Partial** — display=swap, logo fetchpriority; further font subsetting optional | Auto | M |
+| P2-14 | CSP headers | Security | **Done** — CSP + frame/permissions in netlify.toml | Approval for strictness | M |
+| P2-15 | Method / About polish | Content/UX | **Done** — clearer CTAs/ledes | Auto | S |
+| P2-16 | Expand link checker | Testing | **Done** — `--external` flag on check-links.py | Auto | S |
+| **P2-20** | **SaaS-craft UI redesign (Mangrove filter)** | **UI redesign** | **Done 2026-07-20 (v1)** — home result vignette, shared tool shell, result surfaces, Lead-Dev offer polish; assets curated from People’s Design Library in `FREE_ASSET_SOURCES.md`. Further texture/icon drops optional. | Auto after approve | L |
 
 ### P2-20 detail
 
@@ -88,8 +88,9 @@ V1.0 ship items (P0-01…P0-10, SubTarget, studio expansion) are **done on produ
 | Tech debt | P2-12, CSS duplication |
 | UI system | P1-10, P1-11 |
 | UX | P1-12, P1-15, P2-15 |
-| Responsive | Covered inside P1-12/14 QA |
-| Accessibility | Inside P1-11/13 + dedicated QA passes |
+| UI redesign | **P2-20** |
+| Responsive | Covered inside P1-12/14 QA + P2-20 |
+| Accessibility | Inside P1-11/13 + dedicated QA passes + P2-20 |
 | Performance | P2-13 |
 | SEO | P2-11 |
 | Security | P2-14 |
@@ -115,10 +116,11 @@ V1.0 ship items (P0-01…P0-10, SubTarget, studio expansion) are **done on produ
 
 ## Recommended execution order
 
-1. Land this workflow/docs PR (P0-B).  
-2. Owner picks **one**: `P1-10` (foundation) **or** `P1-13` (calc UX) **or** `P1-12` (home craft).  
-3. Then continue sequence in `AGENT_WORKFLOW.md` Phase 2→3.  
-4. Defer new tools until foundation + primary workflow polish land.
+1. Land this workflow/docs PR (includes P1-10 / P1-13 / P1-12).  
+2. Optional prep for redesign: **P1-14** tool shell pilot (± **P1-11**).  
+3. Owner approves **P2-20** (SaaS-craft UI redesign) → implement per `UI_REDESIGN_SAAS_CRAFT.md`.  
+4. Hardening: P2-13 performance, P2-14 CSP (gated), SEO parity.  
+5. Defer new tools until redesign + polish land.
 
 ## Done archive (V1.0)
 

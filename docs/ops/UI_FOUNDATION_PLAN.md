@@ -1,7 +1,7 @@
 # UI Foundation Plan (Stage 7 — plan only)
 
 **Date:** 2026-07-20 (updated with P1-10)  
-**Status:** Step A (token completeness) **implemented** in `site.css`. Later steps still need per-ID approval.  
+**Status:** Steps A–D largely **implemented** (`site.css` tokens + `/tool-shell.css` shared by three calculators). P2-20 craft pass layered on top.  
 **Constraint:** Improve the existing CSS architecture; do not replace it with a component framework.
 
 ## Tokens now in `site.css` `:root`

@@ -4,6 +4,7 @@
 **Workflow stage:** 4  
 **Inspiration craft:** [httpster.net](https://httpster.net/) — curated indexes, strong brand, numbered work, calm type, intentional motion  
 **Secondary craft cue:** [Dribbble · SaaS](https://dribbble.com/tags/saas) — product hierarchy, result-forward UI, refined controls (see backlog **P2-20** / `UI_REDESIGN_SAAS_CRAFT.md`). Borrow *craft*, never purple/glass SaaS templates.  
+**Free asset library:** [The People’s Design Library](https://docs.google.com/spreadsheets/d/13GStMRQfbn5glWVkUPqFtW1oovyKhMDdRKD3m5cstBg/edit?gid=0#gid=0) — browse freely; ship only clear-license picks listed in `FREE_ASSET_SOURCES.md`.  
 **Not a rebrand:** Keep Gulf Coast Mangrove identity. Borrow *craft*, not foreign palettes.
 
 > Exception to generic “avoid cream + terracotta + serif” heuristics: **this product’s established system is paper / pine / terracotta + Fraunces + Outfit.** Deepen it; do not replace it with purple SaaS or broadsheet pastiche.

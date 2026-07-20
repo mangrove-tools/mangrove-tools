@@ -8,6 +8,7 @@
   --mist: rgba(20, 36, 28, 0.06);
   --line: rgba(20, 36, 28, 0.1);
   --accent: #c87a53;
+  --accent-text: #9a5838;
   --accent-ink: #fdfbf7;
   --signal: #4a5d4e;
   --pine: #1c2e24;
@@ -534,7 +535,7 @@ summary:focus-visible {
 .faq-item summary::after {
   content: "+";
   flex-shrink: 0;
-  color: var(--accent);
+  color: var(--accent-text);
   font-weight: 500;
 }
 
@@ -548,7 +549,7 @@ summary:focus-visible {
 }
 
 .faq-item a {
-  color: var(--accent);
+  color: var(--accent-text);
   font-weight: 600;
 }
 

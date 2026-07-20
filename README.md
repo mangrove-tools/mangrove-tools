@@ -32,6 +32,8 @@ Publish the **entire repo root** (not a tool subfolder). No build step.
 
 **Preferred when Netlify credits are exhausted:** [Cloudflare Pages](https://pages.cloudflare.com/) — see `docs/setup/CLOUDFLARE_PAGES.md` (`_redirects` + `_headers` included).
 
+**Domain at Porkbun?** Keep Porkbun for DNS and host on Pages, or use Porkbun Static Hosting — see `docs/setup/PORKBUN_HOSTING.md`.
+
 **Also supported:** Netlify via `netlify.toml` (keep as backup).
 
 Production DNS / custom-domain cutover requires owner approval.

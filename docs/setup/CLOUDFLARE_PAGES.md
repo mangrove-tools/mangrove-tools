@@ -4,6 +4,8 @@
 
 **Verdict:** Prefer **Cloudflare Pages** over GitHub Pages (weaker headers/CSP) or Vercel (fine, but CF is usually the better free static fit).
 
+**If the domain is at Porkbun:** keep Porkbun as registrar/DNS and point the site at Pages — see `docs/setup/PORKBUN_HOSTING.md` (Option A). All-Porkbun Static Hosting is Option B there (simpler, but likely ignores `_headers` / `_redirects`).
+
 DNS / domain cutover still requires **you** — agents must not change registrar DNS without approval.
 
 ---

@@ -12,6 +12,23 @@ Agents cannot click Porkbun/Netlify dashboards for you. Follow this checklist in
 
 ## Cutover checklist (all Porkbun)
 
+### 0) Clear Netlify DNS first (do this before Static Hosting)
+
+Porkbun Static Hosting fails with **"Could not add domain on remote server"** when `@` / `www` still have Netlify (or parking) records. Clear those **before** attaching hosting.
+
+As of the last check, public DNS still showed Netlify-style apex IPs (`75.2.60.5`, `99.83.231.61`) and `*.netlify.app` — that conflicts with Porkbun provisioning.
+
+1. Porkbun → **Domain Management** → `mangrovetools.com` → **DNS**.
+2. Delete records that point the site at Netlify or Porkbun parking, for example:
+   - `A` / `AAAA` / `ALIAS` / `CNAME` for `@` or `www` → Netlify IPs or `*.netlify.app`
+   - Anything → `pixie.porkbun.com` (parking page)
+3. **Keep** email/verification records you still need (`MX`, most `TXT` like SPF/DKIM, Google/Stripe verify, etc.).
+4. Save. It’s OK if the site goes offline briefly — Netlify was already failing (credits / 404).
+
+Then continue with step 1. If hosting was already purchased and still errors, open the hosting panel → **Fix DNS** ([KB](https://kb.porkbun.com/article/198-how-to-fix-your-porkbun-hosting-dns)), or cancel/retry Static Hosting after the DNS cleanup.
+
+Related: [CNAME/ALIAS already exists](https://kb.porkbun.com/article/239-cname-alias-record-with-that-host-already-exists-error).
+
 ### 1) Turn on Porkbun Static Hosting
 
 1. Log in at [porkbun.com](https://porkbun.com) → **Account** → **Domain Management**.

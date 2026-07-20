@@ -3,6 +3,7 @@
 
   const SUBSCRIBER_SOFT_CAP = 10_000_000;
   const DEBOUNCE_MS = 150;
+  const FIELD_ORDER = ["subscribers", "open-rate", "custom-cpm"];
 
   const NICHE_PRESETS = {
     finance: { label: "Finance / investing", cpm: 45 },
@@ -68,6 +69,10 @@
     return { empty: false, value, invalid: false };
   }
 
+  function isWholeNumber(value) {
+    return Number.isInteger(value);
+  }
+
   function setFieldError(inputId, message) {
     const input = document.getElementById(inputId);
     const errorEl = document.getElementById(`${inputId}-error`);
@@ -86,6 +91,16 @@
 
   function clearAllErrors() {
     Object.values(fieldIds).forEach((id) => setFieldError(id, ""));
+  }
+
+  function focusFirstInvalid() {
+    for (const id of FIELD_ORDER) {
+      const input = document.getElementById(id);
+      if (input && input.getAttribute("aria-invalid") === "true") {
+        input.focus();
+        return;
+      }
+    }
   }
 
   function syncCustomCpmVisibility() {
@@ -110,8 +125,12 @@
     let subscribers = null;
     if (subscribersRaw.empty) {
       errors.subscribers = "Enter your subscriber count.";
-    } else if (subscribersRaw.invalid || subscribersRaw.value < 0) {
-      errors.subscribers = "Subscribers must be zero or a positive number.";
+    } else if (
+      subscribersRaw.invalid ||
+      subscribersRaw.value < 0 ||
+      !isWholeNumber(subscribersRaw.value)
+    ) {
+      errors.subscribers = "Subscribers must be a whole number (0 or more).";
     } else if (subscribersRaw.value > SUBSCRIBER_SOFT_CAP) {
       errors.subscribers = `Use up to ${SUBSCRIBER_SOFT_CAP.toLocaleString()} subscribers for a directional estimate.`;
     } else {
@@ -224,12 +243,13 @@
     }
   }
 
-  function resetResults() {
+  function resetResults(message) {
     totalRange.textContent = "—";
     flatValue.textContent = "—";
     cpmValue.textContent = "—";
     opensValue.textContent = "—";
     resultsNote.textContent =
+      message ||
       "Enter list size, open rate, and niche to build a rate card.";
   }
 
@@ -255,8 +275,13 @@
 
     if (!result.valid) {
       if (showErrors || !hasCalculated) {
-        resetResults();
+        resetResults(
+          showErrors
+            ? "Fix the highlighted fields, then calculate again."
+            : undefined
+        );
       }
+      if (showErrors) focusFirstInvalid();
       return false;
     }
 

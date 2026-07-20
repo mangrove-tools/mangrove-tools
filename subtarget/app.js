@@ -6,6 +6,14 @@
   const SUBS_SOFT_CAP = 10_000_000;
   const DEBOUNCE_MS = 150;
   const BAND_FACTOR = 0.15;
+  const FIELD_ORDER = [
+    "target-revenue",
+    "monthly-price",
+    "platform-fee",
+    "annual-share",
+    "annual-price",
+    "churn-rate",
+  ];
 
   const form = document.getElementById("calc-form");
   const totalRange = document.getElementById("total-range");
@@ -78,6 +86,16 @@
     Object.values(fieldIds).forEach((id) => setFieldError(id, ""));
   }
 
+  function focusFirstInvalid() {
+    for (const id of FIELD_ORDER) {
+      const input = document.getElementById(id);
+      if (input && input.getAttribute("aria-invalid") === "true") {
+        input.focus();
+        return;
+      }
+    }
+  }
+
   function readAndValidate(showErrors) {
     const errors = {};
     const targetRaw = parseOptionalNumber(
@@ -106,6 +124,8 @@
       errors.targetRevenue = "Target revenue must be greater than zero.";
     } else if (targetRaw.value > REVENUE_SOFT_CAP) {
       errors.targetRevenue = `Use up to ${money(REVENUE_SOFT_CAP)} for a directional estimate.`;
+    } else if (targetRaw.value < 1) {
+      errors.targetRevenue = "Target revenue must be at least $1.";
     } else {
       targetRevenue = targetRaw.value;
     }
@@ -117,6 +137,8 @@
       errors.monthlyPrice = "Monthly price must be greater than zero.";
     } else if (monthlyPriceRaw.value > PRICE_SOFT_CAP) {
       errors.monthlyPrice = `Monthly price must be up to ${money(PRICE_SOFT_CAP)}.`;
+    } else if (monthlyPriceRaw.value < 0.5) {
+      errors.monthlyPrice = "Monthly price must be at least $0.50.";
     } else {
       monthlyPrice = monthlyPriceRaw.value;
     }
@@ -297,7 +319,7 @@
     }
   }
 
-  function resetResults() {
+  function resetResults(message) {
     totalRange.textContent = "—";
     subsValue.textContent = "—";
     netValue.textContent = "—";
@@ -305,6 +327,7 @@
     churnRow.hidden = true;
     churnValue.textContent = "—";
     resultsNote.textContent =
+      message ||
       "Enter your revenue goal and subscription price, then calculate.";
   }
 
@@ -330,8 +353,13 @@
 
     if (!result.valid) {
       if (showErrors || !hasCalculated) {
-        resetResults();
+        resetResults(
+          showErrors
+            ? "Fix the highlighted fields, then calculate again."
+            : undefined
+        );
       }
+      if (showErrors) focusFirstInvalid();
       return false;
     }
 

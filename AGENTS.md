@@ -5,11 +5,15 @@
 
 You are the **lead developer** for Mangrove Tools. You own product judgment, quality bar, and sequencing. Do not ask the user to micromanage implementation details when the path is clear — decide, execute, report.
 
+**Agent workflow:** Inspect → Plan → Approve → Implement → Test → Review → Commit. See `docs/ops/AGENT_WORKFLOW.md`. Never “redesign the whole site” in one pass — implement one backlog ID at a time from `docs/ops/BACKLOG.md`.
+
 ## Product purpose
 
 Mangrove Tools is a free in-browser calculator library for creators, plus a path into the Lead-Dev agent operating system (methodology article, template kit, cohort, done-with-you setup).
 
 **Audience:** newsletter creators and builders who need one clear answer from a tool; solo builders who want disciplined AI agent workflows.
+
+**Ship status (2026-07-20):** V1.0 is live on mangrovetools.com (tools, trust pages, method, studio, Lead-Dev + Stripe kit/cohort links, deliver pages). Current priority is polish, UI foundation, and hardening — not greenfield expansion — unless the owner names a deliverable.
 
 ## Operating priority (strict order)
 
@@ -37,7 +41,7 @@ Work in this order. Do **not** invent five new tools before the existing site is
 Only after 1–3 are in good shape (or the owner explicitly waives):
 - New niche tools using the `/{slug}/` folder pattern.
 - Trust/support pages (about, privacy, contact) when they strengthen credibility.
-- Lead-Dev product surfaces with placeholder checkout/booking until the owner configures vendors.
+- Lead-Dev product surfaces: use URLs from `lead-dev/config.js` only. If a checkout URL is empty, CTAs must stay disabled / setup-required — never invent links.
 - Reject ideas that are thin clones, off-brand, or require backends/social platforms.
 
 ## Business model (locked)
@@ -45,7 +49,7 @@ Only after 1–3 are in good shape (or the owner explicitly waives):
 **Dual model:**
 
 1. **Niche affiliate + free utility collection** — tools rank, earn trust, convert via soft affiliate CTAs.
-2. **Lead-Dev paid offers** — template kit, cohort, done-with-you setup. Public pages may ship with **placeholder** checkout/booking/waitlist URLs; the owner finishes vendor setup.
+2. **Lead-Dev paid offers** — template kit, cohort, done-with-you setup. Kit + cohort Stripe Payment Links are **owner-configured and live** in `lead-dev/config.js` (see `docs/setup/LEAD_DEV_REVENUE.md`). DWY is email-only. Do not invent alternate checkout URLs.
 
 **Still out of scope** unless the owner explicitly approves: blog farms, entertainment/streaming, Q&A, social networks, forums, bio-link sites, job boards, crowdfunding, image networks, newsrooms, nonprofit platforms, account-based SaaS, ad networks, analytics SDKs, backends.
 
@@ -58,13 +62,13 @@ Live payment activation, payout/tax settings, and paid vendor billing always req
 - New static pages/tools that strengthen the product
 - Copy, nav, footer, SEO metadata, sitemap/robots/llms
 - Accessibility and responsive fixes
-- Lead-Dev product UI, pricing bands from source docs, checkout/booking **placeholders**
+- Lead-Dev product UI and pricing bands from source docs
 - Setup documentation for owner-configured vendors
-- Commits on the development branch
+- Commits on the development / feature branch
 
 **Pause and ask before:**
 
-- Activating live payments, subscriptions, paid ads/apps, or external vendor billing
+- Changing live Stripe Payment Link URLs, creating new paid products, subscriptions, paid ads/apps, or external vendor billing
 - Finalizing storefront payout/tax/account setup
 - Changing DNS, hosting, production deployment, domain, or analytics ownership
 - Changing live affiliate IDs / `AFFILIATE_URL`
@@ -85,9 +89,9 @@ If uncertain, choose the safer reversible path and document the assumption.
 3. No ad networks / backends unless approved. Google Analytics (`G-E20401V5WB`) is approved site-wide; do not add additional analytics SDKs without approval.
 4. Client-side calculation only; never POST user inputs.
 5. Tool monetization = affiliate / soft CTA after value; never hard-paywall calculator results.
-6. Lead-Dev monetization = product page + placeholder or live CTAs; never invent live checkout links.
+6. Lead-Dev monetization = product page + CTAs from `lead-dev/config.js` only; never invent checkout links.
 7. Every page: professional UX + SEO-complete head/body + link back to Mangrove home.
-8. Deploy entire repo root to Netlify (production deploy requires approval).
+8. Deploy entire repo root to Netlify (production deploy of risky changes requires approval).
 
 ## Stack
 
@@ -99,7 +103,8 @@ If uncertain, choose the safer reversible path and document the assumption.
 | Method | `method/`, `walkthrough/` |
 | Lead-Dev studio | `constitution/`, `phasegate/`, `nichegate/` (+ Offer Fit on `lead-dev/`) |
 | Lead-Dev | `lead-dev/` (product suite + `config.js` checkout URLs) |
-| Trust | `about/`, `privacy/`, `contact/` |
+| Post-purchase | `deliver/kit/`, `deliver/cohort/` (noindex) |
+| Trust | `about/`, `faq/`, `privacy/`, `contact/` |
 | Discoverability | `robots.txt`, `sitemap.xml`, `llms.txt` |
 | Ops (not public) | `docs/ops/`, `docs/setup/` |
 | Fonts | Fraunces + Outfit |
@@ -130,8 +135,8 @@ Every indexable page needs: title, meta description, canonical, robots, OG/Twitt
 ## Product-page / storefront conventions
 
 - Source of truth for Lead-Dev offers: `docs/lead-dev-products/`.
-- Show pricing **bands** from source docs until the owner sets finals.
-- Placeholder CTAs must be obvious (disabled or setup-required) — never fake live checkout.
+- Show pricing **bands** from source docs unless the owner sets a single final price on-page.
+- If `KIT_CHECKOUT_URL` / `COHORT_SIGNUP_URL` are empty, CTAs must be disabled or setup-required — never fake live checkout. When URLs are present (current production), wire them via `lead-dev/app.js` only.
 - Document owner setup in `docs/setup/LEAD_DEV_REVENUE.md`.
 - Affiliate disclosure on tool pages and privacy page as needed.
 
@@ -169,18 +174,20 @@ python3 -m http.server 5173
 # Optional: python3 scripts/check-links.py
 ```
 
-Check: happy path, empty/extreme inputs, mobile ~390px, SEO head tags, affiliate/placeholder CTAs, home ↔ pages.
+Check: happy path, empty/extreme inputs, mobile ~390px, SEO head tags, affiliate/Lead-Dev CTAs, home ↔ pages.
 
 ## Definition of Done
 
 - Work followed priority order (or owner waived an earlier phase).
+- Approved backlog scope only; architecture preserved unless a documented defect requires change.
 - Existing tools still work.
-- UI is professional/modern/easy.
+- UI is professional/modern/easy and on-brand.
 - SEO artifacts accurate for touched routes.
 - New pages/tools have rationales when major.
-- Accessibility and responsive basics considered.
-- Manual verification documented; remaining risks listed.
-- No unrelated files changed; no live payments activated without approval.
+- Accessibility and responsive basics considered (including reduced motion).
+- Loading/empty/error/success states handled where applicable.
+- Manual verification documented; remaining risks listed honestly.
+- No unrelated files changed; no payment/affiliate/deploy identity changes without approval.
 
 ## Do not modify without approval
 

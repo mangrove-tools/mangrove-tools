@@ -1,79 +1,70 @@
-# Production-readiness audit — MangroveTools V1.0 (branch)
+# Production-readiness audit — Mangrove Tools
 
-**Branch:** `mangrovetools-development`  
-**Date:** 2026-07-19  
-**Deploy:** Not performed (requires owner approval)
+**Date:** 2026-07-20  
+**Repo SHA context:** `main` / feature branch `cursor/mangrove-workflow-foundation-f444`  
+**Live:** https://mangrovetools.com/ — **verified reachable** (earlier 403 note is obsolete)
 
-## Validation run
+## Classification legend
+
+BLOCKER · HIGH · MEDIUM · LOW · MANUAL VERIFICATION
+
+## Verified checks (2026-07-20)
 
 | Check | Result |
 | --- | --- |
-| `python3 scripts/check-links.py` | OK — 9 HTML files, no broken internal links |
-| Local server `python3 -m http.server 5173` | All listed routes returned HTTP 200 |
-| Lead-Dev headline present | Verified |
-| Lead-Dev placeholder CTAs | 3× “setup required” (checkout not live) |
-| Home primary nav | `site-nav` present |
-| Sitemap URL count | 8 `<loc>` entries |
-| Affiliate IDs | Unchanged (`via=letterroi`) |
-
-### Routes checked (local)
-
-`/`, `/letterroi/`, `/sponsorquote/`, `/method/`, `/lead-dev/`, `/about/`, `/privacy/`, `/contact/`, `/sitemap.xml`, `/llms.txt`, `/robots.txt`, `/site.css`, `/lead-dev/config.js`, `/404.html`
-
-### Manual / browser (owner should confirm)
-
-| Item | Status |
-| --- | --- |
-| Visual check at ~390 / 768 / 1440 | MANUAL VERIFICATION — layout CSS added; confirm in browser |
-| Keyboard / focus on nav | Focus-visible styles in `site.css`; confirm in browser |
-| Live production `mangrovetools.com` | MANUAL — agent fetch returned 403 earlier |
-| Netlify deploy of this branch | Not done — approval required |
-| Live checkout / booking URLs | Intentionally empty — see `docs/setup/LEAD_DEV_REVENUE.md` |
-| Contact inbox | Set to `needlesearchapp@protonmail.com` |
+| Public routes HTTP | 200 for all sitemap URLs + studio tools |
+| Bare slug redirects | 301 → trailing slash |
+| www / http | 301 → https://mangrovetools.com/ |
+| `/docs/*`, `AGENTS.md`, `README.md`, `/deliver/` listing | 404 / protected as configured |
+| `python3 scripts/check-links.py` | OK — 19 HTML files |
+| Live ↔ local home bytes | SHA-256 match |
+| GA | `G-E20401V5WB` on pages |
+| Lead-Dev Stripe | Payment Links present + HTTP 200 |
+| Deliver pages | Present, noindex |
+| Security headers | `nosniff`, `Referrer-Policy`, HSTS (Netlify); **no CSP** |
+| Privacy / About / Contact | Live |
+| Automated unit/e2e | None |
 
 ## Findings
 
-### BLOCKER (for going live with paid offers)
+### BLOCKER
 
-- `KIT_CHECKOUT_URL`, `COHORT_SIGNUP_URL`, `DWY_BOOKING_URL` empty — CTAs disabled until owner configures.
+- None for operating the free-tool site.
 
 ### HIGH
 
-- Production deploy of V1.0 not yet approved/executed.
-- Contact email may not be provisioned yet.
+- None open for core browsing/calculating.  
+- **Owner responsibility:** Stripe payout/tax/product correctness and deliver zip freshness (outside agent autonomy).
 
 ### MEDIUM
 
-- No automated browser/visual regression suite (static site; link checker only).
-- Lead-Dev OG image reuses site `og.jpg` (acceptable; dedicated creatives optional later).
+- No Content-Security-Policy (`netlify.toml`).  
+- Calculator CSS duplication → regression risk on visual changes.  
+- No automated visual/a11y CI.  
+- Ops docs previously stale vs live Stripe (addressed in workflow PR).
 
 ### LOW
 
-- Tool pages keep tool-specific headers (intentional); site-wide nav is on umbrella pages.
+- Some studio pages missing `og:locale`; walkthrough lacks JSON-LD.  
+- Stub `styles.css` files under mediakit/inventory.
 
 ### MANUAL VERIFICATION
 
-- Real-device mobile layout
-- Live DNS / Netlify publish of this branch
-- Affiliate click-through on production after deploy
+- Real-device mobile / keyboard / screen reader  
+- Full Stripe purchase → deliver download  
+- Affiliate + GA verification in vendor dashboards  
+- Contrast audit across all studio steps  
 
-## Approval still required before
+## Release posture
 
-- Production deploy
-- Pasting live payment/booking URLs and enabling money movement
-- Payout / tax / storefront account setup
-- Changing affiliate IDs
-- Inventing testimonials or guarantee language
+| Item | Status |
+| --- | --- |
+| Static deploy model | Sound |
+| SEO discoverability | Strong |
+| Placeholder checkout | **Resolved** — live Payment Links in `lead-dev/config.js` |
+| Experimental UI rewrite | **Not approved** — follow backlog IDs |
+| Production deploy of risky changes | Still prefer owner approval / preview deploys |
 
-## V1.0 ship checklist (repo)
+## Rollback
 
-- [x] Development branch protected from sole `main` edits for this work
-- [x] `.gitignore` / `.cursorignore`
-- [x] AGENTS.md dual model + autonomy rules
-- [x] Ops audit / strategy / backlog / discovery
-- [x] Trust pages + shared nav/footer
-- [x] `/method/` + `/lead-dev/`
-- [x] Revenue setup doc
-- [x] sitemap / llms / netlify redirects
-- [ ] Owner: configure CTAs
-- [ ] Owner: approve production deploy
+Netlify prior deploy + git revert of feature branch. No database migrations.

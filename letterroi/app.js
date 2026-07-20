@@ -2,7 +2,9 @@
   "use strict";
 
   const SUBSCRIBER_SOFT_CAP = 10_000_000;
+  const PAID_PRICE_SOFT_CAP = 10_000;
   const DEBOUNCE_MS = 150;
+  const FIELD_ORDER = ["subscribers", "open-rate", "sends", "paid-price"];
 
   const NICHE_PRESETS = {
     finance: {
@@ -72,6 +74,10 @@
     return { empty: false, value, invalid: false };
   }
 
+  function isWholeNumber(value) {
+    return Number.isInteger(value);
+  }
+
   function setFieldError(inputId, message) {
     const input = document.getElementById(inputId);
     const errorEl = document.getElementById(`${inputId}-error`);
@@ -90,6 +96,16 @@
 
   function clearAllErrors() {
     Object.values(fieldIds).forEach((id) => setFieldError(id, ""));
+  }
+
+  function focusFirstInvalid() {
+    for (const id of FIELD_ORDER) {
+      const input = document.getElementById(id);
+      if (input && input.getAttribute("aria-invalid") === "true") {
+        input.focus();
+        return;
+      }
+    }
   }
 
   function readAndValidate(showErrors) {
@@ -112,8 +128,12 @@
     let subscribers = null;
     if (subscribersRaw.empty) {
       errors.subscribers = "Enter your subscriber count.";
-    } else if (subscribersRaw.invalid || subscribersRaw.value < 0) {
-      errors.subscribers = "Subscribers must be zero or a positive number.";
+    } else if (
+      subscribersRaw.invalid ||
+      subscribersRaw.value < 0 ||
+      !isWholeNumber(subscribersRaw.value)
+    ) {
+      errors.subscribers = "Subscribers must be a whole number (0 or more).";
     } else if (subscribersRaw.value > SUBSCRIBER_SOFT_CAP) {
       errors.subscribers = `Use up to ${SUBSCRIBER_SOFT_CAP.toLocaleString()} subscribers for a directional estimate.`;
     } else {
@@ -138,7 +158,7 @@
       errors.sends = "Enter emails sent per month.";
     } else if (
       sendsRaw.invalid ||
-      !Number.isInteger(sendsRaw.value) ||
+      !isWholeNumber(sendsRaw.value) ||
       sendsRaw.value < 1 ||
       sendsRaw.value > 60
     ) {
@@ -152,6 +172,8 @@
       paidPrice = 0;
     } else if (paidPriceRaw.invalid || paidPriceRaw.value < 0) {
       errors.paidPrice = "Paid tier price must be zero or a positive number.";
+    } else if (paidPriceRaw.value > PAID_PRICE_SOFT_CAP) {
+      errors.paidPrice = `Paid tier price must be up to ${money(PAID_PRICE_SOFT_CAP)} for a directional estimate.`;
     } else {
       paidPrice = paidPriceRaw.value;
     }
@@ -229,12 +251,13 @@
     }
   }
 
-  function resetResults() {
+  function resetResults(message) {
     totalRange.textContent = "—";
     adsValue.textContent = "—";
     sponsorValue.textContent = "—";
     paidValue.textContent = "—";
-    resultsNote.textContent = "Enter your list metrics, then calculate.";
+    resultsNote.textContent =
+      message || "Enter your list metrics, then calculate.";
   }
 
   function buildAffiliateUrl() {
@@ -259,8 +282,13 @@
 
     if (!result.valid) {
       if (showErrors || !hasCalculated) {
-        resetResults();
+        resetResults(
+          showErrors
+            ? "Fix the highlighted fields, then calculate again."
+            : undefined
+        );
       }
+      if (showErrors) focusFirstInvalid();
       return false;
     }
 

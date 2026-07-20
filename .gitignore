@@ -5,6 +5,8 @@
 
 .env
 .env.*
+!.env.example
+
 *.pem
 *.key
 *.p8
@@ -19,5 +21,12 @@ node_modules/
 dist/
 build/
 coverage/
+.cache/
+.vite/
+.turbo/
+
 .vercel/
 .netlify/
+
+playwright-report/
+test-results/

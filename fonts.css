@@ -1,0 +1,16 @@
+/* Self-hosted brand fonts — avoids Firefox Tracking Protection blocking fonts.googleapis.com */
+@font-face {
+  font-family: "Fraunces";
+  font-style: normal;
+  font-weight: 500 700;
+  font-display: swap;
+  src: url("/fonts/fraunces.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Outfit";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("/fonts/outfit.woff2") format("woff2");
+}

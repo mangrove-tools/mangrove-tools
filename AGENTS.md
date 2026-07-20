@@ -189,3 +189,10 @@ Check: happy path, empty/extreme inputs, mobile ~390px, SEO head tags, affiliate
 - Backend, auth, database, ad network, hard paywall of tool results
 - Live payment processor credentials, payouts, tax settings
 - Rebrand away from Mangrove Gulf Coast identity
+
+## Cursor Cloud specific instructions
+
+- Pure static site: HTML/CSS/vanilla JS only, no bundler/build step and **no dependencies to install** (Python 3 ships in the base image). The startup update script is a no-op.
+- Run the dev server from the repo root: `python3 -m http.server 5173`, then browse `http://localhost:5173/`. Public routes are listed in `README.md`.
+- "Lint/test" for this repo is the internal link checker: `python3 scripts/check-links.py` (no network required; exits non-zero on broken internal links).
+- Trailing slashes matter locally: `python3 -m http.server` only serves `/{slug}/` (with the slash). The bare `/{slug}` → `/{slug}/` 301s and `/docs/*` 404s live only in `netlify.toml` and do **not** apply to the local server.

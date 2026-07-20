@@ -189,3 +189,10 @@ Check: happy path, empty/extreme inputs, mobile ~390px, SEO head tags, affiliate
 - Backend, auth, database, ad network, hard paywall of tool results
 - Live payment processor credentials, payouts, tax settings
 - Rebrand away from Mangrove Gulf Coast identity
+
+## Cursor Cloud specific instructions
+
+- This is a **pure static site** — no build step, no bundler, and no package manager. There are no dependencies to install; `python3` (3.12) ships with the VM. The update script is effectively a no-op.
+- Run the dev server from the repo root exactly as documented in `README.md`: `python3 -m http.server 5173`, then browse `http://localhost:5173/` and each `/{slug}/` route. Do not serve a subfolder — routes resolve relative to repo root.
+- "Lint"/validation is the internal link checker: `python3 scripts/check-links.py` (no network needed; exits non-zero on broken internal links). There is no separate test suite.
+- Netlify's `netlify.toml` forces `/docs/*`, `AGENTS.md`, and `README.md` to 404 in production, but the local `http.server` does **not** apply those rules — local serving of those paths is expected and not a bug.

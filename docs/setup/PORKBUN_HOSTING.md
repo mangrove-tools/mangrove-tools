@@ -1,121 +1,81 @@
-# Leave Netlify → host on Porkbun (owner)
+# Porkbun Static Hosting (owner)
 
-**Goal:** Serve `mangrovetools.com` from Porkbun Static Hosting instead of Netlify.
+**Status (2026-07-20):** `mangrovetools.com` is on **Porkbun Static Hosting** (Starter trial) with **GitHub Connect** → `kylito3/mangrove-tools` @ `main`. Domain stays at Porkbun (lock ON is fine — that only blocks registrar transfers).
 
-**Good news:** The domain is already at Porkbun. You do **not** need an auth/EPP code. This is a **hosting** cutover, not a domain transfer.
-
-Site size is ~**1 MB** (under Porkbun’s **40 MB** Static Hosting limit).
-
-Agents cannot click Porkbun/Netlify dashboards for you. Follow this checklist in your accounts.
+Site size is ~**1 MB** (under the **40 MB** Static Hosting limit).
 
 ---
 
-## Cutover checklist (all Porkbun)
+## Current setup (keep it this way)
 
-### 0) Clear Netlify DNS first (do this before Static Hosting)
+| Setting | Value |
+| --- | --- |
+| Product | **Static Hosting** only (not WordPress / cPanel / Easy PHP) |
+| Deploy | GitHub Connect → `kylito3/mangrove-tools` → branch **`main`** |
+| SSL | Porkbun certificate on the hosting panel |
+| `www` path | Site root (`/` or blank) — not a placeholder path |
+| Rewrite URL | Leave **empty** (not a SPA) |
+| Domain lock | ON (safe; leave on) |
 
-Porkbun Static Hosting fails with **"Could not add domain on remote server"** when `@` / `www` still have Netlify (or parking) records. Clear those **before** attaching hosting.
+After any DNS mess: hosting panel → **Fix DNS Records**.  
+If Fix DNS says another hosting product is attached, cancel the **other** product first — keep Static Hosting.
 
-As of the last check, public DNS still showed Netlify-style apex IPs (`75.2.60.5`, `99.83.231.61`) and `*.netlify.app` — that conflicts with Porkbun provisioning.
+---
 
-1. Porkbun → **Domain Management** → `mangrovetools.com` → **DNS**.
-2. Delete records that point the site at Netlify or Porkbun parking, for example:
-   - `A` / `AAAA` / `ALIAS` / `CNAME` for `@` or `www` → Netlify IPs or `*.netlify.app`
-   - Anything → `pixie.porkbun.com` (parking page)
-3. **Keep** email/verification records you still need (`MX`, most `TXT` like SPF/DKIM, Google/Stripe verify, etc.).
-4. Save. It’s OK if the site goes offline briefly — Netlify was already failing (credits / 404).
-
-Then continue with step 1. If hosting was already purchased and still errors, open the hosting panel → **Fix DNS** ([KB](https://kb.porkbun.com/article/198-how-to-fix-your-porkbun-hosting-dns)), or cancel/retry Static Hosting after the DNS cleanup.
-
-Related: [CNAME/ALIAS already exists](https://kb.porkbun.com/article/239-cname-alias-record-with-that-host-already-exists-error).
-
-### If DNS is already clean and you still get “Could not add domain on remote server”
-
-That message is a **Porkbun hosting backend** failure (their panel couldn’t provision the domain on the static-hosting server). Repo/DNS cleanup can’t fix it.
-
-1. Domain Management → Website/hosting for `mangrovetools.com` → cancel any half-created Static Hosting / other hosting plan on that domain.  
-2. Wait a few minutes → try Static Hosting again.  
-3. If it still fails → Help bubble or `support@porkbun.com` with: domain `mangrovetools.com`, exact error, and that apex Netlify ALIAS was removed and NS are `*.ns.porkbun.com`.  
-4. **Meanwhile (recommended):** get the site back on **Cloudflare Pages** while keeping the domain at Porkbun — `docs/setup/CLOUDFLARE_PAGES.md`. Same registrar; working host.
-
-### 1) Turn on Porkbun Static Hosting
-
-1. Log in at [porkbun.com](https://porkbun.com) → **Account** → **Domain Management**.
-2. Find `mangrovetools.com` → click the **house** icon under **Website**.
-3. Under **Static Hosting** → **Select A Plan** (or **Start Trial** for 15 days).
-4. Finish billing/trial so the Static Hosting panel opens.
-
-KB: [How to set up Static Hosting](https://kb.porkbun.com/article/137-how-to-set-up-static-hosting)
-
-### 2) Connect GitHub (auto-deploy from `main`)
-
-1. On the Static Hosting page for the domain → **GitHub Connect**.
-2. Install/authorize on the `kylito3/mangrove-tools` repo.
-3. Choose branch **`main`** (publish the repo root — no build step).
-4. Wait for the first sync to finish.
-
-KB: [Connect Static Hosting to GitHub](https://kb.porkbun.com/article/145-how-to-connect-static-hosting-to-github)
-
-### 3) Point the domain at Porkbun hosting
-
-Porkbun usually wires DNS when Static Hosting is attached to that domain. Still verify:
-
-1. Domain Management → **DNS** for `mangrovetools.com`.
-2. Remove leftover **Netlify** records (typical leftovers):
-   - `A` / `AAAA` / `CNAME` / `ALIAS` / `ANAME` pointing at Netlify (`*.netlify.app`, Netlify load-balancer IPs, etc.)
-3. Keep whatever records Porkbun Static Hosting shows as required for `@` and `www`.
-4. Leave unrelated records alone (email MX, TXT verification, etc.) unless you know they were Netlify-only.
-
-SSL: wait until Porkbun shows HTTPS ready (can take a short while after DNS settles).
-
-### 4) Smoke-check live
-
-Open these after DNS/SSL look green:
+## Smoke-check after deploys
 
 - `https://mangrovetools.com/`
 - `https://mangrovetools.com/letterroi/`
 - `https://mangrovetools.com/sponsorquote/`
 - `https://mangrovetools.com/lead-dev/`
-- `https://mangrovetools.com/fonts/fraunces.woff2` (fonts load)
-- Stripe deliver paths if you use them (`/deliver/kit/`, `/deliver/cohort/`)
+- `https://mangrovetools.com/fonts/fraunces.woff2`
+- Stripe deliver paths (`/deliver/kit/`, `/deliver/cohort/`) if used
 
-Also try bare slugs without a trailing slash (e.g. `/letterroi`). If they 404, add Porkbun **URL Forwarding** from bare slug → slash URL for important routes.
-
-### 5) Pause / detach Netlify (after smoke-check passes)
-
-1. Netlify → project for mangrovetools → disable auto-publish or delete the custom domain.
-2. Do **not** delete the Netlify project on day one if you want a fast rollback (re-add old DNS).
-3. After a week of stable Porkbun hosting, you can delete the Netlify site to stop credit burn.
-
-### 6) Confirm Stripe / affiliate still use the domain
-
-Checkout and deliver URLs should stay on `https://mangrovetools.com/...` — no change needed if the hostname never changed. Only re-check if you temporarily used a `*.netlify.app` URL anywhere in Stripe or email copy.
+Bare slugs without a trailing slash (e.g. `/letterroi`) may 404 — Porkbun likely ignores `_redirects`. Add Porkbun **URL Forwarding** for important bare → slash routes if needed.
 
 ---
 
-## What you give up vs Netlify
+## Limits vs Netlify / Cloudflare Pages
 
-| Feature | Netlify / Cloudflare Pages | Porkbun Static Hosting |
+| Feature | Porkbun Static Hosting | Cloudflare Pages (optional) |
 | --- | --- | --- |
-| GitHub auto-deploy | Yes | Yes (GitHub Connect) |
-| Free forever tier | Often yes | Paid (cheap; 15-day trial) |
-| `_redirects` trailing-slash 301s | Yes | Likely ignored — use URL Forwarding if needed |
-| `_headers` / CSP | Yes | Likely ignored |
-| Force `/docs` → 404 | Yes | Weaker — files on disk may be fetchable |
+| GitHub auto-deploy | Yes | Yes |
+| `_redirects` / trailing-slash 301s | Likely ignored | Supported |
+| `_headers` / CSP | Likely ignored | Supported |
+| Force `/docs` → 404 | Weaker (files may be fetchable) | Supported |
 
-If CSP + clean redirects matter more than “one vendor,” use **Porkbun DNS + Cloudflare Pages** instead — see `docs/setup/CLOUDFLARE_PAGES.md`. Same registrar, stronger host.
+Repo still ships `_redirects` + `_headers` for Cloudflare Pages / Netlify backup. On Porkbun they are harmless no-ops if ignored.
 
----
-
-## What not to buy at Porkbun for this site
-
-- WordPress / cPanel / Easy PHP — wrong stack (this site is static HTML).
-- Domain **transfer** tools / auth codes — not needed; domain is already here.
+Optional stronger edge: keep Porkbun as registrar/DNS and host on Pages — `docs/setup/CLOUDFLARE_PAGES.md`.
 
 ---
 
-## Rollback
+## Pause Netlify
 
-1. Re-add Netlify DNS for `@` / `www` (from the Netlify domain panel).
-2. Or point DNS at Cloudflare Pages if that project was already created.
-3. Turn off Porkbun Static Hosting only after the other host answers correctly.
+1. Netlify → disable auto-publish or remove the custom domain.  
+2. Keep the Netlify project a few days for rollback, then delete to stop credit burn.
+
+---
+
+## Troubleshooting (cutover leftovers)
+
+### “Could not add domain on remote server”
+
+Usually leftover Netlify / parking DNS. In DNS, delete `@` / `www` records pointing at Netlify (`apex-loadbalancer.netlify.com`, `*.netlify.app`) or `pixie.porkbun.com` / `uixie.porkbun.com`. Keep MX + needed TXT. Then retry or **Fix DNS**.
+
+If DNS is already clean and it still fails → Porkbun backend: cancel half-created plans, retry, or email `support@porkbun.com`.
+
+### “Please cancel the existing hosting product first”
+
+Two hosting products on one domain. Cancel the one that is **not** Static Hosting, turn off conflicting **URL Forwarding** for `@`/`www`, then Fix DNS.
+
+### Domain lock
+
+**Not** the cause of hosting errors. Leave **Domain Lock ON**.
+
+---
+
+## What not to buy
+
+- WordPress / cPanel / Easy PHP — wrong stack  
+- Auth/EPP codes — domain is already at Porkbun; not needed for hosting

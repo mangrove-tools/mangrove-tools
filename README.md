@@ -30,13 +30,11 @@ python3 scripts/check-links.py
 
 Publish the **entire repo root** (not a tool subfolder). No build step.
 
-**Leaving Netlify → Porkbun:** domain is already at Porkbun. Turn on Static Hosting + GitHub Connect to `main` — see `docs/setup/PORKBUN_HOSTING.md`.
+**Production host:** Porkbun Static Hosting + GitHub Connect to `main` — see `docs/setup/PORKBUN_HOSTING.md`.
 
-**Stronger edge (CSP / redirects):** Porkbun DNS + [Cloudflare Pages](https://pages.cloudflare.com/) — see `docs/setup/CLOUDFLARE_PAGES.md`.
+**Optional stronger edge (CSP / redirects):** [Cloudflare Pages](https://pages.cloudflare.com/) with Porkbun DNS — `docs/setup/CLOUDFLARE_PAGES.md`.
 
-**Backup:** Netlify via `netlify.toml` (pause after Porkbun smoke-check).
-
-Production DNS / custom-domain cutover requires owner approval.
+**Backup:** Netlify via `netlify.toml` (pause/remove custom domain after Porkbun is stable).
 
 Live URLs:
 

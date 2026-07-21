@@ -97,7 +97,7 @@ If uncertain, choose the safer reversible path and document the assumption.
 
 | Piece | Choice |
 | --- | --- |
-| Hosting | Porkbun Static Hosting (leave Netlify): `docs/setup/PORKBUN_HOSTING.md`. Cloudflare Pages keeps `_redirects`/`_headers` if preferred. Netlify kept as backup (`netlify.toml`) |
+| Hosting | Porkbun Static Hosting + GitHub Connect (`main`): `docs/setup/PORKBUN_HOSTING.md`. Optional Cloudflare Pages for `_redirects`/`_headers`. Netlify backup (`netlify.toml`) |
 | Home | `index.html`, `site.css`, brand SVGs |
 | Tools | `letterroi/`, `sponsorquote/`, `subtarget/`, `mediakit/`, `inventory/` |
 | Method | `method/`, `walkthrough/` |

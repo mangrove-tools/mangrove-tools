@@ -13,7 +13,7 @@
 
 ## 1. Brand & interface personality
 
-Calm, specific, coastal-professional. Tools feel like a **curated index**, not a startup dashboard. Lead-Dev feels like a **studio**, not a course landing spam page.
+Calm, specific, coastal-professional. Tools feel like a **product library** (software chrome, result-forward), not a WordPress brochure or a purple SaaS dashboard. Lead-Dev feels like a **studio**, not a course landing spam page.
 
 ## 2. Visual principles
 

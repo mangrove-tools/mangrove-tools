@@ -191,53 +191,87 @@
       </nav>
     </header>
 
-    <main class="shell" id="main">
-      <section class="hero hero-home reveal">
-        <p class="hero-meta">
-          <span>Naples, Florida</span>
-          <span>Free in-browser</span>
-          <span>Gulf Coast calm</span>
-        </p>
-        <h1>Mangrove Tools</h1>
-        <p class="hero-tagline">Tools that earn their keep</p>
-        <p class="lede">
-          Free calculators for newsletter creators. Pick one, get a clear
-          answer, leave when you’re done — no accounts, no dashboard theater.
-        </p>
-        <p class="cta-row">
-          <a class="btn" href="#tools">Browse tools</a>
-          <a class="text-cta" href="/method/">Read the method</a>
-        </p>
+    <main class="shell shell-home" id="main">
+      <section class="home-stage reveal" aria-labelledby="home-brand">
+        <div class="home-stage-copy">
+          <p class="hero-meta">
+            <span>No account</span>
+            <span>Runs in your browser</span>
+            <span>Instant results</span>
+          </p>
+          <h1 id="home-brand">Mangrove Tools</h1>
+          <p class="hero-tagline">Pick a tool. Get a number.</p>
+          <p class="lede">
+            Free calculators for creators. Open a tool, enter numbers, get a
+            range you can act on — then leave.
+          </p>
+          <p class="cta-row">
+            <a class="btn" href="#tools">Open tools</a>
+            <a class="text-cta" href="/letterroi/">Try LetterROI</a>
+          </p>
+        </div>
+
+        <aside
+          class="product-frame reveal reveal-delay-1"
+          aria-label="LetterROI product preview"
+        >
+          <div class="product-frame-bar">
+            <span class="product-frame-title">LetterROI</span>
+            <span class="product-frame-badge">Preview</span>
+          </div>
+          <div class="product-frame-body">
+            <div class="product-frame-fields" aria-hidden="true">
+              <div class="product-field">
+                <span class="product-field-label">Subscribers</span>
+                <span class="product-field-value">5,000</span>
+              </div>
+              <div class="product-field">
+                <span class="product-field-label">Open rate</span>
+                <span class="product-field-value">38%</span>
+              </div>
+              <div class="product-field">
+                <span class="product-field-label">Niche</span>
+                <span class="product-field-value">Tech</span>
+              </div>
+              <div class="product-field">
+                <span class="product-field-label">Paid tier</span>
+                <span class="product-field-value">$10/mo</span>
+              </div>
+            </div>
+            <div class="product-frame-result">
+              <p class="product-frame-kicker">Estimated monthly revenue</p>
+              <p class="product-frame-total">
+                $872 – $1,927<span>/mo</span>
+              </p>
+              <ul class="product-frame-breakdown">
+                <li><span>Ads</span><span>$180–$420</span></li>
+                <li><span>Sponsorships</span><span>$520–$1,150</span></li>
+                <li><span>Paid subs</span><span>$172–$357</span></li>
+              </ul>
+            </div>
+          </div>
+          <a class="product-frame-link" href="/letterroi/"
+            >Run this with your numbers →</a
+          >
+        </aside>
       </section>
 
-      <aside
-        class="product-vignette reveal reveal-delay-1"
-        aria-label="Example LetterROI result"
+      <section
+        class="tool-list reveal reveal-delay-1"
+        id="tools"
+        aria-labelledby="tools-title"
       >
-        <p class="product-vignette-kicker">Example result · LetterROI</p>
-        <p class="product-vignette-total">$872 – $1,927<span>/mo</span></p>
-        <p class="product-vignette-note">
-          Directional range for a 5,000-subscriber tech list at 38% open rate —
-          ads, sponsorships, and a $10 paid tier.
-        </p>
-        <a class="product-vignette-link" href="/letterroi/"
-          >Open the revenue calculator</a
-        >
-      </aside>
-
-      <section class="tool-list reveal reveal-delay-1" id="tools" aria-labelledby="tools-title">
         <div class="tool-list-head">
-          <h2 id="tools-title">Index</h2>
-          <p class="tool-count">05 tools</p>
+          <h2 id="tools-title">Tools</h2>
+          <p class="tool-count">5 products</p>
         </div>
         <a class="tool-link" href="/letterroi/">
           <span class="tool-index" aria-hidden="true">01</span>
           <span class="tool-copy">
-            <span class="tool-intent">Newsletter revenue calculator</span>
             <span class="tool-name">LetterROI</span>
+            <span class="tool-intent">Newsletter revenue calculator</span>
             <span class="tool-desc"
-              >Estimate monthly income from ads, sponsorships, and paid
-              subscriptions using list size, open rate, and niche.</span
+              >Monthly range from ads, sponsorships, and paid subscriptions.</span
             >
           </span>
           <span class="tool-go" aria-hidden="true">Open →</span>
@@ -245,11 +279,10 @@
         <a class="tool-link" href="/sponsorquote/">
           <span class="tool-index" aria-hidden="true">02</span>
           <span class="tool-copy">
-            <span class="tool-intent">Sponsorship rate calculator</span>
             <span class="tool-name">SponsorQuote</span>
+            <span class="tool-intent">Sponsorship rate calculator</span>
             <span class="tool-desc"
-              >Build a rate card from list size, open rate, and niche CPM —
-              flat fee, implied CPM, and a low/high band.</span
+              >Flat fee, implied CPM, and a low/high band for your list.</span
             >
           </span>
           <span class="tool-go" aria-hidden="true">Open →</span>
@@ -257,11 +290,10 @@
         <a class="tool-link" href="/subtarget/">
           <span class="tool-index" aria-hidden="true">03</span>
           <span class="tool-copy">
-            <span class="tool-intent">Paid subscriber goal calculator</span>
             <span class="tool-name">SubTarget</span>
+            <span class="tool-intent">Paid subscriber goal calculator</span>
             <span class="tool-desc"
-              >Work backward from a monthly revenue goal to paying subscribers
-              needed after platform fees.</span
+              >Subscribers needed for a monthly revenue goal after fees.</span
             >
           </span>
           <span class="tool-go" aria-hidden="true">Open →</span>
@@ -269,11 +301,10 @@
         <a class="tool-link" href="/mediakit/">
           <span class="tool-index" aria-hidden="true">04</span>
           <span class="tool-copy">
-            <span class="tool-intent">Newsletter media kit template</span>
             <span class="tool-name">Media Kit Composer</span>
+            <span class="tool-intent">Newsletter media kit template</span>
             <span class="tool-desc"
-              >Compose a print-ready one-pager from audience stats, rates, and
-              placements — not just another CPM number.</span
+              >One-pager from audience stats, rates, and placements.</span
             >
           </span>
           <span class="tool-go" aria-hidden="true">Open →</span>
@@ -281,70 +312,67 @@
         <a class="tool-link" href="/inventory/">
           <span class="tool-index" aria-hidden="true">05</span>
           <span class="tool-copy">
-            <span class="tool-intent">Sponsorship inventory planner</span>
             <span class="tool-name">Inventory Planner</span>
+            <span class="tool-intent">Sponsorship inventory planner</span>
             <span class="tool-desc"
-              >Model slots × cadence × fill × exclusivity for booked revenue,
-              open capacity, and sold-out timing.</span
+              >Slots, fill, and exclusivity → booked revenue and capacity.</span
             >
           </span>
           <span class="tool-go" aria-hidden="true">Open →</span>
         </a>
       </section>
 
-      <section class="home-support reveal reveal-delay-2" aria-labelledby="about-tools">
-        <h2 id="about-tools">Free newsletter monetization calculators</h2>
-        <p>
-          Creators use Mangrove Tools for practical planning math: a
-          <a href="/letterroi/">newsletter revenue calculator</a>, a
-          <a href="/sponsorquote/">newsletter sponsorship rate calculator</a>,
-          a
-          <a href="/subtarget/">paid newsletter subscriber calculator</a>,
-          plus
-          <a href="/mediakit/">media kit</a> and
-          <a href="/inventory/">sponsorship inventory</a> composers.
-          Together they cover common monetization questions — without accounts
-          or uploading your list.
-        </p>
-        <p>
-          Every calculation runs client-side in your browser. Soft affiliate
-          links appear after the tool has been useful; results are never hard
-          paywalled. See the <a href="/faq/">FAQ</a> and
-          <a href="/privacy/">privacy page</a> for how data is handled.
-        </p>
-      </section>
+      <p class="home-seo-line reveal reveal-delay-2">
+        Free
+        <a href="/letterroi/">newsletter revenue</a>,
+        <a href="/sponsorquote/">sponsorship rate</a>, and
+        <a href="/subtarget/">subscriber goal</a>
+        calculators — plus
+        <a href="/mediakit/">media kit</a> and
+        <a href="/inventory/">inventory</a>
+        tools. Client-side only.
+        <a href="/faq/">FAQ</a> ·
+        <a href="/privacy/">Privacy</a>
+      </p>
 
-      <section class="section-block reveal reveal-delay-2" aria-labelledby="path-title">
+      <section
+        class="section-block section-product reveal reveal-delay-2"
+        aria-labelledby="path-title"
+      >
         <p class="section-kicker">Lead-Dev</p>
         <h2 id="path-title">Ship with a lead-dev agent</h2>
         <p class="section-intro">
-          Done browsing calculators? Install a constitution and see which paid
-          path fits — before you invent another tool.
+          Done with calculators? Install a constitution and pick a paid path —
+          before you invent another tool.
         </p>
         <p class="cta-row is-compact">
           <a class="btn" href="/constitution/">Constitution Builder</a>
           <a class="btn btn-secondary" href="/lead-dev/#offer-fit">Offer Fit</a>
         </p>
         <p class="cta-row is-follow">
-          <a class="text-cta" href="/method/">Read the method</a>
-          <a class="text-cta" href="/lead-dev/">All Lead-Dev offers</a>
+          <a class="text-cta" href="/method/">Method</a>
+          <a class="text-cta" href="/lead-dev/">Offers</a>
           <a class="text-cta" href="/phasegate/">Phase Gate</a>
-          <a class="text-cta" href="/walkthrough/">Walkthrough</a>
         </p>
       </section>
 
-      <section class="section-block reveal reveal-delay-3" aria-labelledby="home-faq-title">
-        <p class="section-kicker">Quick answers</p>
-        <h2 id="home-faq-title">FAQ</h2>
+      <section
+        class="section-block section-faq-home reveal reveal-delay-3"
+        aria-labelledby="home-faq-title"
+      >
+        <div class="tool-list-head">
+          <h2 id="home-faq-title">FAQ</h2>
+          <a class="text-cta" href="/faq/">Full FAQ</a>
+        </div>
         <div class="faq-list">
-          <details open>
+          <details>
             <summary>What is Mangrove Tools?</summary>
             <div class="faq-answer">
               <p>
-                A Naples, Florida collection of free, single-purpose calculators
-                for creators — plus the Lead-Dev system used to ship them. Calm,
-                useful, tool-first. More on the
-                <a href="/about/">About Mangrove Tools</a> page.
+                A product library of free, single-purpose calculators for
+                creators — plus Lead-Dev for shipping with AI agents. Based in
+                Naples, Florida.
+                <a href="/about/">About</a>
               </p>
             </div>
           </details>
@@ -361,16 +389,12 @@
             <summary>Do calculators send my data anywhere?</summary>
             <div class="faq-answer">
               <p>
-                No. Inputs stay in your browser and are not POSTed to our
-                servers. Details on the <a href="/privacy/">privacy page</a>.
+                No. Inputs stay in your browser.
+                <a href="/privacy/">Privacy</a>
               </p>
             </div>
           </details>
         </div>
-        <p class="cta-row">
-          <a class="text-cta" href="/faq/">Full FAQ</a>
-          <a class="text-cta" href="/contact/">Contact</a>
-        </p>
       </section>
     </main>
 

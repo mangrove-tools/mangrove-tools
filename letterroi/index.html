@@ -338,6 +338,17 @@
             Enter your list metrics, then calculate.
           </p>
 
+          <div class="range-band" id="range-band" role="img" hidden>
+            <div class="range-band-track">
+              <span class="range-band-fill"></span>
+              <span class="range-band-mid"></span>
+            </div>
+            <div class="range-band-scale">
+              <span class="range-band-low">—</span>
+              <span class="range-band-high">—</span>
+            </div>
+          </div>
+
           <ul class="streams" id="streams">
             <li>
               <span>Programmatic ads</span>
@@ -352,6 +363,18 @@
               <strong id="paid-value" aria-live="polite">—</strong>
             </li>
           </ul>
+
+          <div class="result-actions">
+            <button type="button" class="ghost-btn" id="copy-summary" disabled>
+              Copy summary
+            </button>
+          </div>
+
+          <div class="next-steps" id="next-steps" hidden>
+            <p class="next-steps-label">Next steps</p>
+            <a href="/sponsorquote/">Price a sponsorship →</a>
+            <a href="/subtarget/">Set a paid revenue goal →</a>
+          </div>
 
           <aside class="cta" id="cta">
             <h2>Ready to chase that number?</h2>
@@ -497,6 +520,8 @@
       </div>
     </footer>
 
+    <script src="/shared/letterroi-model.js"></script>
+    <script src="/shared/tool-extras.js"></script>
     <script src="./config.js"></script>
     <script src="./app.js"></script>
   </body>

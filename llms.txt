@@ -9,7 +9,14 @@
 - [SubTarget](https://mangrovetools.com/subtarget/): Paid newsletter subscriber goal calculator (revenue target → paying subs needed + band)
 - [Media Kit Composer](https://mangrovetools.com/mediakit/): Print-ready newsletter media kit from audience stats and rates
 - [Inventory Planner](https://mangrovetools.com/inventory/): Sponsorship inventory over time (slots × cadence × fill × exclusivity)
-- [Home](https://mangrovetools.com/): Tool directory
+- [Home](https://mangrovetools.com/): Tool directory with a live LetterROI estimate in the hero
+
+## Guides & methodology
+
+- [Methodology](https://mangrovetools.com/methodology/): How the calculators work — niche benchmarks (ad RPM, sponsorship CPM, paid conversion) and formulas, with honest limits
+- [Guides](https://mangrovetools.com/guides/): Newsletter monetization guides paired with calculators
+- [How newsletters make money](https://mangrovetools.com/guides/how-newsletters-make-money/): The four revenue streams — ads, sponsorships, paid subs, affiliates
+- [How to set newsletter sponsorship rates](https://mangrovetools.com/guides/newsletter-sponsorship-rates/): Price a sponsor slot with opens, niche CPM, and placement
 
 ## Lead-Dev studio
 

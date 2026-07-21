@@ -195,63 +195,101 @@
       <section class="home-stage reveal" aria-labelledby="home-brand">
         <div class="home-stage-copy">
           <p class="hero-meta">
-            <span>No account</span>
+            <span>No signup</span>
             <span>Runs in your browser</span>
             <span>Instant results</span>
           </p>
-          <h1 id="home-brand">Mangrove Tools</h1>
-          <p class="hero-tagline">Pick a tool. Get a number.</p>
+          <h1 id="home-brand">Know what your newsletter is worth.</h1>
+          <p class="hero-tagline">Free, no-signup calculators for creators.</p>
           <p class="lede">
-            Free calculators for creators. Open a tool, enter numbers, get a
-            range you can act on — then leave.
+            Revenue, sponsorship rates, and subscriber goals — from your real
+            numbers. Type it in on the right, get a range you can act on, then
+            take the summary with you.
           </p>
           <p class="cta-row">
-            <a class="btn" href="#tools">Open tools</a>
-            <a class="text-cta" href="/letterroi/">Try LetterROI</a>
+            <a class="btn" href="#tools">See all calculators</a>
           </p>
         </div>
 
         <aside
           class="product-frame reveal reveal-delay-1"
-          aria-label="LetterROI product preview"
+          aria-label="LetterROI quick revenue estimate"
         >
           <div class="product-frame-bar">
             <span class="product-frame-title">LetterROI</span>
-            <span class="product-frame-badge">Preview</span>
+            <span class="product-frame-badge">Live estimate</span>
           </div>
-          <div class="product-frame-body">
-            <div class="product-frame-fields" aria-hidden="true">
+          <form class="product-frame-body" id="home-calc" novalidate onsubmit="return false">
+            <div class="product-frame-fields">
               <div class="product-field">
-                <span class="product-field-label">Subscribers</span>
-                <span class="product-field-value">5,000</span>
+                <label class="product-field-label" for="home-subscribers"
+                  >Subscribers</label
+                >
+                <input
+                  class="product-field-input"
+                  id="home-subscribers"
+                  name="subscribers"
+                  type="number"
+                  inputmode="numeric"
+                  min="0"
+                  max="10000000"
+                  step="1"
+                  value="5000"
+                  autocomplete="off"
+                />
               </div>
               <div class="product-field">
-                <span class="product-field-label">Open rate</span>
-                <span class="product-field-value">38%</span>
+                <label class="product-field-label" for="home-open-rate"
+                  >Open rate (%)</label
+                >
+                <input
+                  class="product-field-input"
+                  id="home-open-rate"
+                  name="openRate"
+                  type="number"
+                  inputmode="decimal"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  value="38"
+                  autocomplete="off"
+                />
               </div>
-              <div class="product-field">
-                <span class="product-field-label">Niche</span>
-                <span class="product-field-value">Tech</span>
-              </div>
-              <div class="product-field">
-                <span class="product-field-label">Paid tier</span>
-                <span class="product-field-value">$10/mo</span>
+              <div class="product-field product-field-wide">
+                <label class="product-field-label" for="home-niche">Niche</label>
+                <select class="product-field-input" id="home-niche" name="niche">
+                  <option value="finance">Finance / investing</option>
+                  <option value="tech" selected>Tech / startups</option>
+                  <option value="health">Health / wellness</option>
+                  <option value="lifestyle">Lifestyle / culture</option>
+                  <option value="general">General interest</option>
+                </select>
               </div>
             </div>
             <div class="product-frame-result">
               <p class="product-frame-kicker">Estimated monthly revenue</p>
-              <p class="product-frame-total">
-                $872 – $1,927<span>/mo</span>
+              <p class="product-frame-total" id="home-total" aria-live="polite">
+                $—<span>/mo</span>
               </p>
+              <div class="range-band" id="home-range-band" role="img">
+                <div class="range-band-track">
+                  <span class="range-band-fill"></span>
+                  <span class="range-band-mid"></span>
+                </div>
+                <div class="range-band-scale">
+                  <span class="range-band-low">—</span>
+                  <span class="range-band-high">—</span>
+                </div>
+              </div>
               <ul class="product-frame-breakdown">
-                <li><span>Ads</span><span>$180–$420</span></li>
-                <li><span>Sponsorships</span><span>$520–$1,150</span></li>
-                <li><span>Paid subs</span><span>$172–$357</span></li>
+                <li><span>Ads</span><span id="home-ads">—</span></li>
+                <li><span>Sponsorships</span><span id="home-sponsor">—</span></li>
+                <li><span>Paid subs</span><span id="home-paid">—</span></li>
               </ul>
             </div>
-          </div>
-          <a class="product-frame-link" href="/letterroi/"
-            >Run this with your numbers →</a
+          </form>
+          <a class="product-frame-link" id="home-full-link" href="/letterroi/"
+            >Open full calculator →</a
           >
         </aside>
       </section>
@@ -262,8 +300,8 @@
         aria-labelledby="tools-title"
       >
         <div class="tool-list-head">
-          <h2 id="tools-title">Tools</h2>
-          <p class="tool-count">5 products</p>
+          <h2 id="tools-title">Your toolkit</h2>
+          <p class="tool-count">5 calculators</p>
         </div>
         <a class="tool-link" href="/letterroi/">
           <span class="tool-index" aria-hidden="true">01</span>
@@ -336,23 +374,54 @@
       </p>
 
       <section
+        class="section-block section-trust reveal reveal-delay-2"
+        aria-labelledby="trust-title"
+      >
+        <div class="tool-list-head">
+          <h2 id="trust-title">How the numbers work</h2>
+          <a class="text-cta" href="/methodology/">Methodology</a>
+        </div>
+        <div class="trust-grid">
+          <div class="trust-item">
+            <h3>Benchmarked, not guessed</h3>
+            <p>
+              Ranges combine your inputs with directional creator-economy
+              benchmarks for ad RPM, sponsorship CPM, and paid conversion.
+              <a href="/methodology/">See the sources</a>.
+            </p>
+          </div>
+          <div class="trust-item">
+            <h3>Your data stays put</h3>
+            <p>
+              Every calculation runs in your browser. Nothing you type is sent
+              to a server. <a href="/privacy/">Privacy</a>.
+            </p>
+          </div>
+          <div class="trust-item">
+            <h3>Free, with honest CTAs</h3>
+            <p>
+              No paywall on results. Optional affiliate links appear only after
+              a tool has been useful.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section
         class="section-block section-product reveal reveal-delay-2"
         aria-labelledby="path-title"
       >
-        <p class="section-kicker">Lead-Dev</p>
-        <h2 id="path-title">Ship with a lead-dev agent</h2>
+        <p class="section-kicker">Also from Mangrove Tools</p>
+        <h2 id="path-title">Building with AI coding agents?</h2>
         <p class="section-intro">
-          Done with calculators? Install a constitution and pick a paid path —
-          before you invent another tool.
+          Separate from the calculators: <strong>Lead-Dev</strong> is our system
+          for running AI agents like a disciplined lead developer — a free
+          method article, a constitution builder, and optional paid templates.
+          Unrelated to the tools above, so skip it if it&rsquo;s not for you.
         </p>
         <p class="cta-row is-compact">
-          <a class="btn" href="/constitution/">Constitution Builder</a>
-          <a class="btn btn-secondary" href="/lead-dev/#offer-fit">Offer Fit</a>
-        </p>
-        <p class="cta-row is-follow">
-          <a class="text-cta" href="/method/">Method</a>
-          <a class="text-cta" href="/lead-dev/">Offers</a>
-          <a class="text-cta" href="/phasegate/">Phase Gate</a>
+          <a class="btn btn-secondary" href="/lead-dev/">Explore Lead-Dev</a>
+          <a class="text-cta" href="/method/">Read the method</a>
         </p>
       </section>
 
@@ -418,19 +487,19 @@
           </ul>
         </div>
         <div class="foot-col">
-          <h2>Lead-Dev</h2>
+          <h2>Learn</h2>
           <ul>
-            <li><a href="/method/">Method</a></li>
-            <li><a href="/constitution/">Constitution</a></li>
-            <li><a href="/phasegate/">Phase Gate</a></li>
-            <li><a href="/lead-dev/">Offers</a></li>
+            <li><a href="/methodology/">Methodology</a></li>
+            <li><a href="/guides/">Guides</a></li>
             <li><a href="/faq/">FAQ</a></li>
+            <li><a href="/method/">Lead-Dev method</a></li>
           </ul>
         </div>
         <div class="foot-col">
           <h2>Site</h2>
           <ul>
             <li><a href="/about/">About</a></li>
+            <li><a href="/lead-dev/">Lead-Dev</a></li>
             <li><a href="/privacy/">Privacy</a></li>
             <li><a href="/contact/">Contact</a></li>
             <li><a href="/llms.txt">llms.txt</a></li>
@@ -438,5 +507,9 @@
         </div>
       </div>
     </footer>
+
+    <script src="/shared/letterroi-model.js"></script>
+    <script src="/shared/tool-extras.js"></script>
+    <script src="/home.js"></script>
   </body>
 </html>

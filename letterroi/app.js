@@ -6,38 +6,9 @@
   const DEBOUNCE_MS = 150;
   const FIELD_ORDER = ["subscribers", "open-rate", "sends", "paid-price"];
 
-  const NICHE_PRESETS = {
-    finance: {
-      label: "Finance / investing",
-      sponsorCpm: 45,
-      adRpm: 18,
-      paidConversion: 0.025,
-    },
-    tech: {
-      label: "Tech / startups",
-      sponsorCpm: 35,
-      adRpm: 14,
-      paidConversion: 0.02,
-    },
-    health: {
-      label: "Health / wellness",
-      sponsorCpm: 28,
-      adRpm: 11,
-      paidConversion: 0.018,
-    },
-    lifestyle: {
-      label: "Lifestyle / culture",
-      sponsorCpm: 22,
-      adRpm: 9,
-      paidConversion: 0.015,
-    },
-    general: {
-      label: "General interest",
-      sponsorCpm: 18,
-      adRpm: 7,
-      paidConversion: 0.012,
-    },
-  };
+  const MODEL = window.MangroveLetterROI || {};
+  const NICHE_PRESETS = MODEL.NICHE_PRESETS || {};
+  const EXTRAS = window.MangroveToolExtras || {};
 
   const form = document.getElementById("calc-form");
   const totalRange = document.getElementById("total-range");
@@ -47,6 +18,9 @@
   const paidValue = document.getElementById("paid-value");
   const beehiivLink = document.getElementById("beehiiv-link");
   const faqBeehiivLink = document.getElementById("faq-beehiiv-link");
+  const rangeBand = document.getElementById("range-band");
+  const nextSteps = document.getElementById("next-steps");
+  const copyBtn = document.getElementById("copy-summary");
 
   const fieldIds = {
     subscribers: "subscribers",
@@ -196,39 +170,30 @@
     };
   }
 
-  /**
-   * Directional model:
-   * - Ads: (opens per month / 1000) * RPM
-   * - Sponsorships: ~1 primary sponsor slot every 2 sends at niche CPM
-   * - Paid: list * conversion * price (assumes paid tier is live)
-   */
-  function calculate(input) {
-    const opensPerMonth =
-      input.subscribers * (input.openRate / 100) * input.sends;
+  // Directional model lives in /shared/letterroi-model.js (single source of
+  // truth shared with the home hero mini-calc). See /methodology/ for details.
+  const calculate = MODEL.calculate;
 
-    const ads = (opensPerMonth / 1000) * input.niche.adRpm;
-
-    const sponsorSlots = Math.max(1, Math.floor(input.sends / 2));
-    const sponsor =
-      (opensPerMonth / input.sends / 1000) *
-      input.niche.sponsorCpm *
-      sponsorSlots;
-
-    const paid =
-      input.subscribers * input.niche.paidConversion * input.paidPrice;
-
-    const low = ads * 0.7 + sponsor * 0.65 + paid * 0.55;
-    const high = ads * 1.15 + sponsor * 1.25 + paid * 1.35;
-    const mid = ads + sponsor + paid;
-
-    return { ads, sponsor, paid, low, high, mid, opensPerMonth };
-  }
+  let lastResult = null;
 
   function render(input, outcome, options) {
+    lastResult = { input, outcome };
     totalRange.textContent = `${money(outcome.low)} – ${money(outcome.high)}`;
     adsValue.textContent = money(outcome.ads);
     sponsorValue.textContent = money(outcome.sponsor);
     paidValue.textContent = money(outcome.paid);
+
+    if (EXTRAS.renderRangeBand && rangeBand) {
+      EXTRAS.renderRangeBand(
+        rangeBand,
+        outcome.low,
+        outcome.high,
+        outcome.mid,
+        money
+      );
+    }
+    if (nextSteps) nextSteps.hidden = false;
+    if (copyBtn) copyBtn.disabled = false;
 
     const openRatePct = input.openRate.toFixed(
       Number.isInteger(input.openRate) ? 0 : 1
@@ -252,12 +217,68 @@
   }
 
   function resetResults(message) {
+    lastResult = null;
     totalRange.textContent = "—";
     adsValue.textContent = "—";
     sponsorValue.textContent = "—";
     paidValue.textContent = "—";
     resultsNote.textContent =
       message || "Enter your list metrics, then calculate.";
+    if (EXTRAS.hideRangeBand) EXTRAS.hideRangeBand(rangeBand);
+    if (nextSteps) nextSteps.hidden = true;
+    if (copyBtn) copyBtn.disabled = true;
+  }
+
+  function buildSummary() {
+    if (!lastResult) return "";
+    const i = lastResult.input;
+    const o = lastResult.outcome;
+    return (
+      `LetterROI — newsletter revenue estimate\n` +
+      `${i.subscribers.toLocaleString()} subscribers · ${i.openRate}% open · ` +
+      `${i.sends} emails/mo · ${i.niche.label}\n` +
+      `Estimated monthly revenue: ${money(o.low)}–${money(o.high)} ` +
+      `(midpoint ${money(o.mid)})\n` +
+      `Ads ${money(o.ads)} · Sponsorships ${money(o.sponsor)} · Paid subs ${money(
+        o.paid
+      )}\n` +
+      `Directional estimate via https://mangrovetools.com/letterroi/`
+    );
+  }
+
+  // Deep-link prefill: /letterroi/?subscribers=5000&openRate=38&niche=tech
+  function applyQueryPrefill() {
+    let params;
+    try {
+      params = new URLSearchParams(window.location.search);
+    } catch (err) {
+      return;
+    }
+    const map = {
+      subscribers: "subscribers",
+      openRate: "open-rate",
+      sends: "sends",
+      paidPrice: "paid-price",
+    };
+    let touched = false;
+    Object.keys(map).forEach((key) => {
+      if (!params.has(key)) return;
+      const el = document.getElementById(map[key]);
+      const raw = params.get(key);
+      if (el && raw !== null && raw.trim() !== "" && Number.isFinite(Number(raw))) {
+        el.value = raw;
+        touched = true;
+      }
+    });
+    const nicheParam = params.get("niche");
+    if (nicheParam && NICHE_PRESETS[nicheParam]) {
+      const nicheEl = document.getElementById("niche");
+      if (nicheEl) {
+        nicheEl.value = nicheParam;
+        touched = true;
+      }
+    }
+    return touched;
   }
 
   function buildAffiliateUrl() {
@@ -318,6 +339,13 @@
   form.addEventListener("input", onInput);
   form.addEventListener("change", onInput);
 
+  if (EXTRAS.wireCopyButton) EXTRAS.wireCopyButton(copyBtn, buildSummary);
+
   applyAffiliateLinks();
   resetResults();
+
+  // Prefilled from the home hero (or a shared link) → show the result at once.
+  if (applyQueryPrefill()) {
+    runCalculation({ showErrors: false, animate: true });
+  }
 })();

@@ -945,6 +945,32 @@ summary:focus-visible {
   border-bottom: 0;
 }
 
+.maker-card {
+  display: flex;
+  gap: var(--space-md);
+  align-items: flex-start;
+  margin: 1.25rem 0 1.75rem;
+  padding: var(--space-md) var(--space-lg);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.maker-avatar {
+  flex-shrink: 0;
+  width: 64px;
+  height: auto;
+}
+
+.maker-body p {
+  margin: 0 0 0.75rem;
+}
+
+.maker-body p:last-child {
+  margin-bottom: 0;
+}
+
 .page-path {
   margin: 2.75rem 0 0;
   padding-top: 1.5rem;

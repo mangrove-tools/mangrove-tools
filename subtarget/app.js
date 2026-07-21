@@ -25,6 +25,11 @@
   const churnValue = document.getElementById("churn-value");
   const beehiivLink = document.getElementById("beehiiv-link");
   const faqBeehiivLink = document.getElementById("faq-beehiiv-link");
+  const rangeBand = document.getElementById("range-band");
+  const nextSteps = document.getElementById("next-steps");
+  const copyBtn = document.getElementById("copy-summary");
+  const EXTRAS = window.MangroveToolExtras || {};
+  let lastResult = null;
 
   const fieldIds = {
     targetRevenue: "target-revenue",
@@ -281,10 +286,23 @@
   }
 
   function render(input, outcome, options) {
+    lastResult = { input, outcome };
     totalRange.textContent = `${subs(outcome.low)} – ${subs(outcome.high)}`;
     subsValue.textContent = subs(outcome.subsNeeded);
     netValue.textContent = moneyExact(outcome.blendedNet);
     runRateValue.textContent = money(outcome.annualRunRate);
+
+    if (EXTRAS.renderRangeBand && rangeBand) {
+      EXTRAS.renderRangeBand(
+        rangeBand,
+        outcome.low,
+        outcome.high,
+        outcome.subsNeeded,
+        subs
+      );
+    }
+    if (nextSteps) nextSteps.hidden = false;
+    if (copyBtn) copyBtn.disabled = false;
 
     if (outcome.churnReplacements !== null) {
       churnRow.hidden = false;
@@ -320,6 +338,7 @@
   }
 
   function resetResults(message) {
+    lastResult = null;
     totalRange.textContent = "—";
     subsValue.textContent = "—";
     netValue.textContent = "—";
@@ -329,6 +348,30 @@
     resultsNote.textContent =
       message ||
       "Enter your revenue goal and subscription price, then calculate.";
+    if (EXTRAS.hideRangeBand) EXTRAS.hideRangeBand(rangeBand);
+    if (nextSteps) nextSteps.hidden = true;
+    if (copyBtn) copyBtn.disabled = true;
+  }
+
+  function buildSummary() {
+    if (!lastResult) return "";
+    const i = lastResult.input;
+    const o = lastResult.outcome;
+    let line =
+      `SubTarget — paid subscriber goal\n` +
+      `Goal ${money(i.targetRevenue)}/mo at ${moneyExact(
+        i.monthlyPrice
+      )}/mo · ${i.platformFee}% platform fee\n` +
+      `Paying subscribers needed: ${subs(o.subsNeeded)} ` +
+      `(band ${subs(o.low)}–${subs(o.high)})\n` +
+      `Net per paying sub: ${moneyExact(o.blendedNet)} · annual run rate ${money(
+        o.annualRunRate
+      )}`;
+    if (o.churnReplacements !== null) {
+      line += `\nChurn replacements: ~${subs(o.churnReplacements)}/mo`;
+    }
+    line += `\nDirectional estimate via https://mangrovetools.com/subtarget/`;
+    return line;
   }
 
   function buildAffiliateUrl() {
@@ -388,6 +431,8 @@
   form.addEventListener("submit", onSubmit);
   form.addEventListener("input", onInput);
   form.addEventListener("change", onInput);
+
+  if (EXTRAS.wireCopyButton) EXTRAS.wireCopyButton(copyBtn, buildSummary);
 
   applyAffiliateLinks();
   resetResults();

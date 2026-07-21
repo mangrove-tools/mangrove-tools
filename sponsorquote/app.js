@@ -35,6 +35,11 @@
   const beehiivLink = document.getElementById("beehiiv-link");
   const faqBeehiivLink = document.getElementById("faq-beehiiv-link");
   const customCpmField = document.getElementById("custom-cpm-field");
+  const rangeBand = document.getElementById("range-band");
+  const nextSteps = document.getElementById("next-steps");
+  const copyBtn = document.getElementById("copy-summary");
+  const EXTRAS = window.MangroveToolExtras || {};
+  let lastResult = null;
 
   const fieldIds = {
     subscribers: "subscribers",
@@ -215,10 +220,23 @@
   }
 
   function render(input, outcome, options) {
+    lastResult = { input, outcome };
     totalRange.textContent = `${money(outcome.low)} – ${money(outcome.high)}`;
     flatValue.textContent = money(outcome.mid);
     cpmValue.textContent = moneyExact(outcome.impliedCpm);
     opensValue.textContent = Math.round(outcome.opens).toLocaleString();
+
+    if (EXTRAS.renderRangeBand && rangeBand) {
+      EXTRAS.renderRangeBand(
+        rangeBand,
+        outcome.low,
+        outcome.high,
+        outcome.mid,
+        money
+      );
+    }
+    if (nextSteps) nextSteps.hidden = false;
+    if (copyBtn) copyBtn.disabled = false;
 
     const openRatePct = input.openRate.toFixed(
       Number.isInteger(input.openRate) ? 0 : 1
@@ -244,6 +262,7 @@
   }
 
   function resetResults(message) {
+    lastResult = null;
     totalRange.textContent = "—";
     flatValue.textContent = "—";
     cpmValue.textContent = "—";
@@ -251,6 +270,27 @@
     resultsNote.textContent =
       message ||
       "Enter list size, open rate, and niche to build a rate card.";
+    if (EXTRAS.hideRangeBand) EXTRAS.hideRangeBand(rangeBand);
+    if (nextSteps) nextSteps.hidden = true;
+    if (copyBtn) copyBtn.disabled = true;
+  }
+
+  function buildSummary() {
+    if (!lastResult) return "";
+    const i = lastResult.input;
+    const o = lastResult.outcome;
+    return (
+      `SponsorQuote — newsletter sponsorship rate\n` +
+      `${i.subscribers.toLocaleString()} subscribers · ${i.openRate}% open · ` +
+      `${i.nicheLabel} ($${i.nicheCpm} CPM) · ${i.placement.label}\n` +
+      `Suggested flat rate: ${money(o.mid)} (band ${money(o.low)}–${money(
+        o.high
+      )})\n` +
+      `Implied CPM: ${moneyExact(o.impliedCpm)} · ~${Math.round(
+        o.opens
+      ).toLocaleString()} opens/issue\n` +
+      `Directional estimate via https://mangrovetools.com/sponsorquote/`
+    );
   }
 
   function buildAffiliateUrl() {
@@ -311,6 +351,8 @@
   form.addEventListener("submit", onSubmit);
   form.addEventListener("input", onInput);
   form.addEventListener("change", onInput);
+
+  if (EXTRAS.wireCopyButton) EXTRAS.wireCopyButton(copyBtn, buildSummary);
 
   applyAffiliateLinks();
   syncCustomCpmVisibility();

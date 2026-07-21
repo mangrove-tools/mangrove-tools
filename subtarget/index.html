@@ -371,6 +371,17 @@
             Enter your revenue goal and subscription price, then calculate.
           </p>
 
+          <div class="range-band" id="range-band" role="img" hidden>
+            <div class="range-band-track">
+              <span class="range-band-fill"></span>
+              <span class="range-band-mid"></span>
+            </div>
+            <div class="range-band-scale">
+              <span class="range-band-low">—</span>
+              <span class="range-band-high">—</span>
+            </div>
+          </div>
+
           <ul class="streams" id="streams">
             <li>
               <span>Point estimate</span>
@@ -389,6 +400,18 @@
               <strong id="churn-value" aria-live="polite">—</strong>
             </li>
           </ul>
+
+          <div class="result-actions">
+            <button type="button" class="ghost-btn" id="copy-summary" disabled>
+              Copy summary
+            </button>
+          </div>
+
+          <div class="next-steps" id="next-steps" hidden>
+            <p class="next-steps-label">Next steps</p>
+            <a href="/sponsorquote/">Price a sponsorship →</a>
+            <a href="/letterroi/">See total revenue →</a>
+          </div>
 
           <aside class="cta" id="cta">
             <h2>Ready to chase that subscriber count?</h2>
@@ -446,7 +469,8 @@
           Related:
           <a href="/letterroi/">LetterROI</a> estimates forward revenue from
           list size ·
-          <a href="/sponsorquote/">SponsorQuote</a> prices sponsorships.
+          <a href="/sponsorquote/">SponsorQuote</a> prices sponsorships ·
+          <a href="/methodology/">How the numbers work</a>.
         </p>
       </section>
 
@@ -534,6 +558,7 @@
       </div>
     </footer>
 
+    <script src="/shared/tool-extras.js"></script>
     <script src="./config.js"></script>
     <script src="./app.js"></script>
   </body>

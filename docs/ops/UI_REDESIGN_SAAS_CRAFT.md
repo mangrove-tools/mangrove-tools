@@ -2,7 +2,7 @@
 
 **Backlog ID:** P2-20  
 **Inspiration source:** [Dribbble · SaaS](https://dribbble.com/tags/saas)  
-**Status:** In progress / approved for implement  
+**Status:** v2 home ship — product UI frame (not blog vignette); tools denser; FAQ quieter  
 **Constraint:** Static HTML/CSS/JS. No React. No UI kit install. Keep Gulf Coast Mangrove identity.  
 **Free assets:** Curated from [People’s Design Library](https://docs.google.com/spreadsheets/d/13GStMRQfbn5glWVkUPqFtW1oovyKhMDdRKD3m5cstBg/edit?gid=0#gid=0) → `FREE_ASSET_SOURCES.md` (legal, on-brand only).
 

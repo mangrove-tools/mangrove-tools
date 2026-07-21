@@ -1,0 +1,25 @@
+# Cloudflare Pages / Netlify-compatible redirects
+# Trailing-slash canonicals
+/letterroi           /letterroi/           301
+/sponsorquote        /sponsorquote/        301
+/subtarget           /subtarget/           301
+/method              /method/              301
+/lead-dev            /lead-dev/            301
+/about               /about/               301
+/privacy             /privacy/             301
+/contact             /contact/             301
+/faq                 /faq/                 301
+/constitution        /constitution/        301
+/phasegate           /phasegate/           301
+/nichegate           /nichegate/           301
+/walkthrough         /walkthrough/         301
+/mediakit            /mediakit/            301
+/inventory           /inventory/           301
+/deliver/kit         /deliver/kit/         301
+/deliver/cohort      /deliver/cohort/      301
+
+# Keep ops/docs off the public site (force)
+/docs                /404.html             404!
+/docs/*              /404.html             404!
+/AGENTS.md           /404.html             404!
+/README.md           /404.html             404!

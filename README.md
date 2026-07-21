@@ -28,8 +28,13 @@ python3 scripts/check-links.py
 
 ## Deploy
 
-Redeploy the **entire** project folder to Netlify (not just a tool subfolder).
-Production deploy requires owner approval.
+Publish the **entire repo root** (not a tool subfolder). No build step.
+
+**Production host:** Porkbun Static Hosting + GitHub Connect to `main` — see `docs/setup/PORKBUN_HOSTING.md`.
+
+**Optional stronger edge (CSP / redirects):** [Cloudflare Pages](https://pages.cloudflare.com/) with Porkbun DNS — `docs/setup/CLOUDFLARE_PAGES.md`.
+
+**Backup:** Netlify via `netlify.toml` (pause/remove custom domain after Porkbun is stable).
 
 Live URLs:
 

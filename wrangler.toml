@@ -1,0 +1,5 @@
+# Optional Wrangler config for Cloudflare Pages (direct upload / CI).
+# Dashboard Git integration does not require this file.
+name = "mangrove-tools"
+compatibility_date = "2026-07-20"
+pages_build_output_dir = "."

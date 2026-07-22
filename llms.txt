@@ -9,7 +9,7 @@
 - [SubTarget](https://mangrovetools.com/subtarget/): Paid newsletter subscriber goal calculator (revenue target → paying subs needed + band)
 - [Media Kit Composer](https://mangrovetools.com/mediakit/): Print-ready newsletter media kit from audience stats and rates
 - [Inventory Planner](https://mangrovetools.com/inventory/): Sponsorship inventory over time (slots × cadence × fill × exclusivity)
-- [Home](https://mangrovetools.com/): Tool directory with a live LetterROI estimate in the hero
+- [Home](https://mangrovetools.com/): Split-screen hero — choose calculators or Lead-Dev products
 
 ## Guides & methodology
 
@@ -25,7 +25,7 @@
 - [Constitution Builder](https://mangrovetools.com/constitution/): Downloadable starter AGENTS.md + session brief
 - [Phase Gate](https://mangrovetools.com/phasegate/): Phases 1–3 readiness diagnostic + ordered backlog
 - [Niche Gate](https://mangrovetools.com/nichegate/): Expansion idea filter — build at most one
-- [Lead-Dev offers](https://mangrovetools.com/lead-dev/): Offer Fit quiz, template kit, cohort, done-with-you Agent OS Install
+- [Lead-Dev offers](https://mangrovetools.com/lead-dev/): Offer Fit quiz, template kit, cohort, Full-Stack Kit
 
 ## About
 

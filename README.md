@@ -5,7 +5,7 @@ Umbrella site for free micro-tools and Lead-Dev offers.
 - **LetterROI** at `/letterroi/` — newsletter revenue calculator
 - **SponsorQuote** at `/sponsorquote/` — newsletter sponsorship rate calculator
 - **Method** at `/method/` — free Lead-Dev methodology article
-- **Lead-Dev** at `/lead-dev/` — kit, cohort, and done-with-you offers
+- **Lead-Dev** at `/lead-dev/` — kit, cohort, and Full-Stack Kit
 - **About / Privacy / Contact** at `/about/`, `/privacy/`, `/contact/`
 
 ## Local
@@ -54,7 +54,7 @@ Live URLs:
 
 ## Lead-Dev checkout
 
-Configure Kit + cohort checkout URLs in `lead-dev/config.js`. DWY is email-only.
+Configure Kit + cohort checkout URLs in `lead-dev/config.js`. Full-Stack Kit is email-only.
 Setup checklist: `docs/setup/LEAD_DEV_REVENUE.md`.
 Affiliate via codes to create: `docs/setup/AFFILIATE_VIA_CODES.md`.
 

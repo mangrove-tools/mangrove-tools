@@ -10,7 +10,7 @@ Contact page email: `contact/index.html` (keep in sync)
 | --- | --- | --- |
 | Lead-Dev Kit | Self-serve checkout | None after purchase |
 | Ship With a Lead-Dev Agent | Self-serve checkout (self-paced) | None — optional email if they reach out |
-| Agent OS Install (DWY) | Email inquiry only | Only if they email you |
+| Full-Stack Kit (Premium) | Email inquiry only | Only if they email you |
 
 No booking calendar. No live cohort facilitation required.
 
@@ -30,7 +30,7 @@ No booking calendar. No live cohort facilitation required.
 | --- | --- |
 | Lead-Dev Kit | $49–$149 |
 | Ship With a Lead-Dev Agent (self-serve) | $297–$997 |
-| Agent OS Install (DWY) | $499–$2,500 (Starter / Standard / Plus) |
+| Full-Stack Kit (Premium) | $297 |
 
 Set **final** prices inside the bands in your checkout product, then update on-page copy if you want a single number instead of a range.
 
@@ -38,7 +38,7 @@ Set **final** prices inside the bands in your checkout product, then update on-p
 
 1. Template pack (Kit)  
 2. Self-serve cohort product  
-3. DWY via email inquiries  
+3. Full-Stack Kit via email inquiries  
 
 ## Digital delivery (live)
 
@@ -61,9 +61,9 @@ Rebuild zips from `docs/lead-dev-products/` when templates/course content change
 - [ ] Confirm tax / payout settings with your provider (owner only)  
 - [x] Paste `KIT_CHECKOUT_URL` and `COHORT_SIGNUP_URL` into `lead-dev/config.js`  
 - [x] Wire Stripe after-payment redirects to `/deliver/kit/` and `/deliver/cohort/`  
-- [x] Confirm DWY button opens mailto to your inbox  
+- [x] Confirm Full-Stack Kit email opens mailto to your inbox  
 - [x] Pack license included in zip `LICENSE.txt`  
-- [ ] DWY: SOW + payment received before kickoff (only after email intake)  
+- [ ] Full-Stack Kit: payment received before kickoff (only after email intake)  
 
 ## Approval boundaries
 

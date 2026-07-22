@@ -11,7 +11,7 @@ Do not treat this as a rewrite brief. Prefer incremental improvement of what alr
 
 ## 1. Concise product description
 
-Mangrove Tools is a **static Netlify library** of free, single-purpose in-browser calculators for newsletter creators, plus a **Lead-Dev** path (methodology, studio wizards, and paid kit/cohort/DWY offers). Brand: Naples / Gulf Coast calm — paper, pine, terracotta; Fraunces + Outfit.
+Mangrove Tools is a **static Netlify library** of free, single-purpose in-browser calculators for newsletter creators, plus a **Lead-Dev** path (methodology, studio wizards, and paid kit/cohort/Full-Stack Kit). Brand: Naples / Gulf Coast calm — paper, pine, terracotta; Fraunces + Outfit.
 
 ---
 

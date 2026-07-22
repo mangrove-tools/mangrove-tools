@@ -6,9 +6,9 @@ Owner waived “more newsletter math.” Implement the unique set from the expan
 
 | Order | Ship | Route | Depends on | Monetization |
 | --- | --- | --- | --- | --- |
-| 1 | Offer Fit | `/lead-dev/#offer-fit` | Live Lead-Dev CTAs | Routes to Kit / Cohort / DWY email |
+| 1 | Offer Fit | `/lead-dev/#offer-fit` | Live Lead-Dev CTAs | Routes to Kit / Cohort / Full-Stack Kit email |
 | 2 | Constitution Builder | `/constitution/` | Offer Fit CTAs exist | Lead-Dev Kit upsell |
-| 3 | Phase Gate | `/phasegate/` | Method phases + Constitution | Kit / Cohort / DWY |
+| 3 | Phase Gate | `/phasegate/` | Method phases + Constitution | Kit / Cohort / Full-Stack Kit |
 | 4 | Niche Gate | `/nichegate/` | Phase Gate rubric language | Cohort / Kit |
 | 5 | Method Walkthrough | `/walkthrough/` | Method + Lead-Dev | Kit / Cohort |
 | 6 | Media Kit Composer | `/mediakit/` | SponsorQuote family | Soft beehiiv affiliate |

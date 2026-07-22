@@ -35,12 +35,12 @@
       content="Tools that earn their keep. Free newsletter monetization calculators and a Lead-Dev system for shipping with AI agents — from Naples, Florida."
     />
     <meta property="og:url" content="https://mangrovetools.com/" />
-    <meta property="og:image" content="https://mangrovetools.com/og.jpg" />
+    <meta property="og:image" content="https://mangrovetools.com/og-home-split.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta
       property="og:image:alt"
-      content="Mangrove Tools — free calculators from Naples, Florida"
+      content="Mangrove Tools — choose your path: free newsletter calculators or Lead-Dev AI agent templates"
     />
 
     <meta name="twitter:card" content="summary_large_image" />
@@ -50,9 +50,9 @@
     />
     <meta
       name="twitter:description"
-      content="LetterROI, SponsorQuote, SubTarget, Media Kit, Inventory — plus free Lead-Dev studio tools."
+      content="LetterROI, SponsorQuote, SubTarget, Media Kit, Inventory — plus Lead-Dev template kit and cohort."
     />
-    <meta name="twitter:image" content="https://mangrovetools.com/og.jpg" />
+    <meta name="twitter:image" content="https://mangrovetools.com/og-home-split.png" />
     <meta
       name="twitter:image:alt"
       content="Mangrove Tools — free calculators from Naples, Florida"
@@ -184,114 +184,37 @@
         />
       </a>
       <nav class="site-nav" aria-label="Primary">
-        <a href="/" aria-current="page">Tools</a>
-        <a href="/method/">Method</a>
-        <a href="/lead-dev/">Lead-Dev</a>
+        <a href="/#tools" aria-current="page">Tools</a>
+        <a href="/guides/">Guides</a>
         <a href="/about/">About</a>
+        <a href="/lead-dev/">Lead-Dev Products</a>
       </nav>
     </header>
 
     <main class="shell shell-home" id="main">
-      <section class="home-stage reveal" aria-labelledby="home-brand">
-        <div class="home-stage-copy">
-          <p class="hero-meta">
-            <span>No signup</span>
-            <span>Runs in your browser</span>
-            <span>Instant results</span>
+      <!-- Split-screen hero — click either side to jump to that funnel -->
+      <section class="home-split" aria-label="Choose your path">
+        <!-- LEFT: Calculators funnel -->
+        <div class="split-panel split-panel-left" data-goto="#tools" tabindex="0" role="button" aria-label="Go to newsletter calculators">
+          <p class="split-panel-label">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M8 1v14M1 8h14" stroke-linecap="round"/></svg>
+            Free calculators
           </p>
-          <h1 id="home-brand">Know what your newsletter is worth.</h1>
-          <p class="hero-tagline">Free, no-signup calculators for creators.</p>
-          <p class="lede">
-            Revenue, sponsorship rates, and subscriber goals — from your real
-            numbers. Type it in on the right, get a range you can act on, then
-            take the summary with you.
-          </p>
-          <p class="cta-row">
-            <a class="btn" href="#tools">See all calculators</a>
-          </p>
+          <h2>Know what your newsletter is worth.</h2>
+          <p>Revenue ranges, sponsorship rates, and subscriber goals — from your real numbers.</p>
+          <span class="split-panel-cta">Start here →</span>
         </div>
 
-        <aside
-          class="product-frame reveal reveal-delay-1"
-          aria-label="LetterROI quick revenue estimate"
-        >
-          <div class="product-frame-bar">
-            <span class="product-frame-title">LetterROI</span>
-            <span class="product-frame-badge">Live estimate</span>
-          </div>
-          <form class="product-frame-body" id="home-calc" novalidate onsubmit="return false">
-            <div class="product-frame-fields">
-              <div class="product-field">
-                <label class="product-field-label" for="home-subscribers"
-                  >Subscribers</label
-                >
-                <input
-                  class="product-field-input"
-                  id="home-subscribers"
-                  name="subscribers"
-                  type="number"
-                  inputmode="numeric"
-                  min="0"
-                  max="10000000"
-                  step="1"
-                  value="5000"
-                  autocomplete="off"
-                />
-              </div>
-              <div class="product-field">
-                <label class="product-field-label" for="home-open-rate"
-                  >Open rate (%)</label
-                >
-                <input
-                  class="product-field-input"
-                  id="home-open-rate"
-                  name="openRate"
-                  type="number"
-                  inputmode="decimal"
-                  min="0"
-                  max="100"
-                  step="0.1"
-                  value="38"
-                  autocomplete="off"
-                />
-              </div>
-              <div class="product-field product-field-wide">
-                <label class="product-field-label" for="home-niche">Niche</label>
-                <select class="product-field-input" id="home-niche" name="niche">
-                  <option value="finance">Finance / investing</option>
-                  <option value="tech" selected>Tech / startups</option>
-                  <option value="health">Health / wellness</option>
-                  <option value="lifestyle">Lifestyle / culture</option>
-                  <option value="general">General interest</option>
-                </select>
-              </div>
-            </div>
-            <div class="product-frame-result">
-              <p class="product-frame-kicker">Estimated monthly revenue</p>
-              <p class="product-frame-total" id="home-total" aria-live="polite">
-                $—<span>/mo</span>
-              </p>
-              <div class="range-band" id="home-range-band" role="img">
-                <div class="range-band-track">
-                  <span class="range-band-fill"></span>
-                  <span class="range-band-mid"></span>
-                </div>
-                <div class="range-band-scale">
-                  <span class="range-band-low">—</span>
-                  <span class="range-band-high">—</span>
-                </div>
-              </div>
-              <ul class="product-frame-breakdown">
-                <li><span>Ads</span><span id="home-ads">—</span></li>
-                <li><span>Sponsorships</span><span id="home-sponsor">—</span></li>
-                <li><span>Paid subs</span><span id="home-paid">—</span></li>
-              </ul>
-            </div>
-          </form>
-          <a class="product-frame-link" id="home-full-link" href="/letterroi/"
-            >Open full calculator →</a
-          >
-        </aside>
+        <!-- RIGHT: Lead-Dev products funnel -->
+        <div class="split-panel split-panel-right" data-goto="#lead-dev-cta" tabindex="0" role="button" aria-label="Go to Lead-Dev products">
+          <p class="split-panel-label">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M8 2l1.5 3 3.5.5-2.5 2.5.6 3.5L8 10l-3.1 1.5.6-3.5L3 5.5 6.5 5 8 2z" stroke-linejoin="round"/></svg>
+            Lead-Dev products
+          </p>
+          <h2>Ship with AI agents like a lead developer.</h2>
+          <p>Templates, cohorts, and a methodology for running coding agents with discipline.</p>
+          <span class="split-panel-cta">Explore Lead-Dev →</span>
+        </div>
       </section>
 
       <section
@@ -409,6 +332,7 @@
 
       <section
         class="section-block section-product reveal reveal-delay-2"
+        id="lead-dev-cta"
         aria-labelledby="path-title"
       >
         <p class="section-kicker">Also from Mangrove Tools</p>
@@ -416,8 +340,8 @@
         <p class="section-intro">
           Separate from the calculators: <strong>Lead-Dev</strong> is our system
           for running AI agents like a disciplined lead developer — a free
-          method article, a constitution builder, and optional paid templates.
-          Unrelated to the tools above, so skip it if it&rsquo;s not for you.
+          method article, a constitution builder, and optional paid templates for
+          common stacks. Unrelated to the tools above, so skip it if it&rsquo;s not for you.
         </p>
         <p class="cta-row is-compact">
           <a class="btn btn-secondary" href="/lead-dev/">Explore Lead-Dev</a>
@@ -510,6 +434,6 @@
 
     <script src="/shared/letterroi-model.js"></script>
     <script src="/shared/tool-extras.js"></script>
-    <script src="/home.js"></script>
+    <script src="/home-split.js"></script>
   </body>
 </html>

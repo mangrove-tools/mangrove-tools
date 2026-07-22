@@ -1,4 +1,6 @@
 (function () {
+  "use strict";
+
   const cfg = window.LeadDevConfig || {};
   const email =
     typeof cfg.CONTACT_EMAIL === "string" && cfg.CONTACT_EMAIL.trim()
@@ -42,9 +44,9 @@
   applyCta("cta-kit", cfg.KIT_CHECKOUT_URL, "Buy Lead-Dev Kit");
   applyCta("cta-cohort", cfg.COHORT_SIGNUP_URL, "Get the cohort (self-serve)");
   applyMailtoCta(
-    "cta-dwy",
-    "Agent OS Install inquiry",
-    "Email about Agent OS Install"
+    "cta-premium",
+    "Full-Stack Lead-Dev Kit inquiry",
+    "Email about Full-Stack Kit"
   );
 
   const emailEl = document.getElementById("lead-dev-email");
@@ -77,27 +79,27 @@
         statusClass: "is-yellow",
         headline: "Read the method before buying",
         why:
-          "Lead-Dev assumes a real product contract and a repo you will touch. Paid offers won’t fix “build me Uber overnight” prompting.",
-        avoid: "Skip Kit, Cohort, and DWY until you want constraints.",
+          "Lead-Dev assumes a real product contract and a repo you will touch. Paid offers won't fix \u201cbuild me Uber overnight\u201d prompting.",
+        avoid: "Skip Kit, Cohort, and Premium until you want constraints.",
         primary: "method",
       };
     }
 
-    if (help === "install" && budget === "dwy" && repo === "yes" && mess !== "green") {
+    if (budget === "premium") {
       return {
         status: "Primary fit",
         statusClass: "is-green",
-        headline: "Agent OS Install (email)",
+        headline: "Full-Stack Lead-Dev Kit",
         why:
-          "You want the system installed for you on a real, non-greenfield repo and your budget matches the done-with-you band.",
-        avoid: "Don’t buy the Cohort first if you mainly want someone else to install the OS.",
-        primary: "dwy",
+          "You want the full Kit plus checklists, rubric, and bonus prompts for your stack.",
+        avoid: "Don't skip the free method and constitution first \u2014 the Kit assumes you've read it.",
+        primary: "premium",
       };
     }
 
     if (
       (help === "guided" || mess === "blocked" || mess === "messy") &&
-      (budget === "cohort" || budget === "dwy") &&
+      budget === "cohort" &&
       (time === "mid" || time === "high") &&
       repo !== "no"
     ) {
@@ -106,35 +108,44 @@
         statusClass: "is-green",
         headline: "Ship With a Lead-Dev Agent (self-serve cohort)",
         why:
-          "You have (or will open) a repo, can put in focused hours, and want phased assignments — not just a file drop.",
+          "You have (or will open) a repo, can put in focused hours, and want phased assignments \u2014 not just a file drop.",
         avoid:
           budget === "kit"
             ? "Kit alone may leave you without a path when the repo fights back."
-            : "DWY is optional later if you still want hands-on install after the materials.",
+            : "Premium Kit is available if you want the full stack.",
         primary: "cohort",
       };
     }
 
-    if (help === "install" && budget !== "dwy") {
+    if (help === "install" && budget !== "premium") {
       return {
         status: "Right ladder, wrong tier",
         statusClass: "is-yellow",
-        headline: budget === "cohort" ? "Start with the cohort materials" : "Start with the Lead-Dev Kit",
+        headline:
+          budget === "cohort"
+            ? "Start with the cohort materials"
+            : "Start with the Lead-Dev Kit",
         why:
-          "You asked for install-for-me help, but your budget band doesn’t match Agent OS Install. Climb the ladder instead of forcing DWY.",
-        avoid: "Don’t email for DWY until budget and scope are real.",
+          "You asked for install-for-me help but your budget doesn't match the Full-Stack Kit band.",
+        avoid: "Read the method first.",
         primary: budget === "cohort" ? "cohort" : "kit",
       };
     }
 
-    if (time === "low" || help === "templates" || budget === "kit" || mess === "green") {
+    if (
+      time === "low" ||
+      help === "templates" ||
+      budget === "kit" ||
+      mess === "green"
+    ) {
       return {
         status: "Primary fit",
         statusClass: "is-green",
         headline: "Lead-Dev Kit",
         why:
           "Templates and a filled AGENTS.md match your time, help preference, or greenfield stage. Self-serve first.",
-        avoid: "Skip Cohort and DWY until you’ve adapted a constitution and felt the friction.",
+        avoid:
+          "Skip Cohort and Premium until you've adapted a constitution and felt the friction.",
         primary: "kit",
       };
     }
@@ -143,8 +154,9 @@
       status: "Primary fit",
       statusClass: "is-green",
       headline: "Lead-Dev Kit",
-      why: "Default honest ladder: start with constitution templates, then expand into cohort materials if you need a path.",
-      avoid: "Don’t jump to DWY without a contract and a repo.",
+      why:
+        "Default honest ladder: start with constitution templates, then expand into cohort or Premium if you need more.",
+      avoid: "Don't buy Premium without a contract and a repo.",
       primary: "kit",
     };
   }
@@ -156,7 +168,9 @@
 
     if (primary === "method") {
       parts.push('<a class="btn" href="/method/">Read the method</a>');
-      parts.push('<a class="text-cta" href="/constitution/">Try Constitution Builder</a>');
+      parts.push(
+        '<a class="text-cta" href="/constitution/">Try Constitution Builder</a>'
+      );
     } else if (primary === "kit") {
       if (kitUrl) {
         parts.push(
@@ -165,7 +179,9 @@
             '" target="_blank" rel="noopener noreferrer">Buy Lead-Dev Kit</a>'
         );
       }
-      parts.push('<a class="text-cta" href="/constitution/">Build a free starter AGENTS.md</a>');
+      parts.push(
+        '<a class="text-cta" href="/constitution/">Build a free starter AGENTS.md</a>'
+      );
       parts.push('<a class="text-cta" href="#offers">See all offers</a>');
     } else if (primary === "cohort") {
       if (cohortUrl) {
@@ -183,15 +199,17 @@
             '" target="_blank" rel="noopener noreferrer">Or start with the Kit</a>'
         );
       }
-    } else if (primary === "dwy") {
+    } else if (primary === "premium") {
       parts.push(
         '<a class="btn" href="mailto:' +
           email +
           "?subject=" +
-          encodeURIComponent("Agent OS Install inquiry") +
-          '">Email about Agent OS Install</a>'
+          encodeURIComponent("Full-Stack Lead-Dev Kit inquiry") +
+          '">Email about Full-Stack Kit</a>'
       );
-      parts.push('<a class="text-cta" href="/phasegate/">Self-check with Phase Gate</a>');
+      parts.push(
+        '<a class="text-cta" href="/phasegate/">Self-check with Phase Gate</a>'
+      );
     }
 
     ctasEl.innerHTML = parts.join("");
@@ -207,7 +225,11 @@
       contract: val("contract"),
       mess: val("mess"),
     };
-    if (Object.keys(answers).some(function (k) { return !answers[k]; })) {
+    if (
+      Object.keys(answers).some(function (k) {
+        return !answers[k];
+      })
+    ) {
       result.hidden = true;
       return;
     }

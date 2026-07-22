@@ -9,7 +9,7 @@ You are the **lead developer** for Mangrove Tools. You own product judgment, qua
 
 ## Product purpose
 
-Mangrove Tools is a free in-browser calculator library for creators, plus a path into the Lead-Dev agent operating system (methodology article, template kit, cohort, done-with-you setup).
+Mangrove Tools is a free in-browser calculator library for creators, plus a path into the Lead-Dev agent operating system (methodology article, template kit, cohort, premium template).
 
 **Audience:** newsletter creators and builders who need one clear answer from a tool; solo builders who want disciplined AI agent workflows.
 
@@ -49,7 +49,7 @@ Only after 1–3 are in good shape (or the owner explicitly waives):
 **Dual model:**
 
 1. **Niche affiliate + free utility collection** — tools rank, earn trust, convert via soft affiliate CTAs.
-2. **Lead-Dev paid offers** — template kit, cohort, done-with-you setup. Kit + cohort Stripe Payment Links are **owner-configured and live** in `lead-dev/config.js` (see `docs/setup/LEAD_DEV_REVENUE.md`). DWY is email-only. Do not invent alternate checkout URLs.
+2. **Lead-Dev paid offers** — template kit, cohort, premium Full-Stack Kit. Kit + cohort Stripe Payment Links are **owner-configured and live** in `lead-dev/config.js` (see `docs/setup/LEAD_DEV_REVENUE.md`). Premium Kit is email-only. Do not invent alternate checkout URLs.
 
 **Still out of scope** unless the owner explicitly approves: blog farms, entertainment/streaming, Q&A, social networks, forums, bio-link sites, job boards, crowdfunding, image networks, newsrooms, nonprofit platforms, account-based SaaS, ad networks, analytics SDKs, backends.
 

@@ -28,7 +28,7 @@ V1.0 ship items (P0-01…P0-10, SubTarget, studio expansion) are **done on produ
 | P1-12 | Home craft pass | UX | Home good but can deepen craft | First impression | SEO bounce | **Done 2026-07-20** — hero rule, index craft, focus-within, token spacing | `index.html`, `site.css` | Mobile + reduced-motion | P1-10 preferred | Med UX | M | Unsafe w/ home | Yes | Light copy OK | No |
 | P1-13 | Calculator UX audit | UX | Extreme/empty edges uneven | Task success | Affiliate after value | **Done 2026-07-20** — see `CALC_UX_AUDIT.md` | `letterroi/app.js`, `sponsorquote/app.js`, `subtarget/app.js` | Manual edge cases | None | Low | M | Safe per tool if sequential | No | No | No |
 | P1-14 | Tool shell unification (pilot) | Architecture | CSS duplication / brand drift | Consistency | Dev speed | **Done 2026-07-20** — `/tool-shell.css` + SubTarget/LetterROI/SponsorQuote on site shell | new `tool-shell.css` or `site.css`, one tool | Screenshot diff | P1-10 | Med | M | Unsafe across tools | Yes | No | No |
-| P1-15 | Lead-Dev conversion clarity | UX | Must stay honest about live checkout | Trust | Revenue | **Done 2026-07-20** — live Stripe + email DWY copy clarified | `lead-dev/index.html`, `lead-dev/app.js` | Click-through to Stripe (no purchase) | None | Low | S | Safe | Light | Copy OK | No |
+| P1-15 | Lead-Dev conversion clarity | UX | Must stay honest about live checkout | Trust | Revenue | **Done 2026-07-20** — live Stripe + email Full-Stack Kit copy clarified | `lead-dev/index.html`, `lead-dev/app.js` | Click-through to Stripe (no purchase) | None | Low | S | Safe | Light | Copy OK | No |
 
 **UI-system prerequisites:** P1-10 → P1-11 → (P1-14 or P1-12).  
 **Can ship without visual changes:** P0-A, P0-B, P0-C, P1-13 (logic-only), SEO items below.

@@ -30,7 +30,7 @@ Free, calm, Gulf Coast micro-tools that earn their keep — plus Lead-Dev for pe
 ## Value proposition
 
 - **Tools path:** Instant, private, in-browser math → trust → soft affiliate.  
-- **Lead-Dev path:** Method → studio self-checks → paid kit/cohort or email DWY.
+- **Lead-Dev path:** Method → studio self-checks → paid kit/cohort or email for Full-Stack.
 
 ## Primary success events
 
@@ -38,7 +38,7 @@ Free, calm, Gulf Coast micro-tools that earn their keep — plus Lead-Dev for pe
 | --- | --- |
 | Tools | User completes a calculation and understands the result |
 | Affiliate | User clicks soft Beehiiv CTA after value (not before) |
-| Lead-Dev | User starts checkout (Kit/Cohort) or emails for DWY |
+| Lead-Dev | User starts checkout (Kit/Cohort) or emails for Full-Stack Kit |
 | Trust | User finds About / Privacy / Contact without friction |
 
 ## Primary workflow

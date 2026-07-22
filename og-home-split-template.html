@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;900&family=Outfit:wght@400;600&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 1200px;
+    height: 630px;
+    font-family: 'Outfit', sans-serif;
+    background: #f7f4ef;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+  .bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(1300px 720px at 4% -6%, rgba(212, 220, 206, 1) 0%, transparent 54%),
+      radial-gradient(900px 580px at 100% 3%, rgba(200, 122, 83, 0.22) 0%, transparent 44%),
+      linear-gradient(180deg, #fdfbf7 0%, #f7f4ef 46%, #e5ebe4 100%);
+  }
+  .header {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 28px 52px 20px;
+    border-bottom: 1px solid rgba(20,36,28,0.12);
+  }
+  .brand {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #14241c;
+    letter-spacing: -0.03em;
+  }
+  .tag {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #4a5d4e;
+  }
+  .body {
+    position: relative;
+    z-index: 2;
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 40px 48px;
+  }
+  .panel-left {
+    border-right: 1px solid rgba(20,36,28,0.12);
+  }
+  .panel-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #4a5d4e;
+    margin-bottom: 14px;
+  }
+  .panel h2 {
+    font-family: 'Fraunces', serif;
+    font-size: 42px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    color: #14241c;
+    margin-bottom: 14px;
+  }
+  .panel p {
+    font-size: 16px;
+    line-height: 1.6;
+    color: #4a5d4e;
+    max-width: 36ch;
+  }
+  .divider {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 3;
+    background: #f7f4ef;
+    border: 1px solid rgba(20,36,28,0.12);
+    border-radius: 50px;
+    padding: 10px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #4a5d4e;
+  }
+  .footer {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    padding: 16px;
+    font-size: 12px;
+    color: #4a5d4e;
+    letter-spacing: 0.04em;
+  }
+</style>
+</head>
+<body>
+<div class="bg"></div>
+
+<div class="header">
+  <span class="brand">Mangrove Tools</span>
+  <span class="tag">mangrovetools.com</span>
+</div>
+
+<div class="body">
+  <div class="panel panel-left">
+    <p class="panel-label">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#4a5d4e" stroke-width="1.5"><path d="M8 1v14M1 8h14" stroke-linecap="round"/></svg>
+      Free calculators
+    </p>
+    <h2>Know what your newsletter is worth.</h2>
+    <p>Revenue ranges, sponsorship rates, and subscriber goals — from your real numbers.</p>
+  </div>
+
+  <div class="panel panel-right">
+    <p class="panel-label">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#4a5d4e" stroke-width="1.5"><path d="M8 2l1.5 3 3.5.5-2.5 2.5.6 3.5L8 10l-3.1 1.5.6-3.5L3 5.5 6.5 5 8 2z" stroke-linejoin="round"/></svg>
+      Lead-Dev products
+    </p>
+    <h2>Ship with AI agents like a lead developer.</h2>
+    <p>Templates, cohorts, and a methodology for running coding agents with discipline.</p>
+  </div>
+
+  <div class="divider">Choose your path</div>
+</div>
+
+<div class="footer">mangrovetools.com</div>
+</body>
+</html>

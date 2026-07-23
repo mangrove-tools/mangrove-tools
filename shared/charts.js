@@ -6,6 +6,25 @@
 
 'use strict';
 
+function getChartColors() {
+  const isDark = getComputedStyle(document.documentElement)
+    .getPropertyValue('--paper').trim() === '#0c0c0c';
+  if (isDark) {
+    return {
+      current: 'rgba(245, 243, 239, 0.15)',
+      recommended: '#e07a4f',
+      text: '#f5f3ef',
+      muted: '#9e9a93'
+    };
+  }
+  return {
+    current: 'rgba(20, 36, 28, 0.3)',
+    recommended: '#c87a53',
+    text: '#14241c',
+    muted: '#4a5d4e'
+  };
+}
+
 /**
  * Draw a horizontal bar chart (current vs recommended allocation).
  * @param {HTMLCanvasElement} canvas
@@ -23,12 +42,7 @@ function drawAllocationChart(canvas, data, unit) {
 
   const W = rect.width;
   const H = rect.height;
-  const colors = {
-    current: 'rgba(20, 36, 28, 0.3)',
-    recommended: '#c87a53',
-    text: '#14241c',
-    muted: '#4a5d4e'
-  };
+  const colors = getChartColors();
 
   const labelWidth = 100;
   const barAreaWidth = W - labelWidth - 16;
@@ -109,13 +123,14 @@ function drawForecastChart(canvas, historical, forecast, unit) {
   const W = rect.width;
   const H = rect.height;
   const pad = { top: 16, right: 16, bottom: 36, left: 56 };
+  const base = getChartColors();
   const colors = {
-    line: '#c87a53',
-    band: 'rgba(200, 122, 83, 0.15)',
-    historical: '#14241c',
-    grid: 'rgba(20, 36, 28, 0.1)',
-    text: '#4a5d4e',
-    axis: '#14241c'
+    line: base.recommended,
+    band: base.recommended === '#e07a4f' ? 'rgba(224, 122, 79, 0.15)' : 'rgba(200, 122, 83, 0.15)',
+    historical: base.text,
+    grid: base.muted === '#9e9a93' ? 'rgba(245, 243, 239, 0.08)' : 'rgba(20, 36, 28, 0.1)',
+    text: base.muted,
+    axis: base.text
   };
 
   ctx.clearRect(0, 0, W, H);

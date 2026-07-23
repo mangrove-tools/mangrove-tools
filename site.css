@@ -12,11 +12,12 @@
   --surface-2: #1e1e1b;
   --line: rgba(245, 243, 239, 0.09);
   --line-strong: rgba(245, 243, 239, 0.18);
-  --accent: #e07a4f;
-  --accent-text: #e07a4f;
-  --pine: #4a7c5e;
+  --accent: #308e7b;
+  --accent-text: #308e7b;
+  --pine: #308e7b;
+  --pine-dark: #256860;
   --ok-text: #5a9e72;
-  --danger-text: #c96a52;
+  --danger-text: #a85a52;
 
   /* Type */
   --font-display: "Fraunces", Georgia, serif;
@@ -95,7 +96,7 @@ body {
   z-index: -1;
   background:
     radial-gradient(ellipse 60% 40% at 15% 0%, rgba(74, 124, 94, 0.12) 0%, transparent 60%),
-    radial-gradient(ellipse 50% 35% at 85% 100%, rgba(224, 122, 79, 0.10) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 35% at 85% 100%, rgba(48, 142, 123, 0.10) 0%, transparent 55%),
     var(--paper);
 }
 
@@ -1105,7 +1106,7 @@ summary:focus-visible {
   outline: none;
   border-color: rgba(245, 243, 239, 0.4);
   background: var(--surface-2);
-  box-shadow: 0 0 0 3px rgba(224, 122, 79, 0.15);
+  box-shadow: 0 0 0 3px rgba(48, 142, 123, 0.15);
 }
 
 .product-frame-result {
@@ -1359,7 +1360,7 @@ summary:focus-visible {
   position: absolute;
   inset: 0;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--pine), var(--accent));
+  background: linear-gradient(90deg, var(--pine), var(--pine-dark));
   transform: scaleX(0);
   transform-origin: left center;
   transition: transform 0.6s var(--ease);
@@ -1497,7 +1498,7 @@ summary:focus-visible {
   border: 1px solid var(--line-strong);
   border-radius: 999px;
   color: var(--accent-text);
-  background: rgba(224, 122, 79, 0.08);
+  background: rgba(48, 142, 123, 0.08);
 }
 
 .hero-feature .eyebrow::before {
@@ -1506,7 +1507,7 @@ summary:focus-visible {
   height: 6px;
   border-radius: 50%;
   background: var(--accent);
-  box-shadow: 0 0 8px rgba(224, 122, 79, 0.6);
+  box-shadow: 0 0 8px rgba(48, 142, 123, 0.6);
 }
 
 .hero-headline {
@@ -1626,7 +1627,7 @@ summary:focus-visible {
   position: absolute;
   inset: 0;
   border-radius: 6px;
-  background: linear-gradient(135deg, rgba(224, 122, 79, 0.04) 0%, transparent 50%);
+  background: linear-gradient(135deg, rgba(48, 142, 123, 0.04) 0%, transparent 50%);
   pointer-events: none;
   opacity: 0.6;
 }

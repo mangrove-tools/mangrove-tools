@@ -12,7 +12,7 @@ function getChartColors() {
   if (isDark) {
     return {
       current: 'rgba(245, 243, 239, 0.15)',
-      recommended: '#e07a4f',
+      recommended: '#308e7b',
       text: '#f5f3ef',
       muted: '#9e9a93'
     };
@@ -126,7 +126,7 @@ function drawForecastChart(canvas, historical, forecast, unit) {
   const base = getChartColors();
   const colors = {
     line: base.recommended,
-    band: base.recommended === '#e07a4f' ? 'rgba(224, 122, 79, 0.15)' : 'rgba(200, 122, 83, 0.15)',
+    band: base.recommended === '#308e7b' ? 'rgba(48, 142, 123, 0.15)' : 'rgba(200, 122, 83, 0.15)',
     historical: base.text,
     grid: base.muted === '#9e9a93' ? 'rgba(245, 243, 239, 0.08)' : 'rgba(20, 36, 28, 0.1)',
     text: base.muted,

@@ -64,9 +64,12 @@
     document.getElementById("kit-contact").textContent = contact || "—";
 
     const ul = document.getElementById("kit-placements");
-    ul.innerHTML = (placements.length ? placements : ["Primary sponsorship", "Secondary / classified"]).map(function (p) {
-      return "<li>" + p.replace(/</g, "&lt;") + "</li>";
-    }).join("");
+    const items = (placements.length ? placements : ["Primary sponsorship", "Secondary / classified"]);
+    ul.replaceChildren(...items.map(function (p) {
+      const li = document.createElement("li");
+      li.textContent = p;
+      return li;
+    }));
 
     out.hidden = false;
     affiliate.hidden = false;

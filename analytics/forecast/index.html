@@ -140,15 +140,14 @@
             <label for="csv-input">Historical data (paste CSV or tab-separated)</label>
             <textarea id="csv-input" rows="6"
               placeholder="date,value&#10;2025-01,18500&#10;2025-02,19200&#10;2025-03,21000&#10;..."
-              style="width:100%;border:1px solid var(--line);border-radius:2px;padding:0.75rem;background:var(--surface);color:var(--ink);font:inherit;font-size:0.9rem;resize:vertical;"
             ></textarea>
             <p class="field-hint">Include a header row with column names (date,value). Dates in YYYY-MM or MM/YYYY format.</p>
           </div>
 
           <div id="manual-area" class="field-wide" hidden>
-            <p style="margin:0 0 0.5rem;font-size:0.78rem;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--ink-soft);">Manual entry (up to 24 months)</p>
+            <p class="manual-label">Manual entry (up to 24 months)</p>
             <div id="manual-rows"></div>
-            <button type="button" id="add-row" class="ghost-btn" style="margin-top:0.5rem;">+ Add month</button>
+            <button type="button" id="add-row" class="ghost-btn add-row">+ Add month</button>
           </div>
 
           <button type="submit" class="primary">Generate forecast</button>
@@ -163,13 +162,14 @@
             <p id="guardrail-text"></p>
           </div>
 
-          <div id="chart-wrap" hidden style="margin-bottom:1.5rem;">
-            <canvas id="forecast-chart" height="260" style="width:100%;max-width:500px;"></canvas>
+          <div id="chart-wrap" class="chart-wrap" hidden>
+            <canvas id="forecast-chart" height="260" aria-label="Forecast chart showing historical data and projected values with confidence bands"></canvas>
           </div>
 
           <div id="forecast-table-wrap" hidden>
             <div class="data-table-wrap">
               <table class="data-table" id="forecast-table">
+                <caption class="sr-only">Forecasted values per period with low and high confidence bands</caption>
                 <thead>
                   <tr>
                     <th>Period</th>
@@ -183,8 +183,8 @@
             </div>
           </div>
 
-          <div id="target-prob" hidden style="margin-top:1rem;padding:1rem;background:var(--surface-2);border-radius:2px;border-left:3px solid var(--accent);">
-            <p id="target-prob-text" style="margin:0;color:var(--ink-soft);font-size:0.95rem;line-height:1.6;"></p>
+          <div id="target-prob" class="target-prob" hidden>
+            <p id="target-prob-text" class="target-prob-text"></p>
           </div>
 
           <div class="next-steps" id="next-steps" hidden>

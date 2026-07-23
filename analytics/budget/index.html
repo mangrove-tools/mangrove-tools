@@ -146,13 +146,14 @@
             <p id="guardrail-text"></p>
           </div>
 
-          <div id="chart-wrap" hidden>
-            <canvas id="allocation-chart" height="200" style="width:100%;max-width:400px;"></canvas>
+          <div id="chart-wrap" class="chart-wrap" hidden>
+            <canvas id="allocation-chart" height="200" aria-label="Bar chart showing recommended budget allocation by channel"></canvas>
           </div>
 
           <div id="allocation-table-wrap" hidden>
             <div class="data-table-wrap">
               <table class="data-table" id="allocation-table">
+                <caption class="sr-only">Recommended budget allocation by channel</caption>
                 <thead>
                   <tr>
                     <th>Channel</th>

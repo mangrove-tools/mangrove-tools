@@ -40,14 +40,23 @@
   function addManualRow(monthVal, valueVal) {
     const row = document.createElement('div');
     row.className = 'manual-row';
-    row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.35rem;';
-    row.innerHTML = `
-      <input type="month" class="manual-month" value="${monthVal}"
-        style="border:1px solid var(--line);border-radius:2px;padding:0.55rem 0.7rem;background:var(--surface);color:var(--ink);font:inherit;font-size:0.9rem;" />
-      <input type="number" class="manual-value" inputmode="numeric" min="0" step="1" placeholder="Value"
-        value="${valueVal}"
-        style="border:1px solid var(--line);border-radius:2px;padding:0.55rem 0.7rem;background:var(--surface);color:var(--ink);font:inherit;font-size:0.9rem;" />
-    `;
+
+    const monthInput = document.createElement('input');
+    monthInput.type = 'month';
+    monthInput.className = 'manual-month';
+    monthInput.value = monthVal;
+
+    const valueInput = document.createElement('input');
+    valueInput.type = 'number';
+    valueInput.className = 'manual-value';
+    valueInput.inputMode = 'numeric';
+    valueInput.min = '0';
+    valueInput.step = '1';
+    valueInput.placeholder = 'Value';
+    valueInput.value = valueVal;
+
+    row.appendChild(monthInput);
+    row.appendChild(valueInput);
     manualRows.appendChild(row);
   }
 

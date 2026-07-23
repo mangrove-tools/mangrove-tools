@@ -220,6 +220,103 @@ body.tool-page {
   outline-offset: var(--focus-offset);
 }
 
+/* ─── Textarea (forecast CSV input) ─── */
+.inputs textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1rem;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.9rem;
+  resize: vertical;
+  transition: border-color 0.2s var(--ease), background 0.2s var(--ease),
+    box-shadow 0.2s var(--ease);
+}
+
+.inputs textarea:hover {
+  border-color: var(--line-strong);
+}
+
+.inputs textarea:focus-visible {
+  outline: none;
+  border-color: rgba(74, 93, 78, 0.45);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(74, 93, 78, 0.1);
+}
+
+/* ─── Manual data-entry rows (forecast) ─── */
+.manual-label {
+  margin: 0 0 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.manual-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.manual-row input {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 0.55rem 0.7rem;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.9rem;
+  transition: border-color 0.2s var(--ease);
+}
+
+.manual-row input:hover {
+  border-color: var(--line-strong);
+}
+
+.manual-row input:focus-visible {
+  outline: none;
+  border-color: rgba(74, 93, 78, 0.45);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(74, 93, 78, 0.1);
+}
+
+.add-row {
+  margin-top: 0.5rem;
+}
+
+/* ─── Chart wrapper + canvas ─── */
+.chart-wrap {
+  margin-bottom: 1.5rem;
+}
+
+.chart-wrap canvas {
+  display: block;
+  width: 100%;
+  max-width: 500px;
+  height: auto;
+}
+
+/* ─── Target-probability callout (forecast) ─── */
+.target-prob {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--surface-2);
+  border-radius: var(--radius);
+  border-left: 3px solid var(--accent);
+}
+
+.target-prob-text {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
 @media (hover: hover) {
   .primary:hover {
     transform: translateY(-1px);

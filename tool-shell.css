@@ -13,12 +13,12 @@ body.tool-page {
 .brand-tool {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-sm);
+  gap: 0.55rem;
   min-width: 0;
 }
 
 .brand-tool .brand-logo {
-  width: min(148px, 42vw);
+  width: min(38px, 11vw);
 }
 
 .brand-tool-name {

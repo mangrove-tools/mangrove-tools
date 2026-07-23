@@ -1,12 +1,12 @@
 # Mangrove Tools
 
-Umbrella site for free micro-tools and Lead-Dev offers.
+Free **marketing analytics** for small businesses and founders, plus a free **newsletter calculator** library. From Naples, Florida.
 
-- **LetterROI** at `/letterroi/` — newsletter revenue calculator
-- **SponsorQuote** at `/sponsorquote/` — newsletter sponsorship rate calculator
-- **Method** at `/method/` — free Lead-Dev methodology article
-- **Lead-Dev** at `/lead-dev/` — kit, cohort, and Full-Stack Kit
-- **About / Privacy / Contact** at `/about/`, `/privacy/`, `/contact/`
+- **Marketing analytics** (primary) — `/analytics/`
+  - **Budget Advisor** at `/analytics/budget/` — marketing budget optimizer with marginal ROI and recommended allocation
+  - **Revenue Forecaster** at `/analytics/forecast/` — trend, seasonality, and scenario forecasting
+- **Newsletter calculators** (secondary; SEO surface) — `/letterroi/`, `/sponsorquote/`, `/subtarget/`, `/mediakit/`, `/inventory/`
+- **Trust** — `/about/`, `/faq/`, `/privacy/`, `/contact/`
 
 ## Local
 
@@ -21,44 +21,38 @@ python3 scripts/check-links.py
 ```
 
 - Home: `http://localhost:5173/`
+- Analytics: `http://localhost:5173/analytics/`
 - LetterROI: `http://localhost:5173/letterroi/`
-- SponsorQuote: `http://localhost:5173/sponsorquote/`
-- Method: `http://localhost:5173/method/`
-- Lead-Dev: `http://localhost:5173/lead-dev/`
 
 ## Deploy
 
 Publish the **entire repo root** (not a tool subfolder). No build step.
 
-**Production host:** Porkbun Static Hosting + GitHub Connect to `main` — see `docs/setup/PORKBUN_HOSTING.md`.
+**Production host:** Vercel (primary) — `vercel.json` is the source of truth for rewrites, headers, cache, and the 404 rules for `/docs/*` and `*.md`. See `AGENTS.md` for the standing product contract.
 
-**Optional stronger edge (CSP / redirects):** [Cloudflare Pages](https://pages.cloudflare.com/) with Porkbun DNS — `docs/setup/CLOUDFLARE_PAGES.md`.
-
-**Backup:** Netlify via `netlify.toml` (pause/remove custom domain after Porkbun is stable).
+**Optional escape hatches:**
+- Cloudflare Pages — `wrangler.toml` (only used if you cut over from Vercel)
+- Netlify — `netlify.toml` + `_redirects` + `_headers` (legacy backup; keep in sync if you still use it)
 
 Live URLs:
 
 - `https://mangrovetools.com/`
+- `https://mangrovetools.com/analytics/`
+- `https://mangrovetools.com/analytics/budget/`
+- `https://mangrovetools.com/analytics/forecast/`
 - `https://mangrovetools.com/letterroi/`
 - `https://mangrovetools.com/sponsorquote/`
-- `https://mangrovetools.com/method/`
-- `https://mangrovetools.com/lead-dev/`
+- `https://mangrovetools.com/subtarget/`
+- `https://mangrovetools.com/mediakit/`
+- `https://mangrovetools.com/inventory/`
 
 ## Affiliate
 
 - `letterroi/config.js` → `via=letterroi`
 - `sponsorquote/config.js` → `via=sponsorquote`
 - `subtarget/config.js` → `via=subtarget`
-- Optional unused codes: `via=mangrove`, `via=leaddev` — see `docs/setup/AFFILIATE_VIA_CODES.md`
 - Do not change affiliate IDs without approval.
-
-## Lead-Dev checkout
-
-Configure Kit + cohort checkout URLs in `lead-dev/config.js`. Full-Stack Kit is email-only.
-Setup checklist: `docs/setup/LEAD_DEV_REVENUE.md`.
-Affiliate via codes to create: `docs/setup/AFFILIATE_VIA_CODES.md`.
 
 ## Agent ops
 
-Standing rules: `AGENTS.md`  
-Backlog / strategy: `docs/ops/`
+Standing rules: `AGENTS.md` · Backlog / strategy: `docs/ops/`

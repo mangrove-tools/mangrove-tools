@@ -12,11 +12,17 @@
     { "source": "/privacy", "destination": "/privacy/" },
     { "source": "/contact", "destination": "/contact/" },
     { "source": "/faq", "destination": "/faq/" },
-    { "source": "/tools", "destination": "/tools/" },
     { "source": "/analytics", "destination": "/analytics/" },
     { "source": "/analytics/budget", "destination": "/analytics/budget/" },
-    { "source": "/analytics/forecast", "destination": "/analytics/forecast/" }
+    { "source": "/analytics/forecast", "destination": "/analytics/forecast/" },
+    { "source": "/AGENTS.md", "destination": "/404.html", "statusCode": 404 },
+    { "source": "/README.md", "destination": "/404.html", "statusCode": 404 },
+    { "source": "/(.*)\\.md", "destination": "/404.html", "statusCode": 404 },
+    { "source": "/docs", "destination": "/404.html", "statusCode": 404 },
+    { "source": "/docs/(.*)", "destination": "/404.html", "statusCode": 404 }
   ],
+  "cleanUrls": false,
+  "trailingSlash": true,
   "headers": [
     {
       "source": "/sitemap.xml",

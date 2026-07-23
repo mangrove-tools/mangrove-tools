@@ -15,3 +15,9 @@
 /.cursor/
 /.cursorignore
 /.vercelignore
+
+# AI Gateway smoke test (local-only — not part of the deployed site)
+/index.mjs
+/package.json
+/package-lock.json
+/.env.local

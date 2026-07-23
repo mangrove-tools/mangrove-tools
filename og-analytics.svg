@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mangrove Tools — Marketing Analytics: Know where your budget is working. Budget Advisor and Revenue Forecaster.">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0c0c0c"/>
+      <stop offset="100%" stop-color="#161614"/>
+    </linearGradient>
+    <linearGradient id="curveFill" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#e07a4f" stop-opacity="0.32"/>
+      <stop offset="100%" stop-color="#e07a4f" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#4a7c5e" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#4a7c5e" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Subtle top-right pine glow -->
+  <circle cx="1080" cy="80" r="180" fill="url(#glow)"/>
+
+  <!-- Decorative response curve (large, faded) -->
+  <g opacity="0.55">
+    <path d="M 600 100 C 800 80, 950 50, 1100 35 L 1100 50 C 950 65, 800 95, 600 115 Z" fill="url(#curveFill)"/>
+    <path d="M 600 100 C 800 80, 950 50, 1100 35" stroke="#e07a4f" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </g>
+
+  <!-- Top kicker -->
+  <g transform="translate(80, 100)">
+    <circle cx="0" cy="-6" r="4" fill="#e07a4f"/>
+    <text x="14" y="0" font-family="Outfit, sans-serif" font-size="18" font-weight="500" letter-spacing="2.4" fill="#9e9a93">MARKETING ANALYTICS</text>
+  </g>
+
+  <!-- Main headline -->
+  <text x="80" y="220" font-family="Fraunces, Georgia, serif" font-size="78" font-weight="700" fill="#f5f3ef" letter-spacing="-2.4">Know where your</text>
+  <text x="80" y="310" font-family="Fraunces, Georgia, serif" font-size="78" font-weight="700" fill="#f5f3ef" letter-spacing="-2.4">budget is working.</text>
+
+  <!-- Sub -->
+  <text x="80" y="380" font-family="Outfit, sans-serif" font-size="24" fill="#9e9a93">Budget optimization, marginality analysis,</text>
+  <text x="80" y="412" font-family="Outfit, sans-serif" font-size="24" fill="#9e9a93">and revenue forecasting — for small business.</text>
+
+  <!-- Divider -->
+  <line x1="80" y1="468" x2="1120" y2="468" stroke="rgba(245,243,239,0.12)" stroke-width="1"/>
+
+  <!-- Tools row -->
+  <g transform="translate(80, 510)">
+    <text x="0" y="0" font-family="Outfit, sans-serif" font-size="13" font-weight="600" letter-spacing="1.8" fill="#9e9a93">TOOLS</text>
+    <text x="0" y="42" font-family="Fraunces, Georgia, serif" font-size="30" font-weight="700" fill="#f5f3ef">Budget Advisor</text>
+    <text x="370" y="42" font-family="Fraunces, Georgia, serif" font-size="30" font-weight="700" fill="#f5f3ef">Revenue Forecaster</text>
+    <text x="0" y="70" font-family="Outfit, sans-serif" font-size="14" fill="#9e9a93">Marginal ROI · Optimized allocation</text>
+    <text x="370" y="70" font-family="Outfit, sans-serif" font-size="14" fill="#9e9a93">Trend · Seasonality · Scenarios</text>
+  </g>
+
+  <!-- Brand mark + URL -->
+  <text x="80" y="600" font-family="Outfit, sans-serif" font-size="14" font-weight="600" letter-spacing="1.2" fill="#9e9a93">MANGROVE TOOLS</text>
+  <text x="1120" y="600" text-anchor="end" font-family="Outfit, sans-serif" font-size="14" fill="#9e9a93">mangrovetools.com/analytics/</text>
+</svg>

@@ -9,11 +9,13 @@ You are the **lead developer** for Mangrove Tools. You own product judgment, qua
 
 ## Product purpose
 
-Mangrove Tools is a free in-browser calculator library for creators, plus marketing analytics tools for small businesses and founders (budget optimization, marginality analysis, revenue forecasting).
+Mangrove Tools is a free in-browser **marketing analytics** suite for small businesses and founders (budget optimization, marginality analysis, revenue forecasting), plus a free **newsletter calculator** library for creators.
 
-**Audience:** newsletter creators and small business founders who need one clear answer from a calculator or marketing analytics tool; solo builders who want agency-level insights without agency-level costs.
+**Primary product:** marketing analytics. **Secondary product (SEO surface):** newsletter calculators that drive traffic to the analytics tools.
 
-**Ship status (2026-07-22):** V2.0 is live on mangrovetools.com (newsletter calculators, analytics tools, trust pages). Revamp includes Budget Advisor and Revenue Forecaster analytics modules. Lead-Dev product suite removed.
+**Audience:** founders, marketers, and small business owners who need agency-level insights without agency-level costs; newsletter creators who need one clear answer from a calculator.
+
+**Ship status (2026-07-22):** V2.1 is live on mangrovetools.com with analytics-first IA: home page leads with marketing analytics, the two analytics tools (Budget Advisor, Revenue Forecaster) are the primary feature, and the five newsletter calculators are a secondary SEO surface. Lead-Dev product suite removed.
 
 ## Operating priority (strict order)
 
@@ -99,8 +101,8 @@ If uncertain, choose the safer reversible path and document the assumption.
 | --- | --- |
 | Hosting | Vercel (primary) + Netlify backup (`netlify.toml`) |
 | Home | `index.html`, `site.css`, brand SVGs |
-| Newsletter Tools | `letterroi/`, `sponsorquote/`, `subtarget/`, `mediakit/`, `inventory/` |
-| Analytics | `analytics/budget/`, `analytics/forecast/`, `analytics/` |
+| Analytics (primary) | `analytics/`, `analytics/budget/`, `analytics/forecast/` |
+| Newsletter Calculators (secondary) | `letterroi/`, `sponsorquote/`, `subtarget/`, `mediakit/`, `inventory/` |
 | Trust | `about/`, `faq/`, `privacy/`, `contact/` |
 | Discoverability | `robots.txt`, `sitemap.xml`, `llms.txt` |
 | Ops (not public) | `docs/ops/`, `docs/setup/` |

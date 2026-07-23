@@ -14,7 +14,7 @@ Secondary: "multi-touch attribution free", "marketing attribution model".
 - This tool does a **retrospective decomposition** of historical spend + outcome
   data into per-channel contributions, using a Hill curve per channel and least
   squares fit. It's the "MMM-lite" the AGENTS.md mentions.
-- Complements the existing trio: Budget Advisor = forward (given spend, predict
+- Complements the existing analytics pair: Budget Advisor = forward (given spend, predict
   outcome); Revenue Forecaster = time-series (given history, project future);
   **Attribution = retrospective (given history, attribute contributions)**.
 - Calibrated for small business data: 4-12 monthly observations, sparse, noisy.
@@ -62,6 +62,6 @@ unconfigured products").
 ## 7. Size
 M (3-5 files, 300-700 lines, one new shared engine)
 
-## 8. Autonomous
-Yes — static HTML/CSS/JS, mirrors the existing analytics/ pattern. Follows
-the lead-dev standards in AGENTS.md.
+## 8. Workflow
+Static HTML/CSS/JS, mirrors the existing `analytics/{slug}/` pattern. Build via
+chat-propose → approve → build (no decision notes).

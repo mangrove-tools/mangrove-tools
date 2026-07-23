@@ -15,8 +15,6 @@ Mangrove Tools is a free in-browser **marketing analytics** suite for small busi
 
 **Audience:** founders, marketers, and small business owners who need agency-level insights without agency-level costs; newsletter creators who need one clear answer from a calculator.
 
-**Ship status (2026-07-22):** V2.1 is live on mangrovetools.com with analytics-first IA: home page leads with marketing analytics, the two analytics tools (Budget Advisor, Revenue Forecaster) are the primary feature, and the five newsletter calculators are a secondary SEO surface. Lead-Dev product suite removed.
-
 ## Operating priority (strict order)
 
 Work in this order. Do **not** invent five new tools before the existing site is optimized, professional, and SEO-solid — unless the owner waives an earlier phase for a named deliverable.
@@ -148,19 +146,6 @@ Every indexable page needs: title, meta description, canonical, robots, OG/Twitt
 - Affiliate links are normal anchors (+ UTMs in config).
 - No pixels/email gates without approval.
 - Never commit `.env`, keys, or certificates.
-
-## Lead-dev standards for new tools
-
-Before building, write a short decision note (in PR/summary or `docs/ops/`):
-
-1. Tool name + slug  
-2. Primary search intent / keyword  
-3. Why it’s niche & unique  
-4. Inputs → outputs → math outline  
-5. Monetization path (affiliate/soft CTA or “none yet”)  
-6. Explicit out-of-scope  
-
-Then implement end-to-end: page + calc + SEO + home/sitemap/llms wiring + manual QA.
 
 ## Validation
 

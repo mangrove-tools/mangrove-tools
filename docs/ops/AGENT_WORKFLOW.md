@@ -17,7 +17,7 @@ Ask for one backlog item, one route, or one foundation layer at a time.
 
 ## Stack constraint (non-negotiable)
 
-This is a **static** Netlify site: HTML / CSS / vanilla JS. No React, Next, Vue, bundler, or package.json unless the owner explicitly approves.
+This is a **static** Vercel site: HTML / CSS / vanilla JS. No React, Next, Vue, bundler, or package.json unless the owner explicitly approves.
 
 Cutting-edge UI here means distinctive brand craft, clear hierarchy, purposeful motion, accessibility, and performance — **not** installing a UI framework.
 
@@ -50,12 +50,12 @@ Use dedicated prompts for Product Architect, UI Systems, Interaction, Implementa
 - `site.css` tokens, typography, atmosphere
 - Shared nav / footer markup patterns
 - `studio.css` shared wizard chrome
-- `netlify.toml` redirects/headers
+- `vercel.json` headers / rewrites
 - Calculator shell unification (touches three tool CSS trees)
 
 ## Approval gates (unchanged)
 
-Pause for owner before: live payments changes, deploy/DNS/Netlify identity, affiliate ID changes, invented testimonials/legal, pricing outside source bands, destructive git, rebrand, secrets, external form submits.
+Pause for owner before: live payments changes, deploy/DNS/Vercel identity, affiliate ID changes, invented testimonials/legal, pricing outside source bands, destructive git, rebrand, secrets, external form submits.
 
 ## Validation (this stack)
 

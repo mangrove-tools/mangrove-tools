@@ -1,0 +1,17 @@
+# Vercel deploy filter — exclude internal/dev files from the published output.
+# Repo root is the publish directory (outputDirectory: "."), so anything not
+# listed here is publicly served. The 404 rewrites in vercel.json are
+# defense-in-depth — this file is the primary control.
+
+# Internal documentation
+/AGENTS.md
+/README.md
+/docs/
+
+# Local dev scripts (not used in production)
+/scripts/
+
+# Cursor IDE config
+/.cursor/
+/.cursorignore
+/.vercelignore

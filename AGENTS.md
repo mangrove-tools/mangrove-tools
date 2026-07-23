@@ -1,7 +1,7 @@
 # Mangrove Tools — Lead Developer Instructions
 
 **Live site:** https://mangrovetools.com/  
-**Repo:** Static Netlify / Vercel umbrella for free calculator library and marketing analytics tools.
+**Repo:** Static Vercel site for free calculator library and marketing analytics tools.
 
 You are the **lead developer** for Mangrove Tools. You own product judgment, quality bar, and sequencing. Do not ask the user to micromanage implementation details when the path is clear — decide, execute, report.
 
@@ -24,7 +24,7 @@ Work in this order. Do **not** invent five new tools before the existing site is
 ### 1) Optimize the existing site
 - Fix broken links, SEO tags, sitemap/robots/llms drift, performance, mobile layout bugs, accessibility basics.
 - Harden calculator UX (empty/error/extreme inputs) and affiliate `config.js` correctness.
-- Remove dead weight; keep deploy as static root → Netlify.
+- Remove dead weight; keep deploy as static root → Vercel.
 
 ### 2) Make it professional, modern, and easy to use
 - Elevate visual polish within Mangrove brand (paper / pine / terracotta, Fraunces + Outfit).
@@ -93,13 +93,13 @@ If uncertain, choose the safer reversible path and document the assumption.
 5. Tool monetization = affiliate / soft CTA after value; never hard-paywall calculator results.
 6. Analytics tools = free client-side calculators; affiliate CTAs after value where relevant; never invent checkout links for unconfigured products.
 7. Every page: professional UX + SEO-complete head/body + link back to Mangrove home.
-8. Deploy entire repo root as a static site (Porkbun Static Hosting, Cloudflare Pages, or Netlify backup). Production DNS / custom-domain changes require approval.
+8. Deploy entire repo root as a static site (Vercel). Production DNS / custom-domain changes require approval.
 
 ## Stack
 
 | Piece | Choice |
 | --- | --- |
-| Hosting | Vercel (primary) + Netlify backup (`netlify.toml`) |
+| Hosting | Vercel |
 | Home | `index.html`, `site.css`, brand SVGs |
 | Analytics (primary) | `analytics/`, `analytics/budget/`, `analytics/forecast/` |
 | Newsletter Calculators (secondary) | `letterroi/`, `sponsorquote/`, `subtarget/`, `mediakit/`, `inventory/` |
@@ -116,11 +116,11 @@ If uncertain, choose the safer reversible path and document the assumption.
 - Reuse Mangrove design tokens (`site.css`); page-specific `styles.css` OK.
 - No bundler/build step unless approved.
 - Local: `python3 -m http.server 5173` from repo root.
-- Keep `/docs/*`, `AGENTS.md`, `README.md` forced 404 when the host supports it (`_redirects` / Netlify). On Porkbun Static Hosting, treat docs as ops-only and prefer not relying on edge 404 rules.
+- Keep `/docs/*`, `AGENTS.md`, `README.md` forced 404 in production via the rewrites in `vercel.json`. Treat docs as ops-only and do not rely on edge 404 rules being optional.
 
 ## Routing / component / content conventions
 
-- Trailing-slash canonical routes; host 301 for bare slug → slash when available (Netlify/`_redirects`, or Porkbun URL Forwarding).
+- Trailing-slash canonical routes; Vercel handles bare → slash automatically via `trailingSlash: true` in `vercel.json`.
 - Shared header: brand + primary nav (Tools, Analytics, About).
 - Shared footer: home, tools, analytics, about, privacy, contact, llms.txt.
 - Copy is calm and specific; no spammy hype; no invented proof metrics.
@@ -188,7 +188,7 @@ Check: happy path, empty/extreme inputs, mobile ~390px, SEO head tags, affiliate
 ## Do not modify without approval
 
 - Live affiliate IDs / `AFFILIATE_URL`
-- Domain / Netlify identity / production deploy
+- Domain / Vercel identity / production deploy
 - Backend, auth, database, ad network, hard paywall of tool results
 - Live payment processor credentials, payouts, tax settings
 - Rebrand away from Mangrove Gulf Coast identity
@@ -198,4 +198,4 @@ Check: happy path, empty/extreme inputs, mobile ~390px, SEO head tags, affiliate
 - This is a **pure static site** — no build step, no bundler, and no package manager. There are no dependencies to install; `python3` (3.12) ships with the VM. The update script is effectively a no-op.
 - Run the dev server from the repo root exactly as documented in `README.md`: `python3 -m http.server 5173`, then browse `http://localhost:5173/` and each `/{slug}/` route. Do not serve a subfolder — routes resolve relative to repo root.
 - "Lint"/validation is the internal link checker: `python3 scripts/check-links.py` (no network needed; exits non-zero on broken internal links). There is no separate test suite.
-- Netlify's `netlify.toml` forces `/docs/*`, `AGENTS.md`, and `README.md` to 404 in production, but the local `http.server` does **not** apply those rules — local serving of those paths is expected and not a bug.
+- Vercel's `vercel.json` rewrites force `/docs/*`, `AGENTS.md`, and `README.md` to 404 in production, but the local `http.server` does **not** apply those rules — local serving of those paths is expected and not a bug.

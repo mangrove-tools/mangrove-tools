@@ -43,7 +43,7 @@ V1.0 ship items (P0-01…P0-10, SubTarget, studio expansion) are **done on produ
 | P2-11 | Studio SEO parity | SEO | **Done** — og:locale + walkthrough JSON-LD | Auto | S |
 | P2-12 | Remove/replace stub CSS | Tech debt | **Done** — stub files removed | Auto | S |
 | P2-13 | Performance pass | Performance | **Partial** — display=swap, logo fetchpriority; further font subsetting optional | Auto | M |
-| P2-14 | CSP headers | Security | **Done** — CSP + frame/permissions in netlify.toml | Approval for strictness | M |
+| P2-14 | CSP headers | Security | **Done** — CSP + frame/permissions in `vercel.json` (was previously in `netlify.toml`; migrated 2026-07-23 when dropping Netlify backup) | Approval for strictness | M |
 | P2-15 | Method / About polish | Content/UX | **Done** — clearer CTAs/ledes | Auto | S |
 | P2-16 | Expand link checker | Testing | **Done** — `--external` flag on check-links.py | Auto | S |
 | **P2-20** | **SaaS-craft UI redesign (Mangrove filter)** | **UI redesign** | **Done 2026-07-20 (v1)** — home result vignette, shared tool shell, result surfaces, Lead-Dev offer polish; assets curated from People’s Design Library in `FREE_ASSET_SOURCES.md`. Further texture/icon drops optional. | Auto after approve | L |

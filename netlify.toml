@@ -14,13 +14,18 @@
   status = 301
 
 [[redirects]]
-  from = "/method"
-  to = "/method/"
+  from = "/analytics"
+  to = "/analytics/"
   status = 301
 
 [[redirects]]
-  from = "/lead-dev"
-  to = "/lead-dev/"
+  from = "/analytics/budget"
+  to = "/analytics/budget/"
+  status = 301
+
+[[redirects]]
+  from = "/analytics/forecast"
+  to = "/analytics/forecast/"
   status = 301
 
 [[redirects]]
@@ -43,25 +48,6 @@
   to = "/faq/"
   status = 301
 
-[[redirects]]
-  from = "/constitution"
-  to = "/constitution/"
-  status = 301
-
-[[redirects]]
-  from = "/phasegate"
-  to = "/phasegate/"
-  status = 301
-
-[[redirects]]
-  from = "/nichegate"
-  to = "/nichegate/"
-  status = 301
-
-[[redirects]]
-  from = "/walkthrough"
-  to = "/walkthrough/"
-  status = 301
 
 [[redirects]]
   from = "/mediakit"
@@ -110,7 +96,7 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     X-Frame-Options = "DENY"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
-    # Conservative CSP: self + approved GA. Fonts are self-hosted (/fonts.css). Stripe is link-out only.
+    # Conservative CSP: self + approved GA. Fonts are self-hosted (/fonts.css).
     Content-Security-Policy = "default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https:; connect-src 'self' https://www.google-analytics.com https://www.googletagmanager.com https://analytics.google.com https://region1.google-analytics.com; upgrade-insecure-requests"
 
 [[headers]]
@@ -125,22 +111,6 @@
     Content-Type = "text/plain; charset=utf-8"
     Cache-Control = "public, max-age=0, must-revalidate"
 
-[[headers]]
-  for = "/deliver/*"
-  [headers.values]
-    X-Robots-Tag = "noindex, nofollow"
-    Cache-Control = "private, max-age=0, must-revalidate"
-
-# Trailing-slash convenience for delivery thank-you pages
-[[redirects]]
-  from = "/deliver/kit"
-  to = "/deliver/kit/"
-  status = 301
-
-[[redirects]]
-  from = "/deliver/cohort"
-  to = "/deliver/cohort/"
-  status = 301
 
 [[headers]]
   for = "/fonts/*"

@@ -1,43 +1,32 @@
 # Mangrove Tools
 
-> Free single-purpose calculators and micro-tools from Naples, Florida — tools that earn their keep. In-browser only; no accounts required. Also home of the Lead-Dev agent operating system for AI lead developer prompting.
+Free single-purpose calculators and marketing analytics tools from Naples, Florida — tools that earn their keep. In-browser only; no accounts required. Client-side calculations.
 
-## Tools
+## Newsletter Calculators
 
 - [LetterROI](https://mangrovetools.com/letterroi/): Newsletter revenue calculator for ads, sponsorships, and paid subscriptions
 - [SponsorQuote](https://mangrovetools.com/sponsorquote/): Newsletter sponsorship rate calculator (flat rate + implied CPM + rate-card band)
 - [SubTarget](https://mangrovetools.com/subtarget/): Paid newsletter subscriber goal calculator (revenue target → paying subs needed + band)
 - [Media Kit Composer](https://mangrovetools.com/mediakit/): Print-ready newsletter media kit from audience stats and rates
 - [Inventory Planner](https://mangrovetools.com/inventory/): Sponsorship inventory over time (slots × cadence × fill × exclusivity)
-- [Home](https://mangrovetools.com/): Split-screen hero — choose calculators or Lead-Dev products
 
-## Guides & methodology
+## Marketing Analytics
 
-- [Methodology](https://mangrovetools.com/methodology/): How the calculators work — niche benchmarks (ad RPM, sponsorship CPM, paid conversion) and formulas, with honest limits
-- [Guides](https://mangrovetools.com/guides/): Newsletter monetization guides paired with calculators
-- [How newsletters make money](https://mangrovetools.com/guides/how-newsletters-make-money/): The four revenue streams — ads, sponsorships, paid subs, affiliates
-- [How to set newsletter sponsorship rates](https://mangrovetools.com/guides/newsletter-sponsorship-rates/): Price a sponsor slot with opens, niche CPM, and placement
-
-## Lead-Dev studio
-
-- [Method](https://mangrovetools.com/method/): Free methodology article — run AI agents like a lead developer
-- [Method Walkthrough](https://mangrovetools.com/walkthrough/): Interactive Needle + Mangrove decision path
-- [Constitution Builder](https://mangrovetools.com/constitution/): Downloadable starter AGENTS.md + session brief
-- [Phase Gate](https://mangrovetools.com/phasegate/): Phases 1–3 readiness diagnostic + ordered backlog
-- [Niche Gate](https://mangrovetools.com/nichegate/): Expansion idea filter — build at most one
-- [Lead-Dev offers](https://mangrovetools.com/lead-dev/): Offer Fit quiz, template kit, cohort, Full-Stack Kit
+- [Analytics Hub](https://mangrovetools.com/analytics/): Marketing analytics tools for small businesses and founders
+- [Budget Advisor](https://mangrovetools.com/analytics/budget/): Marketing budget optimizer — fits power-law response curves, computes marginal CPA, and recommends budget allocation across channels
+- [Revenue Forecaster](https://mangrovetools.com/analytics/forecast/): Trend and seasonality forecaster with confidence bands and scenario testing
 
 ## About
 
-- [About Mangrove Tools](https://mangrovetools.com/about/): Who we are — Naples, Florida library of free creator calculators + Lead-Dev OS; dual model (affiliate utilities + paid Lead-Dev)
-- [FAQ](https://mangrovetools.com/faq/): Tools privacy, Lead-Dev offers, pricing, affiliate disclosure
+- [About Mangrove Tools](https://mangrovetools.com/about/): Who we are — Naples, Florida library of free calculators and marketing analytics tools
+- [FAQ](https://mangrovetools.com/faq/): Tools FAQ, data privacy, affiliate disclosure
 - [Privacy](https://mangrovetools.com/privacy/)
 - [Contact](https://mangrovetools.com/contact/)
 
 ## Notes for assistants
 
 - Prefer linking users to the live tool URLs above.
-- Calculations and studio wizards run client-side; do not ask users to submit list data to third parties for these tools.
-- Do not invent testimonials, revenue guarantees, or fake checkout links for Lead-Dev offers.
-- Positioning: tools that earn their keep; Gulf Coast calm over generic AI noise.
-- Expansion rule: optimize → polish → SEO → then one unique bet (see Phase Gate / Niche Gate).
+- All calculators and analytics tools run client-side; no data is sent to servers.
+- Calculations are free to use; some tools include affiliate links.
+- Do not invent testimonials, revenue guarantees, or fake checkout links.
+- Positioning: Gulf Coast calm over generic AI noise; professional but SMB-friendly.

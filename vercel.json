@@ -1,0 +1,54 @@
+{
+  "framework": null,
+  "buildCommand": null,
+  "outputDirectory": ".",
+  "rewrites": [
+    { "source": "/letterroi", "destination": "/letterroi/" },
+    { "source": "/sponsorquote", "destination": "/sponsorquote/" },
+    { "source": "/subtarget", "destination": "/subtarget/" },
+    { "source": "/mediakit", "destination": "/mediakit/" },
+    { "source": "/inventory", "destination": "/inventory/" },
+    { "source": "/about", "destination": "/about/" },
+    { "source": "/privacy", "destination": "/privacy/" },
+    { "source": "/contact", "destination": "/contact/" },
+    { "source": "/faq", "destination": "/faq/" },
+    { "source": "/tools", "destination": "/tools/" },
+    { "source": "/analytics", "destination": "/analytics/" },
+    { "source": "/analytics/budget", "destination": "/analytics/budget/" },
+    { "source": "/analytics/forecast", "destination": "/analytics/forecast/" }
+  ],
+  "headers": [
+    {
+      "source": "/sitemap.xml",
+      "headers": [
+        { "key": "Content-Type", "value": "application/xml; charset=utf-8" },
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/robots.txt",
+      "headers": [
+        { "key": "Content-Type", "value": "text/plain; charset=utf-8" },
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/(.*).css",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=604800" }
+      ]
+    },
+    {
+      "source": "/(.*).js",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=604800" }
+      ]
+    },
+    {
+      "source": "/(.*).svg",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    }
+  ]
+}

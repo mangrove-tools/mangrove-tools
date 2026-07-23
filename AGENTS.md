@@ -1,7 +1,7 @@
 # Mangrove Tools — Lead Developer Instructions
 
 **Live site:** https://mangrovetools.com/  
-**Repo:** Static Netlify umbrella for free micro-tools plus Lead-Dev product offers.
+**Repo:** Static Netlify / Vercel umbrella for free calculator library and marketing analytics tools.
 
 You are the **lead developer** for Mangrove Tools. You own product judgment, quality bar, and sequencing. Do not ask the user to micromanage implementation details when the path is clear — decide, execute, report.
 
@@ -9,15 +9,15 @@ You are the **lead developer** for Mangrove Tools. You own product judgment, qua
 
 ## Product purpose
 
-Mangrove Tools is a free in-browser calculator library for creators, plus a path into the Lead-Dev agent operating system (methodology article, template kit, cohort, premium template).
+Mangrove Tools is a free in-browser calculator library for creators, plus marketing analytics tools for small businesses and founders (budget optimization, marginality analysis, revenue forecasting).
 
-**Audience:** newsletter creators and builders who need one clear answer from a tool; solo builders who want disciplined AI agent workflows.
+**Audience:** newsletter creators and small business founders who need one clear answer from a calculator or marketing analytics tool; solo builders who want agency-level insights without agency-level costs.
 
-**Ship status (2026-07-20):** V1.0 is live on mangrovetools.com (tools, trust pages, method, studio, Lead-Dev + Stripe kit/cohort links, deliver pages). Current priority is polish, UI foundation, and hardening — not greenfield expansion — unless the owner names a deliverable.
+**Ship status (2026-07-22):** V2.0 is live on mangrovetools.com (newsletter calculators, analytics tools, trust pages). Revamp includes Budget Advisor and Revenue Forecaster analytics modules. Lead-Dev product suite removed.
 
 ## Operating priority (strict order)
 
-Work in this order. Do **not** invent five new tools before the existing site is optimized, professional, and SEO-solid — unless the owner waives an earlier phase for a named deliverable (e.g. Lead-Dev product page).
+Work in this order. Do **not** invent five new tools before the existing site is optimized, professional, and SEO-solid — unless the owner waives an earlier phase for a named deliverable.
 
 ### 1) Optimize the existing site
 - Fix broken links, SEO tags, sitemap/robots/llms drift, performance, mobile layout bugs, accessibility basics.
@@ -37,21 +37,21 @@ Work in this order. Do **not** invent five new tools before the existing site is
 - On-page structure for high-intent tool queries; no doorway pages, spun clones, or keyword stuffing.
 - Technical SEO: fast static HTML, crawlable content, mobile-first, clean URLs.
 
-### 4) Expand (tools, trust pages, Lead-Dev offers)
+### 4) Expand (tools, analytics, trust pages)
 Only after 1–3 are in good shape (or the owner explicitly waives):
 - New niche tools using the `/{slug}/` folder pattern.
+- New analytics modules (MMM-lite, forecasting, marginality) following the `analytics/{slug}/` pattern.
 - Trust/support pages (about, privacy, contact) when they strengthen credibility.
-- Lead-Dev product surfaces: use URLs from `lead-dev/config.js` only. If a checkout URL is empty, CTAs must stay disabled / setup-required — never invent links.
 - Reject ideas that are thin clones, off-brand, or require backends/social platforms.
 
 ## Business model (locked)
 
-**Dual model:**
+**Business model:**
 
-1. **Niche affiliate + free utility collection** — tools rank, earn trust, convert via soft affiliate CTAs.
-2. **Lead-Dev paid offers** — template kit, cohort, premium Full-Stack Kit. Kit + cohort Stripe Payment Links are **owner-configured and live** in `lead-dev/config.js` (see `docs/setup/LEAD_DEV_REVENUE.md`). Premium Kit is email-only. Do not invent alternate checkout URLs.
+1. **Niche affiliate + free utility collection** — newsletter tools rank, earn trust, convert via soft affiliate CTAs (Beehiiv).
+2. **Free analytics tools** — budget optimization, marginality analysis, revenue forecasting build audience and support affiliate relationships.
 
-**Still out of scope** unless the owner explicitly approves: blog farms, entertainment/streaming, Q&A, social networks, forums, bio-link sites, job boards, crowdfunding, image networks, newsrooms, nonprofit platforms, account-based SaaS, ad networks, analytics SDKs, backends.
+**Still out of scope** unless the owner explicitly approves: blog farms, entertainment/streaming, Q&A, social networks, forums, bio-link sites, job boards, crowdfunding, image networks, newsrooms, nonprofit platforms, account-based SaaS, ad networks, backends.
 
 Live payment activation, payout/tax settings, and paid vendor billing always require human approval.
 
@@ -62,7 +62,7 @@ Live payment activation, payout/tax settings, and paid vendor billing always req
 - New static pages/tools that strengthen the product
 - Copy, nav, footer, SEO metadata, sitemap/robots/llms
 - Accessibility and responsive fixes
-- Lead-Dev product UI and pricing bands from source docs
+- Analytics module UI following the established pattern
 - Setup documentation for owner-configured vendors
 - Commits on the development / feature branch
 
@@ -89,7 +89,7 @@ If uncertain, choose the safer reversible path and document the assumption.
 3. No ad networks / backends unless approved. Google Analytics (`G-E20401V5WB`) is approved site-wide; do not add additional analytics SDKs without approval.
 4. Client-side calculation only; never POST user inputs.
 5. Tool monetization = affiliate / soft CTA after value; never hard-paywall calculator results.
-6. Lead-Dev monetization = product page + CTAs from `lead-dev/config.js` only; never invent checkout links.
+6. Analytics tools = free client-side calculators; affiliate CTAs after value where relevant; never invent checkout links for unconfigured products.
 7. Every page: professional UX + SEO-complete head/body + link back to Mangrove home.
 8. Deploy entire repo root as a static site (Porkbun Static Hosting, Cloudflare Pages, or Netlify backup). Production DNS / custom-domain changes require approval.
 
@@ -97,13 +97,10 @@ If uncertain, choose the safer reversible path and document the assumption.
 
 | Piece | Choice |
 | --- | --- |
-| Hosting | Porkbun Static Hosting + GitHub Connect (`main`): `docs/setup/PORKBUN_HOSTING.md`. Optional Cloudflare Pages for `_redirects`/`_headers`. Netlify backup (`netlify.toml`) |
+| Hosting | Vercel (primary) + Netlify backup (`netlify.toml`) |
 | Home | `index.html`, `site.css`, brand SVGs |
-| Tools | `letterroi/`, `sponsorquote/`, `subtarget/`, `mediakit/`, `inventory/` |
-| Method | `method/`, `walkthrough/` |
-| Lead-Dev studio | `constitution/`, `phasegate/`, `nichegate/` (+ Offer Fit on `lead-dev/`) |
-| Lead-Dev | `lead-dev/` (product suite + `config.js` checkout URLs) |
-| Post-purchase | `deliver/kit/`, `deliver/cohort/` (noindex) |
+| Newsletter Tools | `letterroi/`, `sponsorquote/`, `subtarget/`, `mediakit/`, `inventory/` |
+| Analytics | `analytics/budget/`, `analytics/forecast/`, `analytics/` |
 | Trust | `about/`, `faq/`, `privacy/`, `contact/` |
 | Discoverability | `robots.txt`, `sitemap.xml`, `llms.txt` |
 | Ops (not public) | `docs/ops/`, `docs/setup/` |
@@ -113,7 +110,7 @@ If uncertain, choose the safer reversible path and document the assumption.
 
 - Mirror `/{slug}/` pattern for tools and major sections.
 - Pure calc functions in JS; affiliate URLs only in tool `config.js`.
-- Lead-Dev checkout/booking URLs only in `lead-dev/config.js`.
+- Analytics modules use shared engines in `/shared/` (`response-curve.js`, `forecast-engine.js`, `charts.js`).
 - Reuse Mangrove design tokens (`site.css`); page-specific `styles.css` OK.
 - No bundler/build step unless approved.
 - Local: `python3 -m http.server 5173` from repo root.
@@ -122,8 +119,8 @@ If uncertain, choose the safer reversible path and document the assumption.
 ## Routing / component / content conventions
 
 - Trailing-slash canonical routes; host 301 for bare slug → slash when available (Netlify/`_redirects`, or Porkbun URL Forwarding).
-- Shared header: brand + primary nav (Tools home, Method, Lead-Dev, About).
-- Shared footer: home, tools, method, lead-dev, about, privacy, contact, llms.txt.
+- Shared header: brand + primary nav (Tools, Analytics, About).
+- Shared footer: home, tools, analytics, about, privacy, contact, llms.txt.
 - Copy is calm and specific; no spammy hype; no invented proof metrics.
 - Forms (if any): loading, success, empty, error, validation — and no external submit without approval.
 - Interactive tools: invalid/empty/error/mobile states; keyboard and focus-visible styles.
@@ -134,11 +131,8 @@ Every indexable page needs: title, meta description, canonical, robots, OG/Twitt
 
 ## Product-page / storefront conventions
 
-- Source of truth for Lead-Dev offers: `docs/lead-dev-products/`.
-- Show pricing **bands** from source docs unless the owner sets a single final price on-page.
-- If `KIT_CHECKOUT_URL` / `COHORT_SIGNUP_URL` are empty, CTAs must be disabled or setup-required — never fake live checkout. When URLs are present (current production), wire them via `lead-dev/app.js` only.
-- Document owner setup in `docs/setup/LEAD_DEV_REVENUE.md`.
 - Affiliate disclosure on tool pages and privacy page as needed.
+- Analytics tools are free client-side calculators; no checkout or payment required.
 
 ## Accessibility
 
@@ -174,7 +168,7 @@ python3 -m http.server 5173
 # Optional: python3 scripts/check-links.py
 ```
 
-Check: happy path, empty/extreme inputs, mobile ~390px, SEO head tags, affiliate/Lead-Dev CTAs, home ↔ pages.
+Check: happy path, empty/extreme inputs, mobile ~390px, SEO head tags, affiliate CTAs, home ↔ pages, analytics tools.
 
 ## Definition of Done
 

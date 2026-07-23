@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Budget Advisor | Marketing Mix Optimization | Mangrove Tools</title>
+    <meta name="description" content="Free marketing budget optimizer. Estimate marginal ROI per channel and get recommended budget allocation based on your historical spend and conversions data." />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://mangrovetools.com/analytics/budget/" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Mangrove Tools" />
+    <meta property="og:title" content="Budget Advisor | Marketing Mix Optimization | Mangrove Tools" />
+    <meta property="og:description" content="Estimate marginal ROI per channel and get recommended budget allocation." />
+    <meta property="og:url" content="https://mangrovetools.com/analytics/budget/" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Budget Advisor | Mangrove Tools" />
+    <meta name="twitter:description" content="Optimize your marketing budget allocation with marginality analysis." />
+    <link rel="stylesheet" href="/fonts.css" />
+    <link rel="stylesheet" href="/site.css" />
+    <link rel="stylesheet" href="/tool-shell.css" />
+  </head>
+  <body class="tool-page">
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="atmosphere" aria-hidden="true"></div>
+
+    <header class="top">
+      <div class="brand-tool">
+        <a class="brand" href="/" aria-label="Mangrove Tools home">
+          <img class="brand-logo" src="/mangrove-tools-logo.svg" alt="Mangrove Tools" width="148" height="134" />
+        </a>
+        <a class="brand-tool-name" href="/analytics/budget/">Budget Advisor</a>
+      </div>
+      <nav class="site-nav" aria-label="Primary">
+        <a href="/">Tools</a>
+        <a href="/analytics/" aria-current="page">Analytics</a>
+        <a href="/about/">About</a>
+      </nav>
+    </header>
+
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <ol>
+        <li><a href="/">Mangrove Tools</a></li>
+        <li><a href="/analytics/">Analytics</a></li>
+        <li aria-current="page">Budget Advisor</li>
+      </ol>
+    </nav>
+
+    <main class="shell" id="main">
+      <section class="hero" aria-labelledby="hero-title">
+        <h1 id="hero-title">Budget Advisor</h1>
+        <p class="lede">
+          Find out where each marketing dollar is working hardest, where additional spend delivers the best return, and how to split a fixed budget across channels.
+        </p>
+      </section>
+
+      <section class="workspace" aria-label="Budget optimization">
+        <form id="budget-form" class="inputs" novalidate>
+          <div class="field">
+            <label for="period">Planning period</label>
+            <select id="period" name="period">
+              <option value="monthly">Monthly</option>
+              <option value="quarterly">Quarterly</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="total-budget">Total budget ($)</label>
+            <input id="total-budget" name="totalBudget" type="number" inputmode="numeric" min="100" step="100" value="10000" required />
+          </div>
+
+          <div class="field">
+            <label for="num-channels">Number of channels</label>
+            <select id="num-channels" name="numChannels">
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4" selected>4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="target-metric">Target metric</label>
+            <select id="target-metric" name="targetMetric">
+              <option value="conversions">Conversions</option>
+              <option value="revenue">Revenue ($)</option>
+            </select>
+          </div>
+
+          <div id="channel-rows" class="field-wide"></div>
+
+          <button type="submit" class="primary">Optimize allocation</button>
+        </form>
+
+        <div class="results" id="results">
+          <p class="results-kicker">Recommended allocation</p>
+          <p class="total" id="total-conversions" aria-live="polite">—</p>
+          <p class="results-note" id="results-note">Add channel data above and optimize.</p>
+
+          <div id="guardrail" class="guardrail" hidden>
+            <p id="guardrail-text"></p>
+          </div>
+
+          <div id="chart-wrap" hidden>
+            <canvas id="allocation-chart" height="200" style="width:100%;max-width:400px;"></canvas>
+          </div>
+
+          <div id="allocation-table-wrap" hidden>
+            <div class="data-table-wrap">
+              <table class="data-table" id="allocation-table">
+                <thead>
+                  <tr>
+                    <th>Channel</th>
+                    <th>Current spend</th>
+                    <th>Recommended</th>
+                    <th>Marginal CPA</th>
+                    <th>Share</th>
+                  </tr>
+                </thead>
+                <tbody id="allocation-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="next-steps" id="next-steps" hidden>
+            <p class="next-steps-label">Next steps</p>
+            <a href="/analytics/forecast/">Forecast revenue impact →</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="content-block" aria-labelledby="how-title">
+        <h2 id="how-title">How the budget model works</h2>
+        <p>
+          Budget Advisor combines marginality analysis with budget optimization to tell you where to put your next dollar.
+        </p>
+        <ul class="plain-list">
+          <li><strong>Response curves</strong> — For each channel, a power-law curve is fitted to your historical spend and conversions. This captures diminishing returns: the first dollar in often has the highest return.</li>
+          <li><strong>Marginal CPA</strong> — The cost of the next conversion at the current spend level. A low marginal CPA means a channel is efficient at the margin. A high marginal CPA means the next dollar would be better spent elsewhere.</li>
+          <li><strong>Budget optimization</strong> — Given a total budget and per-channel min/max constraints, the model iteratively moves spend from low-marginal-ROI channels to high-marginal-ROI channels until equilibrium.</li>
+        </ul>
+        <p>
+          This is a simplified model — not a full marketing mix model. It works best when you have at least 3 months of historical spend and conversion data per channel, and at least 3-4 channels to compare.
+        </p>
+      </section>
+
+      <section class="content-block" aria-labelledby="faq-title">
+        <h2 id="faq-title">Budget optimization FAQ</h2>
+
+        <details class="faq-item" open>
+          <summary>What data do I need?</summary>
+          <p>
+            You need historical spend and conversions (or revenue) for each marketing channel, broken down by time period. At least 3 months per channel is needed for the model to fit a reliable response curve.
+          </p>
+        </details>
+
+        <details class="faq-item">
+          <summary>What counts as a conversion?</summary>
+          <p>
+            A conversion is whatever matters to your business — a purchase, a lead form fill, a sign-up, a trial start. Enter the number that aligns with your business goal. The tool works the same way whether you track revenue or raw conversion volume.
+          </p>
+        </details>
+
+        <details class="faq-item">
+          <summary>How accurate are the recommendations?</summary>
+          <p>
+            The model uses statistical curve fitting, so accuracy depends on data quality and volume. With 6+ months of clean historical data across 4+ channels, results are directionally reliable. With sparse or noisy data, treat the output as a starting point rather than a precise answer.
+          </p>
+        </details>
+
+        <details class="faq-item">
+          <summary>Why does it use power-law curves?</summary>
+          <p>
+            Power-law (also called Cobb-Douglas in economics) is a standard approach for modeling diminishing returns in marketing spend. It captures the empirically observed pattern that doubling spend rarely doubles output — there is almost always a saturation point.
+          </p>
+        </details>
+
+        <details class="faq-item">
+          <summary>What if I only have 1-2 channels?</summary>
+          <p>
+            The model needs at least 2 channels with positive spend and conversions to fit response curves. If you only have one channel, there is no optimization to do — all budget goes there by definition.
+          </p>
+        </details>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <div class="foot-grid">
+        <div>
+          <p class="foot-brand">Mangrove Tools</p>
+          <p class="foot-note">Free niche calculators from Naples, Florida. Client-side only.</p>
+        </div>
+        <div class="foot-col">
+          <h2>Tools</h2>
+          <ul>
+            <li><a href="/letterroi/">LetterROI</a></li>
+            <li><a href="/sponsorquote/">SponsorQuote</a></li>
+            <li><a href="/subtarget/">SubTarget</a></li>
+          </ul>
+        </div>
+        <div class="foot-col">
+          <h2>Analytics</h2>
+          <ul>
+            <li><a href="/analytics/budget/">Budget Advisor</a></li>
+            <li><a href="/analytics/forecast/">Revenue Forecaster</a></li>
+          </ul>
+        </div>
+        <div class="foot-col">
+          <h2>Site</h2>
+          <ul>
+            <li><a href="/about/">About</a></li>
+            <li><a href="/privacy/">Privacy</a></li>
+            <li><a href="/contact/">Contact</a></li>
+          </ul>
+        </div>
+      </div>
+    </footer>
+
+    <script src="/shared/response-curve.js"></script>
+    <script src="/shared/charts.js"></script>
+    <script src="/analytics/budget/app.js"></script>
+  </body>
+</html>

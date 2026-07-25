@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -12,19 +13,6 @@ from pathlib import Path
 from typing import Iterable, Sequence
 
 ROOT = Path(__file__).resolve().parents[1]
-TEXT_SUFFIXES = {
-    ".css",
-    ".html",
-    ".js",
-    ".json",
-    ".md",
-    ".mjs",
-    ".py",
-    ".txt",
-    ".xml",
-    ".yaml",
-    ".yml",
-}
 SECRET_SUFFIXES = {
     ".crt",
     ".key",
@@ -38,11 +26,17 @@ SECRET_PATTERNS = {
     "OpenAI-style token": re.compile(r"\bsk-(?:proj-)?[A-Za-z0-9_-]{20,}\b"),
     "Vercel token": re.compile(r"\bvck_[A-Za-z0-9_-]{20,}\b"),
     "GitHub token": re.compile(r"\bgh[pousr]_[A-Za-z0-9]{20,}\b"),
+    "GitHub fine-grained token": re.compile(
+        r"\bgithub_pat_[A-Za-z0-9_]{82}\b"
+    ),
 }
 PROTECTED_FILES = {
     Path(".github/CODEOWNERS"),
     Path(".vercelignore"),
     Path("AGENTS.md"),
+    Path("scripts/check-links.py"),
+    Path("scripts/test_validate_site.py"),
+    Path("scripts/validate_site.py"),
     Path("vercel.json"),
 }
 PROTECTED_VALUES = {
@@ -71,11 +65,27 @@ def run(command: Sequence[str], *, cwd: Path = ROOT) -> subprocess.CompletedProc
     )
 
 
+def run_bytes(
+    command: Sequence[str], *, cwd: Path = ROOT
+) -> subprocess.CompletedProcess[bytes]:
+    return subprocess.run(
+        command,
+        cwd=cwd,
+        check=False,
+        capture_output=True,
+    )
+
+
+def nul_paths(data: bytes) -> list[Path]:
+    return [Path(os.fsdecode(item)) for item in data.split(b"\0") if item]
+
+
 def tracked_files(root: Path) -> list[Path]:
-    result = run(["git", "ls-files", "-z"], cwd=root)
+    result = run_bytes(["git", "ls-files", "-z"], cwd=root)
     if result.returncode != 0:
-        raise RuntimeError(result.stderr.strip() or "git ls-files failed")
-    return [Path(item) for item in result.stdout.split("\0") if item]
+        detail = os.fsdecode(result.stderr).strip()
+        raise RuntimeError(detail or "git ls-files failed")
+    return nul_paths(result.stdout)
 
 
 def check_secret_paths(files: Iterable[Path]) -> list[str]:
@@ -88,18 +98,90 @@ def check_secret_paths(files: Iterable[Path]) -> list[str]:
     return errors
 
 
+def is_binary(data: bytes) -> bool:
+    return b"\0" in data
+
+
+def secret_findings(label: str, data: bytes) -> list[str]:
+    if is_binary(data):
+        return []
+    text = data.decode("utf-8", errors="replace")
+    return [
+        f"{label}: possible {pattern_label}"
+        for pattern_label, pattern in SECRET_PATTERNS.items()
+        if pattern.search(text)
+    ]
+
+
 def check_secret_content(root: Path, files: Iterable[Path]) -> list[str]:
     errors: list[str] = []
     for path in files:
-        if path.suffix.lower() not in TEXT_SUFFIXES:
-            continue
         full_path = root / path
         if not full_path.is_file():
             continue
-        text = full_path.read_text(encoding="utf-8", errors="ignore")
-        for label, pattern in SECRET_PATTERNS.items():
-            if pattern.search(text):
-                errors.append(f"{path}: possible {label}")
+        errors.extend(secret_findings(str(path), full_path.read_bytes()))
+    return errors
+
+
+def commits_in_range(root: Path, base_ref: str) -> list[str]:
+    result = run(["git", "rev-list", "--reverse", f"{base_ref}..HEAD"], cwd=root)
+    if result.returncode != 0:
+        raise RuntimeError(result.stderr.strip() or "git rev-list failed")
+    return result.stdout.splitlines()
+
+
+def changed_paths_in_commit(root: Path, commit: str) -> list[Path]:
+    result = run_bytes(
+        [
+            "git",
+            "diff-tree",
+            "--root",
+            "--no-commit-id",
+            "--name-only",
+            "-r",
+            "-z",
+            "--no-renames",
+            "-m",
+            commit,
+        ],
+        cwd=root,
+    )
+    if result.returncode != 0:
+        detail = os.fsdecode(result.stderr).strip()
+        raise RuntimeError(detail or f"git diff-tree failed for {commit}")
+    return nul_paths(result.stdout)
+
+
+def blob_id_at_ref(root: Path, ref: str, path: Path) -> str | None:
+    result = run(["git", "rev-parse", f"{ref}:{path}"], cwd=root)
+    if result.returncode != 0:
+        return None
+    return result.stdout.strip()
+
+
+def blob_bytes(root: Path, blob_id: str) -> bytes:
+    result = run_bytes(["git", "cat-file", "blob", blob_id], cwd=root)
+    if result.returncode != 0:
+        detail = os.fsdecode(result.stderr).strip()
+        raise RuntimeError(detail or f"git cat-file failed for {blob_id}")
+    return result.stdout
+
+
+def check_secret_history(root: Path, base_ref: str) -> list[str]:
+    errors: list[str] = []
+    scanned_blobs: set[str] = set()
+    for commit in commits_in_range(root, base_ref):
+        for path in changed_paths_in_commit(root, commit):
+            blob_id = blob_id_at_ref(root, commit, path)
+            if blob_id is None or blob_id in scanned_blobs:
+                continue
+            scanned_blobs.add(blob_id)
+            errors.extend(
+                secret_findings(
+                    f"{path} at commit {commit[:12]}",
+                    blob_bytes(root, blob_id),
+                )
+            )
     return errors
 
 
@@ -118,7 +200,7 @@ def check_json_files(root: Path, files: Iterable[Path]) -> list[str]:
 def check_javascript_files(root: Path, files: Iterable[Path]) -> list[str]:
     errors: list[str] = []
     for path in files:
-        if path.suffix.lower() not in {".js", ".mjs"}:
+        if path.suffix.lower() not in {".cjs", ".js", ".mjs"}:
             continue
         result = run(["node", "--check", str(path)], cwd=root)
         if result.returncode != 0:
@@ -128,17 +210,21 @@ def check_javascript_files(root: Path, files: Iterable[Path]) -> list[str]:
 
 
 def changed_files(root: Path, base_ref: str) -> list[Path]:
-    result = run(["git", "diff", "--name-only", f"{base_ref}...HEAD"], cwd=root)
+    result = run_bytes(
+        [
+            "git",
+            "diff",
+            "--name-only",
+            "-z",
+            "--no-renames",
+            f"{base_ref}...HEAD",
+        ],
+        cwd=root,
+    )
     if result.returncode != 0:
-        raise RuntimeError(result.stderr.strip() or "git diff --name-only failed")
-    return [Path(line) for line in result.stdout.splitlines() if line]
-
-
-def changed_diff(root: Path, base_ref: str) -> str:
-    result = run(["git", "diff", "--unified=0", f"{base_ref}...HEAD"], cwd=root)
-    if result.returncode != 0:
-        raise RuntimeError(result.stderr.strip() or "git diff failed")
-    return result.stdout
+        detail = os.fsdecode(result.stderr).strip()
+        raise RuntimeError(detail or "git diff --name-only failed")
+    return nul_paths(result.stdout)
 
 
 def protected_value_path(path: Path) -> bool:
@@ -149,41 +235,44 @@ def protected_value_path(path: Path) -> bool:
     )
 
 
-def diff_path(header: str) -> Path | None:
-    raw_path = header[4:].split("\t", 1)[0]
-    if raw_path == "/dev/null":
+def protected_lines(data: bytes | None, pattern: re.Pattern[str]) -> tuple[str, ...]:
+    if data is None or is_binary(data):
+        return ()
+    text = data.decode("utf-8", errors="replace")
+    return tuple(line for line in text.splitlines() if pattern.search(line))
+
+
+def blob_at_ref(root: Path, ref: str, path: Path) -> bytes | None:
+    blob_id = blob_id_at_ref(root, ref, path)
+    if blob_id is None:
         return None
-    if raw_path.startswith(("a/", "b/")):
-        raw_path = raw_path[2:]
-    return Path(raw_path)
+    return blob_bytes(root, blob_id)
 
 
 def detect_protected_changes(
+    root: Path,
+    base_ref: str,
     changed_files: Iterable[Path],
-    diff_text: str,
     allow_protected: bool,
 ) -> list[str]:
     if allow_protected:
         return []
+    paths = list(changed_files)
     errors = [
         f"protected change requires owner approval label: {path}"
-        for path in changed_files
+        for path in paths
         if path in PROTECTED_FILES or path.parts[:2] == (".github", "workflows")
     ]
-    changed_lines: list[str] = []
-    current_path: Path | None = None
-    for line in diff_text.splitlines():
-        if line.startswith("--- ") or line.startswith("+++ "):
-            path = diff_path(line)
-            if path is not None:
-                current_path = path
+    for path in paths:
+        if not protected_value_path(path):
             continue
-        if line[:1] in {"+", "-"} and current_path and protected_value_path(current_path):
-            changed_lines.append(line[1:])
-    changed_text = "\n".join(changed_lines)
-    for label, pattern in PROTECTED_VALUES.items():
-        if pattern.search(changed_text):
-            errors.append(f"protected {label} change requires owner approval label")
+        base_data = blob_at_ref(root, base_ref, path)
+        head_data = blob_at_ref(root, "HEAD", path)
+        for label, pattern in PROTECTED_VALUES.items():
+            if protected_lines(base_data, pattern) != protected_lines(head_data, pattern):
+                errors.append(
+                    f"protected {label} change requires owner approval label: {path}"
+                )
     return errors
 
 
@@ -224,12 +313,17 @@ def main() -> int:
             ("secret content", check_secret_content(ROOT, files)),
         ]
         if args.base_ref:
+            changed = changed_files(ROOT, args.base_ref)
+            checks.append(
+                ("secret history", check_secret_history(ROOT, args.base_ref))
+            )
             checks.append(
                 (
                     "protected changes",
                     detect_protected_changes(
-                        changed_files(ROOT, args.base_ref),
-                        changed_diff(ROOT, args.base_ref),
+                        ROOT,
+                        args.base_ref,
+                        changed,
                         args.allow_protected,
                     ),
                 )

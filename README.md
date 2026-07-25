@@ -14,10 +14,16 @@ Free **marketing analytics** for small businesses and founders, plus a free **ne
 python3 -m http.server 5173
 ```
 
-Optional link check:
+Canonical deterministic validation:
 
 ```bash
-python3 scripts/check-links.py
+python3 scripts/validate_site.py
+```
+
+Validator unit tests:
+
+```bash
+python3 -m unittest discover -s scripts -p 'test_*.py' -v
 ```
 
 - Home: `http://localhost:5173/`

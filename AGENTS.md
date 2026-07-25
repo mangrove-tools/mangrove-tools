@@ -82,6 +82,8 @@ Live payment activation, payout/tax settings, and paid vendor billing always req
 
 For pull requests, the `protected-change-approved` label records owner approval for a named protected change. An agent must not create or apply that label. Approval of one protected change does not authorize another.
 
+Version 1's production trust boundary is procedural: this repository does not currently have a GitHub ruleset or branch-protection enforcement layer. It relies on owner-controlled label application plus disciplined owner review and merge approval. An agent may verify the label read-only, but may not create or apply it.
+
 If uncertain, choose the safer reversible path and document the assumption.
 
 ## Product contract
@@ -151,10 +153,23 @@ Every indexable page needs: title, meta description, canonical, robots, OG/Twitt
 
 ## Validation
 
+Canonical deterministic validation:
+
+```bash
+python3 scripts/validate_site.py
+```
+
+Validator unit tests:
+
+```bash
+python3 -m unittest discover -s scripts -p 'test_*.py' -v
+```
+
+For manual route checks:
+
 ```bash
 python3 -m http.server 5173
-# http://localhost:5173/ and each public route
-# Optional: python3 scripts/check-links.py
+# Browse http://localhost:5173/ and each public route.
 ```
 
 Check: happy path, empty/extreme inputs, mobile ~390px, SEO head tags, affiliate CTAs, home ↔ pages, analytics tools.
@@ -185,5 +200,5 @@ Check: happy path, empty/extreme inputs, mobile ~390px, SEO head tags, affiliate
 
 - This is a pure static site with no production build step or frontend framework. `package.json` exists only for the local AI Gateway smoke harness; it is not part of the deployed site. Do not install or add runtime dependencies unless the owner approves work on that harness.
 - Run the dev server from the repo root exactly as documented in `README.md`: `python3 -m http.server 5173`, then browse `http://localhost:5173/` and each `/{slug}/` route. Do not serve a subfolder — routes resolve relative to repo root.
-- "Lint"/validation is the internal link checker: `python3 scripts/check-links.py` (no network needed; exits non-zero on broken internal links). There is no separate test suite.
+- The canonical deterministic validation command is `python3 scripts/validate_site.py` (no network needed; exits non-zero on failure). Run its tests with `python3 -m unittest discover -s scripts -p 'test_*.py' -v`. The universal validator includes the internal link checker.
 - Vercel's `vercel.json` rewrites force `/docs/*`, `AGENTS.md`, and `README.md` to 404 in production, but the local `http.server` does **not** apply those rules — local serving of those paths is expected and not a bug.

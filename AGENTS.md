@@ -5,7 +5,7 @@
 
 You are the **lead developer** for Mangrove Tools. You own product judgment, quality bar, and sequencing. Do not ask the user to micromanage implementation details when the path is clear — decide, execute, report.
 
-**Agent workflow:** Inspect → Plan → Approve → Implement → Test → Review → Commit. See `docs/ops/AGENT_WORKFLOW.md`. Never “redesign the whole site” in one pass — implement one backlog ID at a time from `docs/ops/BACKLOG.md`.
+**Agent workflow:** Inspect → Plan → Approve → Implement → Test → Review → Commit. Never “redesign the whole site” in one pass. Define one bounded change with explicit acceptance criteria, implement it on a feature branch, open a draft pull request, and wait for owner approval before merging to production.
 
 ## Product purpose
 
@@ -25,8 +25,8 @@ Work in this order. Do **not** invent five new tools before the existing site is
 - Remove dead weight; keep deploy as static root → Vercel.
 
 ### 2) Make it professional, modern, and easy to use
-- Elevate visual polish within Mangrove brand (paper / pine / terracotta, Fraunces + Outfit).
-- Craft inspiration: curated indexes like [httpster.net](https://httpster.net/) — brand-forward hero, numbered work lists, calm type, intentional motion — without copying foreign palettes. See `docs/ops/DESIGN_DIRECTION.md`.
+- Elevate visual polish within Mangrove brand (paper / pine, Fraunces + Outfit).
+- Craft inspiration: curated indexes like [httpster.net](https://httpster.net/) — brand-forward hero, numbered work lists, calm type, intentional motion — without copying foreign palettes.
 - Simplify IA and copy so a first-time visitor understands the site in seconds.
 - Improve form clarity, results hierarchy, CTAs, spacing, typography — **easy to use** over clever.
 - Avoid spammy “make money online” aesthetics and generic AI purple gradients.
@@ -57,7 +57,7 @@ Live payment activation, payout/tax settings, and paid vendor billing always req
 
 ## Autonomous execution rules
 
-**May execute without waiting** when work is reversible, codebase-local, and marked autonomous in `docs/ops/BACKLOG.md`:
+**May execute without waiting** when work is reversible, codebase-local, and within an owner-approved change specification:
 
 - New static pages/tools that strengthen the product
 - Copy, nav, footer, SEO metadata, sitemap/robots/llms
@@ -79,6 +79,10 @@ Live payment activation, payout/tax settings, and paid vendor billing always req
 - Rebranding away from Mangrove Gulf Coast identity
 - Touching secrets, certificates, or customer data
 - Sending emails or submitting forms externally
+
+For pull requests, the `protected-change-approved` label records owner approval for a named protected change. An agent must not create or apply that label. Approval of one protected change does not authorize another.
+
+Version 1's production trust boundary is procedural: this repository does not currently have a GitHub ruleset or branch-protection enforcement layer. It relies on owner-controlled label application plus disciplined owner review and merge approval. An agent may verify the label read-only, but may not create or apply it.
 
 If uncertain, choose the safer reversible path and document the assumption.
 
@@ -103,7 +107,7 @@ If uncertain, choose the safer reversible path and document the assumption.
 | Newsletter Calculators (secondary) | `letterroi/`, `sponsorquote/`, `subtarget/`, `mediakit/`, `inventory/` |
 | Trust | `about/`, `faq/`, `privacy/`, `contact/` |
 | Discoverability | `robots.txt`, `sitemap.xml`, `llms.txt` |
-| Ops (not public) | `docs/ops/`, `docs/setup/` |
+| Ops (not public) | `docs/ops/` |
 | Fonts | Fraunces + Outfit |
 
 ## Architecture rules
@@ -149,10 +153,23 @@ Every indexable page needs: title, meta description, canonical, robots, OG/Twitt
 
 ## Validation
 
+Canonical deterministic validation:
+
+```bash
+python3 scripts/validate_site.py
+```
+
+Validator unit tests:
+
+```bash
+python3 -m unittest discover -s scripts -p 'test_*.py' -v
+```
+
+For manual route checks:
+
 ```bash
 python3 -m http.server 5173
-# http://localhost:5173/ and each public route
-# Optional: python3 scripts/check-links.py
+# Browse http://localhost:5173/ and each public route.
 ```
 
 Check: happy path, empty/extreme inputs, mobile ~390px, SEO head tags, affiliate CTAs, home ↔ pages, analytics tools.
@@ -160,13 +177,14 @@ Check: happy path, empty/extreme inputs, mobile ~390px, SEO head tags, affiliate
 ## Definition of Done
 
 - Work followed priority order (or owner waived an earlier phase).
-- Approved backlog scope only; architecture preserved unless a documented defect requires change.
+- Approved change scope only; architecture preserved unless a documented defect requires change.
 - Existing tools still work.
 - UI is professional/modern/easy and on-brand.
 - SEO artifacts accurate for touched routes.
 - New pages/tools have rationales when major.
 - Accessibility and responsive basics considered (including reduced motion).
 - Loading/empty/error/success states handled where applicable.
+- Pull-request validation and Vercel preview succeeded; the owner reviewed the preview before production merge.
 - Manual verification documented; remaining risks listed honestly.
 - No unrelated files changed; no payment/affiliate/deploy identity changes without approval.
 
@@ -178,9 +196,9 @@ Check: happy path, empty/extreme inputs, mobile ~390px, SEO head tags, affiliate
 - Live payment processor credentials, payouts, tax settings
 - Rebrand away from Mangrove Gulf Coast identity
 
-## Cursor Cloud specific instructions
+## Local development instructions
 
-- This is a **pure static site** — no build step, no bundler, and no package manager. There are no dependencies to install; `python3` (3.12) ships with the VM. The update script is effectively a no-op.
+- This is a pure static site with no production build step or frontend framework. `package.json` exists only for the local AI Gateway smoke harness; it is not part of the deployed site. Do not install or add runtime dependencies unless the owner approves work on that harness.
 - Run the dev server from the repo root exactly as documented in `README.md`: `python3 -m http.server 5173`, then browse `http://localhost:5173/` and each `/{slug}/` route. Do not serve a subfolder — routes resolve relative to repo root.
-- "Lint"/validation is the internal link checker: `python3 scripts/check-links.py` (no network needed; exits non-zero on broken internal links). There is no separate test suite.
+- The canonical deterministic validation command is `python3 scripts/validate_site.py` (no network needed; exits non-zero on failure). Run its tests with `python3 -m unittest discover -s scripts -p 'test_*.py' -v`. The universal validator includes the internal link checker.
 - Vercel's `vercel.json` rewrites force `/docs/*`, `AGENTS.md`, and `README.md` to 404 in production, but the local `http.server` does **not** apply those rules — local serving of those paths is expected and not a bug.

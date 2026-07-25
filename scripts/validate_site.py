@@ -50,6 +50,15 @@ PROTECTED_VALUES = {
     "Google Analytics identity": re.compile(r"\bG-[A-Z0-9]{6,}\b"),
     "security policy": re.compile(r"Content-Security-Policy"),
 }
+PROTECTED_VALUE_SUFFIXES = {".css", ".html", ".js", ".json", ".mjs", ".yaml", ".yml"}
+PROTECTED_VALUE_IGNORED_TOP_LEVEL = {".github", ".superpowers", "docs", "scripts", "tests"}
+
+
+class ValidatorArgumentParser(argparse.ArgumentParser):
+    def error(self, message: str) -> None:
+        print("FAIL validator usage")
+        print(f"  - {message}")
+        self.exit(1)
 
 
 def run(command: Sequence[str], *, cwd: Path = ROOT) -> subprocess.CompletedProcess[str]:
@@ -132,6 +141,23 @@ def changed_diff(root: Path, base_ref: str) -> str:
     return result.stdout
 
 
+def protected_value_path(path: Path) -> bool:
+    return (
+        bool(path.parts)
+        and path.parts[0] not in PROTECTED_VALUE_IGNORED_TOP_LEVEL
+        and path.suffix.lower() in PROTECTED_VALUE_SUFFIXES
+    )
+
+
+def diff_path(header: str) -> Path | None:
+    raw_path = header[4:].split("\t", 1)[0]
+    if raw_path == "/dev/null":
+        return None
+    if raw_path.startswith(("a/", "b/")):
+        raw_path = raw_path[2:]
+    return Path(raw_path)
+
+
 def detect_protected_changes(
     changed_files: Iterable[Path],
     diff_text: str,
@@ -144,15 +170,19 @@ def detect_protected_changes(
         for path in changed_files
         if path in PROTECTED_FILES or path.parts[:2] == (".github", "workflows")
     ]
-    changed_lines = "\n".join(
-        line[1:]
-        for line in diff_text.splitlines()
-        if line[:1] in {"+", "-"}
-        and not line.startswith("+++")
-        and not line.startswith("---")
-    )
+    changed_lines: list[str] = []
+    current_path: Path | None = None
+    for line in diff_text.splitlines():
+        if line.startswith("--- ") or line.startswith("+++ "):
+            path = diff_path(line)
+            if path is not None:
+                current_path = path
+            continue
+        if line[:1] in {"+", "-"} and current_path and protected_value_path(current_path):
+            changed_lines.append(line[1:])
+    changed_text = "\n".join(changed_lines)
     for label, pattern in PROTECTED_VALUES.items():
-        if pattern.search(changed_lines):
+        if pattern.search(changed_text):
             errors.append(f"protected {label} change requires owner approval label")
     return errors
 
@@ -175,7 +205,7 @@ def print_result(name: str, errors: Sequence[str]) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = ValidatorArgumentParser(description=__doc__)
     parser.add_argument("--base-ref", help="Git ref used to identify PR changes")
     parser.add_argument(
         "--allow-protected",

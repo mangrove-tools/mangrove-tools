@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -147,21 +148,56 @@ class ValidateSiteTests(unittest.TestCase):
         self.assertEqual(1, result.returncode)
         self.assertIn("FAIL validator usage", result.stdout)
 
-    def test_cli_committed_diff_ignores_implementation_text(self) -> None:
-        result = subprocess.run(
-            [sys.executable, "scripts/validate_site.py", "--base-ref", "main"],
-            cwd=ROOT,
-            check=False,
-            capture_output=True,
-            text=True,
-        )
+    def test_cli_committed_product_diff_requires_protected_approval(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            scripts = root / "scripts"
+            scripts.mkdir()
+            shutil.copy2(ROOT / "scripts/validate_site.py", scripts)
+            shutil.copy2(ROOT / "scripts/check-links.py", scripts)
+            (root / "index.html").write_text("<main>Base</main>", encoding="utf-8")
 
-        self.assertEqual(1, result.returncode)
-        self.assertIn("FAIL protected changes", result.stdout)
-        self.assertIn("AGENTS.md", result.stdout)
-        self.assertNotIn("affiliate identifier", result.stdout)
-        self.assertNotIn("Google Analytics identity", result.stdout)
-        self.assertNotIn("security policy", result.stdout)
+            for command in (
+                ["git", "init", "-b", "main"],
+                ["git", "config", "user.email", "test@example.com"],
+                ["git", "config", "user.name", "Test User"],
+                ["git", "add", "."],
+                ["git", "commit", "-m", "base"],
+                ["git", "checkout", "-b", "feature"],
+            ):
+                subprocess.run(command, cwd=root, check=True, capture_output=True, text=True)
+
+            (root / "index.html").write_text(
+                '<script>gtag("config", "G-EXAMPLE123")</script>',
+                encoding="utf-8",
+            )
+            subprocess.run(
+                ["git", "add", "index.html"],
+                cwd=root,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            subprocess.run(
+                ["git", "commit", "-m", "add analytics identity"],
+                cwd=root,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            result = subprocess.run(
+                [sys.executable, "scripts/validate_site.py", "--base-ref", "main"],
+                cwd=root,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(1, result.returncode)
+            self.assertIn("FAIL protected changes", result.stdout)
+            self.assertIn("Google Analytics identity", result.stdout)
+            self.assertNotIn("affiliate identifier", result.stdout)
 
 
 if __name__ == "__main__":

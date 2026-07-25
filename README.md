@@ -30,7 +30,7 @@ Publish the **entire repo root** (not a tool subfolder). No build step.
 
 **Production host:** Vercel — `vercel.json` is the source of truth for rewrites, headers (CSP, security, cache), and the 404 rules for `/docs/*` and `*.md`. See `AGENTS.md` for the standing product contract.
 
-Historical hosting guides (Porkbun Static Hosting, Cloudflare Pages, Netlify) live in `docs/setup/` and are kept for reference only — the site no longer ships `netlify.toml`, `wrangler.toml`, `_redirects`, or `_headers`.
+The site no longer ships legacy Porkbun, Cloudflare Pages, or Netlify configuration. `vercel.json` and `.vercelignore` are the deployment source of truth.
 
 Live URLs:
 
@@ -53,4 +53,4 @@ Live URLs:
 
 ## Agent ops
 
-Standing rules: `AGENTS.md` · Backlog / strategy: `docs/ops/`
+Standing rules: `AGENTS.md` · Operations: `docs/ops/`

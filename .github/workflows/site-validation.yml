@@ -1,0 +1,50 @@
+name: Site validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: site-validation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Unit tests
+        run: python3 -m unittest discover -s scripts -p 'test_*.py' -v
+
+      - name: Validate push
+        if: github.event_name == 'push'
+        run: python3 scripts/validate_site.py
+
+      - name: Validate pull request
+        if: github.event_name == 'pull_request'
+        env:
+          ALLOW_PROTECTED_CHANGES: ${{ contains(github.event.pull_request.labels.*.name, 'protected-change-approved') }}
+          BASE_REF: origin/${{ github.base_ref }}
+        run: |
+          args=(--base-ref "$BASE_REF")
+          if [[ "$ALLOW_PROTECTED_CHANGES" == "true" ]]; then
+            args+=(--allow-protected)
+          fi
+          python3 scripts/validate_site.py "${args[@]}"

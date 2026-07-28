@@ -34,3 +34,31 @@ const higherTargetProbability = context.window.MangroveForecast.probabilityOfHit
 );
 
 assert(lowerTargetProbability > higherTargetProbability);
+
+assert(
+  Math.abs(lowerTargetProbability - 0.8365) < 0.002,
+  `expected a known-reference probability near 0.8365, got ${lowerTargetProbability}`
+);
+
+const seasonalHistory = [];
+for (let year = 2024; year <= 2025; year += 1) {
+  for (let month = 1; month <= 12; month += 1) {
+    seasonalHistory.push({
+      month: `${year}-${String(month).padStart(2, '0')}`,
+      value: month === 12 ? 200 : 100
+    });
+  }
+}
+const seasonalSeries = context.window.MangroveForecast.prepareTimeSeries(seasonalHistory);
+const seasonalResult = context.window.MangroveForecast.generateForecast(
+  seasonalSeries,
+  12,
+  true
+);
+const novemberForecast = seasonalResult.forecast.find(row => row.month === '2026-11');
+const decemberForecast = seasonalResult.forecast.find(row => row.month === '2026-12');
+
+assert(
+  decemberForecast.value > novemberForecast.value,
+  'a recurring December peak should remain a peak in the seasonal forecast'
+);

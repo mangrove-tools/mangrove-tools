@@ -107,7 +107,7 @@ function prepareTimeSeries(data) {
 function parseMonthStart(month) {
   const isoMonth = /^(\d{4})-(\d{2})$/.exec(month);
   if (isoMonth) {
-    return new Date(Number(isoMonth[1]), Number(isoMonth[2]) - 1, 1);
+    return new Date(Date.UTC(Number(isoMonth[1]), Number(isoMonth[2]) - 1, 1));
   }
   return new Date(month);
 }
@@ -129,8 +129,11 @@ function computeSeasonalIndices(detrended, ts) {
   for (let i = 0; i < detrended.length; i++) {
     const date = parseMonthStart(ts[i].month);
     if (!isNaN(date.getTime())) {
-      const calMonth = date.getMonth(); // 0-11
-      byCalendarMonth[calMonth].push(detrended[i].y / ts[i].y); // ratio of actual to trend
+      const calMonth = date.getUTCMonth(); // 0-11
+      const trendValue = detrended[i].y;
+      byCalendarMonth[calMonth].push(
+        trendValue > 0 ? ts[i].y / trendValue : 1
+      ); // ratio of actual to trend
     }
   }
 
@@ -203,7 +206,7 @@ function generateForecast(timeSeries, horizon, useSeasonality) {
       // Get calendar month for seasonal index
       const date = parseMonthStart(lastMonth);
       if (!isNaN(date.getTime())) {
-        const calMonth = (date.getMonth() + h) % 12;
+        const calMonth = (date.getUTCMonth() + h) % 12;
         const seasonalFactor = seasonalIndices[calMonth] || 1.0;
         value = baseValue * seasonalFactor;
       }
@@ -217,7 +220,7 @@ function generateForecast(timeSeries, horizon, useSeasonality) {
     // Project month string
     const projDate = parseMonthStart(lastMonth);
     if (!isNaN(projDate.getTime())) {
-      projDate.setMonth(projDate.getMonth() + h);
+      projDate.setUTCMonth(projDate.getUTCMonth() + h);
       const projMonth = projDate.toISOString().slice(0, 7);
       forecast.push({ month: projMonth, value, lower, upper });
     }
@@ -287,9 +290,10 @@ function validateHistoricalData(data) {
   // Check for missing months (gaps)
   const sorted = [...data].sort((a, b) => a.month.localeCompare(b.month));
   for (let i = 1; i < sorted.length; i++) {
-    const prev = new Date(sorted[i-1].month);
-    const curr = new Date(sorted[i].month);
-    const monthsDiff = (curr.getFullYear() - prev.getFullYear()) * 12 + (curr.getMonth() - prev.getMonth());
+    const prev = parseMonthStart(sorted[i-1].month);
+    const curr = parseMonthStart(sorted[i].month);
+    const monthsDiff = (curr.getUTCFullYear() - prev.getUTCFullYear()) * 12
+      + (curr.getUTCMonth() - prev.getUTCMonth());
     if (monthsDiff > 1) {
       issues.push(`Gap detected between ${sorted[i-1].month} and ${sorted[i].month}`);
     }

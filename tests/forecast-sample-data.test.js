@@ -157,4 +157,3 @@ assert.strictEqual(document.getElementById('chart-wrap').hidden, false);
 assert.strictEqual(document.getElementById('forecast-table-wrap').hidden, false);
 assert.strictEqual(document.getElementById('next-steps').hidden, false);
 assert.strictEqual(document.getElementById('guardrail').hidden, true);
-

@@ -179,6 +179,10 @@
   gap: var(--space-xs);
 }
 
+.budget-workspace .financial-treatment[hidden] {
+  display: none !important;
+}
+
 .budget-workspace .mapping-field select,
 .budget-workspace .plan-form input,
 .budget-workspace .plan-form select {

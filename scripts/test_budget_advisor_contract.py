@@ -162,6 +162,22 @@ class BudgetAdvisorContractTests(unittest.TestCase):
             self.assertEqual(attributes.get("role"), "status")
             self.assertEqual(attributes.get("aria-live"), "polite")
 
+    def test_hidden_financial_treatment_overrides_its_authored_grid_layout(
+        self,
+    ) -> None:
+        styles = (
+            ROOT / "analytics/budget/styles.css"
+        ).read_text(encoding="utf-8")
+
+        self.assertRegex(
+            styles,
+            re.compile(
+                r"\.budget-workspace\s+"
+                r"\.financial-treatment\[hidden\]\s*\{\s*"
+                r"display:\s*none(?:\s*!important)?\s*;"
+            ),
+        )
+
     def test_page_loads_decision_canvas_dependencies_in_contract_order(
         self,
     ) -> None:

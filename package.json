@@ -4,9 +4,11 @@
   "private": true,
   "description": "Static marketing site + local AI Gateway smoke test harness. The site itself is bundler-free vanilla HTML/CSS/JS; this manifest only exists to install the 'ai' SDK for the local smoke test in index.mjs.",
   "scripts": {
-    "smoke": "node --env-file=.env.local index.mjs"
+    "smoke": "node --env-file=.env.local index.mjs",
+    "test:api": "node --test tests/*.test.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "2.110.9",
     "ai": "^7.0.35"
   }
 }

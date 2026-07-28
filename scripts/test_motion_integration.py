@@ -5,6 +5,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+MOTION_SCRIPT_PATTERN = re.compile(r"/shared/motion\.[0-9a-f]{12}\.js")
 
 
 class MotionPageParser(HTMLParser):
@@ -36,20 +37,30 @@ def parse_page(relative_path: str) -> MotionPageParser:
     return parser
 
 
+def motion_script_index(scripts: list[str]) -> int:
+    return next(
+        index
+        for index, script in enumerate(scripts)
+        if MOTION_SCRIPT_PATTERN.fullmatch(script)
+    )
+
+
 class MotionIntegrationTests(unittest.TestCase):
     def test_homepage_loads_motion_for_instrument_and_story_hooks(self) -> None:
         homepage = parse_page("index.html")
 
         self.assertTrue(homepage.has_decision_instrument_hook)
         self.assertTrue(homepage.has_decision_story_hook)
-        self.assertIn("/shared/motion.js", homepage.scripts)
+        self.assertTrue(
+            any(MOTION_SCRIPT_PATTERN.fullmatch(script) for script in homepage.scripts)
+        )
         self.assertFalse(homepage.has_generic_reveal)
 
     def test_analytics_pages_load_motion_before_their_apps(self) -> None:
         for route in ("budget", "forecast"):
             with self.subTest(route=route):
                 page = parse_page(f"analytics/{route}/index.html")
-                motion_index = page.scripts.index("/shared/motion.js")
+                motion_index = motion_script_index(page.scripts)
                 app_index = page.scripts.index(f"/analytics/{route}/app.js")
                 self.assertLess(motion_index, app_index)
 

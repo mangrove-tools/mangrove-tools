@@ -295,8 +295,8 @@ test('unequal near-one elasticities retain equal interior marginals', () => {
   const second = row(result, 'Second channel');
 
   assert.equal(result.ok, true);
-  assert.equal(first.recommendedSpend, 4000.26);
-  assert.equal(second.recommendedSpend, 5999.75);
+  assert.equal(first.recommendedSpend, 4000.25);
+  assert.equal(second.recommendedSpend, 5999.76);
   assert.equal(
     Math.round(first.recommendedSpend * 100) + Math.round(second.recommendedSpend * 100),
     1000001
@@ -305,6 +305,58 @@ test('unequal near-one elasticities retain equal interior marginals', () => {
     Math.abs(first.marginalMetric.value - second.marginalMetric.value)
       <= Number.EPSILON * 8
   );
+});
+
+test('mixed elasticities reject a profitable one-cent local exchange', () => {
+  const result = allocate({
+    model: model([
+      channel('C0', { a: 116766.96419497507, b: 0.9999999999999964 }, {
+        currentSpendRate: 0,
+        preservedSpendRate: 0
+      }),
+      channel('C1', { a: 661.1554320970627, b: 0.6451448898762464 }, {
+        currentSpendRate: 0,
+        preservedSpendRate: 0
+      }),
+      channel('C2', { a: 13194.183658816703, b: 0.5731349268555641 }, {
+        currentSpendRate: 0,
+        preservedSpendRate: 0
+      }),
+      channel('C3', { a: 8451788.597087873, b: 0.0848016581684351 }, {
+        currentSpendRate: 0,
+        preservedSpendRate: 0
+      }),
+      channel('C4', { a: 265913.5381282103, b: 0.3030463482439518 }, {
+        currentSpendRate: 0,
+        preservedSpendRate: 0
+      })
+    ], { key: 'revenue', label: 'Revenue', costTreatment: null }),
+    totalBudget: 93509.49,
+    planDays: 782.6114767670637,
+    constraints: {
+      C4: { minimum: 0, maximum: 9223.99, excluded: false }
+    }
+  });
+  const donor = row(result, 'C0');
+  const receiver = row(result, 'C3');
+  function outcome(item, spend) {
+    const rate = spend / result.horizonFactor;
+    return item.curve.a * Math.pow(rate, item.curve.b) * result.horizonFactor;
+  }
+  const donorCurve = { curve: { a: 116766.96419497507, b: 0.9999999999999964 } };
+  const receiverCurve = { curve: { a: 8451788.597087873, b: 0.0848016581684351 } };
+  const exchangeGain = (
+    outcome(donorCurve, donor.recommendedSpend - 0.01)
+    + outcome(receiverCurve, receiver.recommendedSpend + 0.01)
+  ) - (
+    outcome(donorCurve, donor.recommendedSpend)
+    + outcome(receiverCurve, receiver.recommendedSpend)
+  );
+
+  assert.equal(result.ok, true);
+  assert.equal(result.totals.allocatedBudget, 93509.49);
+  assert.ok(receiver.recommendedSpend > 0);
+  assert.ok(exchangeGain <= 0, `one-cent exchange improves outcome by ${exchangeGain}`);
 });
 
 test('near-one projection preserves bounds while reconciling the exact budget', () => {

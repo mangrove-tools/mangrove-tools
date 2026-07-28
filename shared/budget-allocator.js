@@ -353,47 +353,53 @@
     return null;
   }
 
-  function centeredDualBudget(modelable, targetCents, horizonFactor) {
+  function pivotedDualBudget(modelable, targetCents, horizonFactor) {
     if (modelable.length === 0) return targetCents === 0 ? [] : null;
     const logHorizonCents = Math.log(horizonFactor) + Math.log(100);
     if (!Number.isFinite(logHorizonCents)) return null;
-    const coefficientLogs = modelable.map(function coefficientLog(item) {
-      const coefficient = item.curve.a * item.curve.b;
-      return coefficient > 0
-        ? Math.log(coefficient)
-        : Math.log(item.curve.a) + Math.log(item.curve.b);
-    });
-    if (coefficientLogs.some(function invalidLog(value) { return !Number.isFinite(value); })) return null;
-    const centerIndex = coefficientLogs.reduce(function largestLogIndex(largest, value, index) {
-      return value > coefficientLogs[largest] ? index : largest;
-    }, 0);
-    const reference = modelable[centerIndex];
-    const descriptors = modelable.map(function descriptor(item, index) {
+    const pivotIndex = modelable.reduce(function mostStablePivot(selected, item, index) {
+      const selectedGap = 1 - modelable[selected].curve.b;
       const gap = 1 - item.curve.b;
-      const centeredCoefficient = compensatedPair(
+      if (gap < selectedGap) return index;
+      if (gap > selectedGap) return selected;
+      const selectedCoefficient = modelable[selected].curve.a * modelable[selected].curve.b;
+      const coefficient = item.curve.a * item.curve.b;
+      return coefficient > selectedCoefficient ? index : selected;
+    }, 0);
+    const reference = modelable[pivotIndex];
+    const pivotGap = 1 - reference.curve.b;
+    const descriptors = modelable.map(function descriptor(item) {
+      const gap = 1 - item.curve.b;
+      const relativeCoefficient = compensatedPair(
         relativeLog(item.curve.a, reference.curve.a),
         relativeLog(item.curve.b, reference.curve.b)
       );
       return {
-        centeredCoefficient: centeredCoefficient.value,
-        centeredCoefficientCorrection: centeredCoefficient.correction,
+        relativeCoefficient: relativeCoefficient.value,
+        relativeCoefficientCorrection: relativeCoefficient.correction,
         gap: gap,
+        pivotSlope: pivotGap / gap,
         minimumCents: item.minimumCents,
         maximumCents: item.maximumCents,
         logMinimum: item.minimumCents > 0 ? Math.log(item.minimumCents) : -Infinity,
         logMaximum: Number.isFinite(item.maximumCents) ? Math.log(item.maximumCents) : Infinity
       };
     });
-    const minimumGap = descriptors.reduce(function smallestGap(smallest, item) {
-      return Math.min(smallest, item.gap);
-    }, Infinity);
-    if (!Number.isFinite(minimumGap) || minimumGap <= 0) return null;
+    if (!Number.isFinite(pivotGap) || pivotGap <= 0
+      || descriptors.some(function invalidDescriptor(item) {
+        return !Number.isFinite(item.relativeCoefficient)
+          || !Number.isFinite(item.relativeCoefficientCorrection)
+          || !Number.isFinite(item.pivotSlope)
+          || item.pivotSlope <= 0
+          || item.pivotSlope > 1;
+      })) return null;
 
-    function valuesAt(offset) {
-      const values = descriptors.map(function spendAtOffset(item) {
-        const centeredDifference = (item.centeredCoefficient - offset)
-          + item.centeredCoefficientCorrection;
-        const logCents = (centeredDifference / item.gap)
+    function valuesAt(logPivotRate) {
+      const values = descriptors.map(function spendAtPivotRate(item) {
+        const mainLogRate = (item.relativeCoefficient / item.gap)
+          + (item.pivotSlope * logPivotRate);
+        const logCents = mainLogRate
+          + (item.relativeCoefficientCorrection / item.gap)
           + logHorizonCents;
         if (logCents <= item.logMinimum) return item.minimumCents;
         if (logCents >= item.logMaximum) return item.maximumCents;
@@ -413,27 +419,27 @@
     let low;
     let high;
     if (zero.total > targetCents) {
-      low = 0;
-      high = minimumGap;
-      while (valuesAt(high).total > targetCents) {
-        low = high;
-        if (high >= Number.MAX_VALUE / 2) return null;
-        high *= 2;
-      }
-    } else {
       high = 0;
-      low = -minimumGap;
-      while (valuesAt(low).total < targetCents) {
+      low = -1;
+      while (valuesAt(low).total > targetCents) {
         high = low;
         if (low <= -Number.MAX_VALUE / 2) return null;
         low *= 2;
+      }
+    } else {
+      low = 0;
+      high = 1;
+      while (valuesAt(high).total < targetCents) {
+        low = high;
+        if (high >= Number.MAX_VALUE / 2) return null;
+        high *= 2;
       }
     }
 
     for (let iteration = 0; iteration < BALANCE_ITERATIONS; iteration += 1) {
       const midpoint = low + ((high - low) / 2);
       if (midpoint === low || midpoint === high) break;
-      if (valuesAt(midpoint).total > targetCents) low = midpoint;
+      if (valuesAt(midpoint).total < targetCents) low = midpoint;
       else high = midpoint;
     }
     const lowResult = valuesAt(low);
@@ -444,23 +450,203 @@
   }
 
   function balance(modelable, budgetCents, horizonFactor) {
-    const stableCents = centeredDualBudget(modelable, budgetCents, horizonFactor);
+    const stableCents = pivotedDualBudget(modelable, budgetCents, horizonFactor);
     if (!stableCents) return null;
-    const projection = projectToBoundedBudget(modelable, stableCents, budgetCents);
-    if (!projection) return null;
     const allocations = modelable.map(function allocate(item, index) {
-      const allocatedCents = safeCents(projection.values[index] / 100);
-      return allocatedCents == null ? null : Object.assign({}, item, { allocatedCents: allocatedCents });
+      const allocatedCents = Math.floor(stableCents[index]);
+      return Number.isSafeInteger(allocatedCents)
+        ? Object.assign({}, item, { allocatedCents: allocatedCents })
+        : null;
     });
     if (allocations.some(function invalidAllocation(item) { return item == null; })) return null;
     return {
       allocations: allocations,
-      precisionOperations: projection.operations
+      precisionOperations: projectionOperationCount(modelable.length, 0)
     };
   }
 
-  function marginalAtCents(item, cents, horizonFactor) {
-    return marginalOutcome(item.curve, fromCents(cents) / horizonFactor);
+  function logCentIncrement(item, cents, direction, horizonFactor) {
+    const logHorizon = Math.log(horizonFactor);
+    const logHorizonCents = logHorizon + Math.log(100);
+    const logBase = Math.log(item.curve.a) + logHorizon;
+    if (!Number.isFinite(logBase) || !Number.isFinite(logHorizonCents)) return null;
+    if (direction > 0 && cents === 0) {
+      return logBase - item.curve.b * logHorizonCents;
+    }
+    if (direction < 0 && cents === 1) {
+      return logBase - item.curve.b * logHorizonCents;
+    }
+    if (cents <= 0) return null;
+    const logOutcome = logBase
+      + item.curve.b * (Math.log(cents) - logHorizonCents);
+    const logRateChange = item.curve.b * Math.log1p(direction / cents);
+    const relativeIncrement = direction > 0
+      ? Math.expm1(logRateChange)
+      : -Math.expm1(logRateChange);
+    if (!Number.isFinite(logOutcome)
+      || !Number.isFinite(relativeIncrement)
+      || relativeIncrement <= 0) return null;
+    const result = logOutcome + Math.log(relativeIncrement);
+    return Number.isFinite(result) ? result : null;
+  }
+
+  function nextDiscreteExchange(modelable, horizonFactor) {
+    let firstGain = null;
+    let secondGain = null;
+    let firstLoss = null;
+    let secondLoss = null;
+    for (let index = 0; index < modelable.length; index += 1) {
+      const item = modelable[index];
+      if (item.allocatedCents < item.maximumCents) {
+        const gain = logCentIncrement(item, item.allocatedCents, 1, horizonFactor);
+        if (gain == null) return false;
+        const entry = { index: index, value: gain };
+        if (firstGain == null || gain > firstGain.value) {
+          secondGain = firstGain;
+          firstGain = entry;
+        } else if (secondGain == null || gain > secondGain.value) {
+          secondGain = entry;
+        }
+      }
+      if (item.allocatedCents > item.minimumCents) {
+        const loss = logCentIncrement(item, item.allocatedCents, -1, horizonFactor);
+        if (loss == null) return false;
+        const entry = { index: index, value: loss };
+        if (firstLoss == null || loss < firstLoss.value) {
+          secondLoss = firstLoss;
+          firstLoss = entry;
+        } else if (secondLoss == null || loss < secondLoss.value) {
+          secondLoss = entry;
+        }
+      }
+    }
+    const gains = [firstGain, secondGain].filter(Boolean);
+    const losses = [firstLoss, secondLoss].filter(Boolean);
+    const candidates = [];
+    for (let gainIndex = 0; gainIndex < gains.length; gainIndex += 1) {
+      for (let lossIndex = 0; lossIndex < losses.length; lossIndex += 1) {
+        if (gains[gainIndex].index !== losses[lossIndex].index) {
+          candidates.push({
+            receiver: gains[gainIndex].index,
+            donor: losses[lossIndex].index,
+            gain: gains[gainIndex].value,
+            loss: losses[lossIndex].value
+          });
+        }
+      }
+    }
+    if (candidates.length === 0) return null;
+    const best = candidates.reduce(function largestImprovement(selected, candidate) {
+      return candidate.gain - candidate.loss > selected.gain - selected.loss
+        ? candidate
+        : selected;
+    });
+    const comparisonTolerance = Number.EPSILON * 64
+      * (1 + Math.abs(best.gain) + Math.abs(best.loss));
+    return best.gain > best.loss + comparisonTolerance ? best : null;
+  }
+
+  function satisfiesDiscreteKkt(modelable, horizonFactor) {
+    return nextDiscreteExchange(modelable, horizonFactor) === null;
+  }
+
+  function repairDiscreteKkt(modelable, horizonFactor) {
+    const versions = new Array(modelable.length).fill(0);
+    const gainHeap = [];
+    const lossHeap = [];
+    function higherGain(left, right) {
+      if (left.value !== right.value) return left.value > right.value;
+      return left.channel.localeCompare(right.channel) < 0;
+    }
+    function lowerLoss(left, right) {
+      if (left.value !== right.value) return left.value < right.value;
+      return left.channel.localeCompare(right.channel) < 0;
+    }
+    function pushCurrent(index) {
+      const item = modelable[index];
+      if (item.allocatedCents < item.maximumCents) {
+        const gain = logCentIncrement(item, item.allocatedCents, 1, horizonFactor);
+        if (gain == null) return false;
+        pushHeap(gainHeap, {
+          channel: item.channel,
+          index: index,
+          value: gain,
+          version: versions[index]
+        }, higherGain);
+      }
+      if (item.allocatedCents > item.minimumCents) {
+        const loss = logCentIncrement(item, item.allocatedCents, -1, horizonFactor);
+        if (loss == null) return false;
+        pushHeap(lossHeap, {
+          channel: item.channel,
+          index: index,
+          value: loss,
+          version: versions[index]
+        }, lowerLoss);
+      }
+      return true;
+    }
+    function takeCurrent(heap, higherPriority) {
+      while (heap.length > 0) {
+        const entry = popHeap(heap, higherPriority);
+        if (entry.version === versions[entry.index]) return entry;
+      }
+      return null;
+    }
+    for (let index = 0; index < modelable.length; index += 1) {
+      if (!pushCurrent(index)) return false;
+    }
+    for (let adjustment = 0; adjustment <= modelable.length; adjustment += 1) {
+      const gains = [
+        takeCurrent(gainHeap, higherGain),
+        takeCurrent(gainHeap, higherGain)
+      ].filter(Boolean);
+      const losses = [
+        takeCurrent(lossHeap, lowerLoss),
+        takeCurrent(lossHeap, lowerLoss)
+      ].filter(Boolean);
+      const candidates = [];
+      gains.forEach(function pairGain(gain) {
+        losses.forEach(function pairLoss(loss) {
+          if (gain.index !== loss.index) {
+            candidates.push({
+              receiver: gain.index,
+              donor: loss.index,
+              gain: gain.value,
+              loss: loss.value
+            });
+          }
+        });
+      });
+      const best = candidates.reduce(function largestImprovement(selected, candidate) {
+        if (selected == null) return candidate;
+        return candidate.gain - candidate.loss > selected.gain - selected.loss
+          ? candidate
+          : selected;
+      }, null);
+      const tolerance = best == null
+        ? 0
+        : Number.EPSILON * 64 * (1 + Math.abs(best.gain) + Math.abs(best.loss));
+      if (best == null || best.gain <= best.loss + tolerance) return true;
+      if (adjustment === modelable.length) return false;
+
+      modelable[best.donor].allocatedCents -= 1;
+      modelable[best.receiver].allocatedCents += 1;
+      versions[best.donor] += 1;
+      versions[best.receiver] += 1;
+      gains.concat(losses).forEach(function restoreUnchanged(entry) {
+        if (entry.index !== best.donor && entry.index !== best.receiver) {
+          pushHeap(
+            gains.includes(entry) ? gainHeap : lossHeap,
+            entry,
+            gains.includes(entry) ? higherGain : lowerLoss
+          );
+        }
+      });
+      if (!pushCurrent(best.donor)
+        || (best.receiver !== best.donor && !pushCurrent(best.receiver))) return false;
+    }
+    return false;
   }
 
   function pushHeap(heap, item, higherPriority) {
@@ -508,7 +694,7 @@
       delta -= modelable[index].allocatedCents;
       if (!Number.isSafeInteger(delta)) return false;
     }
-    const roundingBound = Math.ceil(modelable.length / 2);
+    const roundingBound = modelable.length;
     const precisionMagnitude = Math.abs(targetCents) + Math.abs(delta);
     const operationCount = projectedOperations == null
       ? projectionOperationCount(modelable.length, 0)
@@ -517,9 +703,9 @@
     const precisionBound = reconciliationPrecisionBound(operationCount, precisionMagnitude);
     if (precisionBound == null) return false;
     const adjustmentBound = roundingBound + precisionBound;
-    // Nearest-cent rounding contributes at most half a cent per channel.
-    // The gamma_n term covers only projection, cent conversion, and summation;
-    // ill-conditioned curve inversion is removed by the budget projection.
+    // Flooring contributes less than one cent per channel.
+    // The independent discrete-KKT check below validates that these bounded
+    // cent adjustments preserve the concave objective's allocation shape.
     if (!Number.isSafeInteger(delta) || Math.abs(delta) > adjustmentBound) return false;
     if (delta === 0) return true;
     const direction = delta > 0 ? 1 : -1;
@@ -536,14 +722,29 @@
     if (remainingCapacity > 0) return false;
 
     function higherPriority(left, right) {
-      const leftMarginal = marginalAtCents(left, left.allocatedCents, horizonFactor);
-      const rightMarginal = marginalAtCents(right, right.allocatedCents, horizonFactor);
-      const leftValue = leftMarginal == null ? -Infinity : leftMarginal;
-      const rightValue = rightMarginal == null ? -Infinity : rightMarginal;
+      const leftIncrement = logCentIncrement(
+        left,
+        left.allocatedCents,
+        direction,
+        horizonFactor
+      );
+      const rightIncrement = logCentIncrement(
+        right,
+        right.allocatedCents,
+        direction,
+        horizonFactor
+      );
+      const leftValue = leftIncrement == null
+        ? (direction > 0 ? -Infinity : Infinity)
+        : leftIncrement;
+      const rightValue = rightIncrement == null
+        ? (direction > 0 ? -Infinity : Infinity)
+        : rightIncrement;
       if (leftValue !== rightValue) {
         return direction > 0 ? leftValue > rightValue : leftValue < rightValue;
       }
-      return left.channel.localeCompare(right.channel) < 0;
+      const order = left.channel.localeCompare(right.channel);
+      return direction > 0 ? order > 0 : order < 0;
     }
 
     const heap = [];
@@ -639,6 +840,10 @@
     if (!balanceResult) return failure('no_defensible_remainder', 'No admitted response curve can receive the remaining budget.', fromCents(minimumCents), maximumCents == null ? null : fromCents(maximumCents), []);
     const balanced = balanceResult.allocations;
     if (!reconcile(balanced, modeledTargetCents, horizonFactor, balanceResult.precisionOperations)) {
+      return failure('currency_reconciliation_failed', 'The allocation could not be reconciled to whole cents.', fromCents(minimumCents), maximumCents == null ? null : fromCents(maximumCents), []);
+    }
+    if (!repairDiscreteKkt(balanced, horizonFactor)
+      || !satisfiesDiscreteKkt(balanced, horizonFactor)) {
       return failure('currency_reconciliation_failed', 'The allocation could not be reconciled to whole cents.', fromCents(minimumCents), maximumCents == null ? null : fromCents(maximumCents), []);
     }
     const allocations = new Map(balanced.map(function byName(item) { return [item.channel, item]; }));

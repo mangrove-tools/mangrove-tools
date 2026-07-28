@@ -10,6 +10,7 @@ Free **marketing analytics** for small businesses and founders, plus a free **ne
 
 ## Newsletter Calculators (secondary; SEO surface)
 
+- [Calculator Library](https://mangrovetools.com/calculators/): Focused newsletter utilities for revenue, pricing, subscriber goals, media kits, and sponsorship inventory
 - [LetterROI](https://mangrovetools.com/letterroi/): Newsletter revenue calculator for ads, sponsorships, and paid subscriptions
 - [SponsorQuote](https://mangrovetools.com/sponsorquote/): Newsletter sponsorship rate calculator (flat rate + implied CPM + rate-card band)
 - [SubTarget](https://mangrovetools.com/subtarget/): Paid newsletter subscriber goal calculator (revenue target → paying subs needed + band)
@@ -18,6 +19,7 @@ Free **marketing analytics** for small businesses and founders, plus a free **ne
 
 ## About
 
+- [Method & Limitations](https://mangrovetools.com/method/): How Mangrove Tools frames decisions, handles browser data, presents assumptions, and states model limits
 - [About Mangrove Tools](https://mangrovetools.com/about/): Who we are — Naples, Florida library of free marketing analytics and newsletter calculators
 - [FAQ](https://mangrovetools.com/faq/): Tools FAQ, data privacy, affiliate disclosure
 - [Privacy](https://mangrovetools.com/privacy/)

@@ -193,6 +193,28 @@ body {
   transform: scaleX(1);
 }
 
+@media (max-width: 560px) {
+  .top {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .site-nav {
+    display: grid;
+    grid-template-columns: repeat(5, max-content);
+    justify-content: space-between;
+    gap: 0.25rem;
+    width: 100%;
+  }
+
+  .site-nav a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2rem;
+    font-size: clamp(0.72rem, 3vw, 0.82rem);
+  }
+}
+
 .shell {
   max-width: var(--shell);
   margin: 0 auto;

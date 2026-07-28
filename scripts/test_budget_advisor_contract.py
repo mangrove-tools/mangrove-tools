@@ -195,6 +195,20 @@ class BudgetAdvisorContractTests(unittest.TestCase):
         self.assertNotIn("spend * 0.6", app_js)
         self.assertNotIn("minimum three-point shape", app_js)
 
+    def test_app_has_no_direct_network_storage_or_console_sinks(self) -> None:
+        app_js = (ROOT / "analytics/budget/app.js").read_text(encoding="utf-8")
+
+        for forbidden in (
+            "fetch(",
+            "XMLHttpRequest",
+            "sendBeacon",
+            "localStorage",
+            "sessionStorage",
+            "console.log",
+            "console.error",
+        ):
+            with self.subTest(forbidden=forbidden):
+                self.assertNotIn(forbidden, app_js)
 
 if __name__ == "__main__":
     unittest.main()

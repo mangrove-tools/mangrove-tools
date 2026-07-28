@@ -46,6 +46,12 @@
     marginal_roas: 'Marginal ROAS',
     marginal_roi: 'Marginal ROI'
   });
+  const IMPORT_ACTIONS = Object.freeze(['upload', 'paste', 'sample']);
+  const BUDGET_EVENTS = Object.freeze([
+    'tool_started',
+    'sample_data_used',
+    'calculation_completed'
+  ]);
 
   function createState() {
     return {
@@ -342,7 +348,7 @@
     const SAMPLE = root.MangroveBudgetSampleData || {};
     const MOTION = root.MangroveMotion || {};
     const state = createState();
-    const downloadUrls = [];
+    const downloadUrls = new Map();
     let activeCorrectionText = null;
     let chartTimer = null;
     let repaintCharts = null;
@@ -406,8 +412,15 @@
     }
 
     function trackEvent(eventName, action) {
+      if (BUDGET_EVENTS.indexOf(eventName) === -1
+        || IMPORT_ACTIONS.indexOf(action) === -1) return;
       if (typeof EXTRAS.trackProductEvent !== 'function') return;
       EXTRAS.trackProductEvent(eventName, { action: action });
+    }
+
+    function trackImport(sourceKind) {
+      if (sourceKind === 'sample') trackEvent('sample_data_used', sourceKind);
+      trackEvent('tool_started', sourceKind);
     }
 
     function clearElement(element) {
@@ -484,12 +497,15 @@
     }
 
     function revokeDownloads() {
-      while (downloadUrls.length > 0) {
-        const url = downloadUrls.pop();
+      downloadUrls.forEach(function revokeDownload(timer, url) {
+        if (timer != null && typeof root.clearTimeout === 'function') {
+          root.clearTimeout(timer);
+        }
         if (root.URL && typeof root.URL.revokeObjectURL === 'function') {
           root.URL.revokeObjectURL(url);
         }
-      }
+      });
+      downloadUrls.clear();
     }
 
     function clearPriorDecision() {
@@ -503,6 +519,7 @@
       state.allocation = null;
       state.constraints = {};
       state.sourceKind = null;
+      state.pendingImport = null;
       activeCorrectionText = null;
       preservedDefaults = {};
       clearElement(readinessSummary);
@@ -523,12 +540,122 @@
       const blob = new root.Blob([text], { type: type });
       const url = root.URL.createObjectURL(blob);
       const anchor = document.createElement('a');
-      downloadUrls.push(url);
       anchor.href = url;
       anchor.download = filename;
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
+      const timer = typeof root.setTimeout === 'function'
+        ? root.setTimeout(function revokeDownloadedObjectUrl() {
+          downloadUrls.delete(url);
+          if (root.URL && typeof root.URL.revokeObjectURL === 'function') {
+            root.URL.revokeObjectURL(url);
+          }
+        }, 0)
+        : null;
+      downloadUrls.set(url, timer);
+    }
+
+    function controlledMetric(metric) {
+      if (!metric || typeof metric !== 'object') return null;
+      return {
+        key: typeof metric.key === 'string' ? metric.key : null,
+        value: finiteValue(metric.value)
+      };
+    }
+
+    function allocationDownloadPayload(model, allocation) {
+      const selectedModel = model && typeof model === 'object' ? model : {};
+      const result = allocation && typeof allocation === 'object' ? allocation : {};
+      const metric = selectedModel.metric && typeof selectedModel.metric === 'object'
+        ? selectedModel.metric
+        : {};
+      const totals = result.totals && typeof result.totals === 'object'
+        ? result.totals
+        : {};
+      const allocationRows = Array.isArray(result.allocation) ? result.allocation : [];
+      const channels = Array.isArray(selectedModel.channels) ? selectedModel.channels : [];
+      return {
+        version: 1,
+        objective: {
+          key: typeof metric.key === 'string' ? metric.key : null,
+          label: typeof metric.label === 'string' ? metric.label : null,
+          costTreatment: typeof metric.costTreatment === 'string' ? metric.costTreatment : null,
+          cadence: typeof selectedModel.cadence === 'string' ? selectedModel.cadence : null,
+          cadenceDays: finiteValue(selectedModel.cadenceDays)
+        },
+        allocation: {
+          code: typeof result.code === 'string' ? result.code : null,
+          horizonFactor: finiteValue(result.horizonFactor),
+          objective: typeof result.objective === 'string' ? result.objective : null,
+          rows: allocationRows.map(function controlledAllocationRow(row) {
+            return {
+              channel: row && typeof row.channel === 'string' ? row.channel : null,
+              status: row && (row.status === 'modelable' || row.status === 'preserved')
+                ? row.status
+                : null,
+              currentSpend: finiteValue(row && row.currentSpend),
+              recommendedSpend: finiteValue(row && row.recommendedSpend),
+              recommendedSpendRate: finiteValue(row && row.recommendedSpendRate),
+              predictedOutcome: finiteValue(row && row.predictedOutcome),
+              marginalMetric: controlledMetric(row && row.marginalMetric),
+              constraint: row && typeof row.constraint === 'string' ? row.constraint : null
+            };
+          }),
+          totals: {
+            requestedBudget: finiteValue(totals.requestedBudget),
+            allocatedBudget: finiteValue(totals.allocatedBudget),
+            optimizedBudget: finiteValue(totals.optimizedBudget),
+            preservedBudget: finiteValue(totals.preservedBudget),
+            predictedOutcome: finiteValue(totals.predictedOutcome)
+          },
+          conflicts: Array.isArray(result.conflicts)
+            ? result.conflicts.filter(function controlledConflict(value) {
+              return typeof value === 'string';
+            })
+            : []
+        },
+        modelDiagnostics: channels.map(function controlledChannelDiagnostics(channel) {
+          const diagnostics = channel && channel.diagnostics && typeof channel.diagnostics === 'object'
+            ? channel.diagnostics
+            : {};
+          const curve = channel && channel.status === 'modelable'
+            && channel.curve && typeof channel.curve === 'object'
+            ? channel.curve
+            : null;
+          return {
+            channel: channel && typeof channel.channel === 'string' ? channel.channel : null,
+            status: channel && (channel.status === 'modelable' || channel.status === 'preserved')
+              ? channel.status
+              : null,
+            currentSpendRate: finiteValue(channel && channel.currentSpendRate),
+            preservedSpendRate: finiteValue(channel && channel.preservedSpendRate),
+            curve: curve
+              ? {
+                a: finiteValue(curve.a),
+                b: finiteValue(curve.b),
+                r2: finiteValue(curve.r2)
+              }
+              : null,
+            diagnostics: {
+              completePeriods: finiteValue(diagnostics.completePeriods),
+              positiveCoverage: finiteValue(diagnostics.positiveCoverage),
+              distinctPositiveSpend: finiteValue(diagnostics.distinctPositiveSpend),
+              robustSpendVariation: finiteValue(diagnostics.robustSpendVariation),
+              elasticity: finiteValue(diagnostics.elasticity),
+              elasticityIqr: finiteValue(diagnostics.elasticityIqr),
+              maximumCurrentPredictionChange: finiteValue(
+                diagnostics.maximumCurrentPredictionChange
+              )
+            },
+            failedGates: Array.isArray(channel && channel.failedGates)
+              ? channel.failedGates.filter(function controlledGate(value) {
+                return typeof value === 'string' && Object.prototype.hasOwnProperty.call(GATE_LABELS, value);
+              })
+              : []
+          };
+        })
+      };
     }
 
     function renderCorrection(inspection) {
@@ -1263,6 +1390,7 @@
         setImportStatus('New history is waiting for replacement confirmation.');
         return;
       }
+      trackImport(sourceKind);
       processImport(sourceText, sourceKind);
     }
 
@@ -1318,14 +1446,11 @@
     });
 
     parsePastedHistory.addEventListener('click', function importPastedHistory() {
-      trackEvent('tool_started', 'paste');
       requestImport(historyPaste.value, 'paste');
     });
 
     sampleButton.addEventListener('click', function importSample() {
       if (typeof SAMPLE.text !== 'string') return;
-      trackEvent('sample_data_used', 'sample');
-      trackEvent('tool_started', 'sample');
       requestImport(SAMPLE.text, 'sample');
     });
 
@@ -1334,7 +1459,6 @@
       if (!file || typeof root.FileReader !== 'function') return;
       const reader = new root.FileReader();
       reader.addEventListener('load', function fileLoaded() {
-        trackEvent('tool_started', 'upload');
         requestImport(typeof reader.result === 'string' ? reader.result : '', 'upload');
         historyFile.value = '';
       });
@@ -1351,6 +1475,7 @@
       clearPriorDecision();
       state.pendingImport = null;
       replacementWarning.hidden = true;
+      trackImport(pending.sourceKind);
       processImport(pending.text, pending.sourceKind);
     });
 
@@ -1365,7 +1490,11 @@
     applyCorrections.addEventListener('click', retryCorrection);
 
     correctionGuide.addEventListener('click', function downloadCorrectionGuide() {
-      downloadText('budget-advisor-correction-guide.txt', correctionGuideText(), 'text/plain;charset=utf-8');
+      downloadText(
+        'mangrove-budget-correction-guide.txt',
+        correctionGuideText(),
+        'text/plain;charset=utf-8'
+      );
     });
 
     objectiveSelect.addEventListener('change', function changeObjective() {
@@ -1411,9 +1540,19 @@
       if (!state.importResult || state.importResult.ok !== true
         || typeof HISTORY.toCleanCsv !== 'function') return;
       downloadText(
-        'budget-advisor-cleaned-history.csv',
+        'mangrove-budget-cleaned-history.csv',
         HISTORY.toCleanCsv(state.importResult),
         'text/csv;charset=utf-8'
+      );
+    });
+
+    downloadAllocation.addEventListener('click', function downloadPlanAllocation() {
+      const model = modelFor(state.analysis, state.selectedObjective);
+      if (!model || !state.allocation || state.allocation.ok !== true) return;
+      downloadText(
+        'mangrove-budget-allocation.json',
+        JSON.stringify(allocationDownloadPayload(model, state.allocation), null, 2) + '\n',
+        'application/json;charset=utf-8'
       );
     });
 
@@ -1445,6 +1584,7 @@
       }
       renderResult(view, planDays);
       renderModelInspector(model, state.allocation);
+      if (downloadAllocation) downloadAllocation.disabled = false;
       syncPhase();
       if (MOTION.revealResult) MOTION.revealResult(resultsPanel);
       if (['upload', 'paste', 'sample'].indexOf(state.sourceKind) !== -1) {

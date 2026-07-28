@@ -242,7 +242,7 @@ class FakeElement {
   }
 }
 
-function createDocument() {
+function createDocument(clickedAnchors) {
   const tagsById = {
     'decision-canvas': 'section',
     'history-file': 'input',
@@ -307,15 +307,30 @@ function createDocument() {
       return elements[id] || null;
     },
     createElement(tagName) {
-      return new FakeElement(tagName);
+      const element = new FakeElement(tagName);
+      if (String(tagName).toLowerCase() === 'a') {
+        element.click = function clickDownloadAnchor() {
+          clickedAnchors.push({
+            href: element.href,
+            download: element.download
+          });
+          element.trigger('click');
+        };
+      }
+      return element;
     },
     elements
   };
 }
 
 function loadDomApp() {
-  const document = createDocument();
+  const clickedAnchors = [];
+  const document = createDocument(clickedAnchors);
   const events = [];
+  const createdBlobs = new Map();
+  const activeObjectUrls = new Set();
+  const revokedObjectUrls = [];
+  let nextObjectUrl = 1;
   const chartCalls = {
     response: [],
     marginal: []
@@ -346,6 +361,26 @@ function loadDomApp() {
   };
   const window = {
     document,
+    Blob: class FakeBlob {
+      constructor(parts, options) {
+        this.parts = Array.from(parts);
+        this.type = options && options.type;
+        this.text = this.parts.join('');
+      }
+    },
+    URL: {
+      createObjectURL(blob) {
+        const url = `blob:budget-test-${nextObjectUrl}`;
+        nextObjectUrl += 1;
+        createdBlobs.set(url, blob);
+        activeObjectUrls.add(url);
+        return url;
+      },
+      revokeObjectURL(url) {
+        revokedObjectUrls.push(url);
+        activeObjectUrls.delete(url);
+      }
+    },
     MangroveMotion: motion,
     MangroveCharts: chartApi,
     MangroveToolExtras: {
@@ -391,6 +426,18 @@ function loadDomApp() {
     motion,
     events,
     chartCalls,
+    downloads: {
+      clickedAnchors,
+      createdBlobs,
+      activeObjectUrls,
+      revokedObjectUrls,
+      latest() {
+        const anchor = clickedAnchors.at(-1);
+        return anchor
+          ? { ...anchor, blob: createdBlobs.get(anchor.href) }
+          : null;
+      }
+    },
     timers: {
       delays: timerDelays,
       pendingCount() {
@@ -909,6 +956,152 @@ test('successful result DOM is complete before reveal and charts inspect every c
   });
 });
 
+test('product events contain only a controlled import action', () => {
+  const { elements, events, window } = loadDomApp();
+  const privatePaste = [
+    'period,channel,spend,revenue',
+    '2024-W01,Private channel,1234,5678'
+  ].join('\n');
+  elements['history-paste'].value = privatePaste;
+
+  elements['parse-pasted-history'].trigger('click');
+  elements['use-sample-data'].trigger('click');
+  elements['confirm-replacement'].trigger('click');
+  elements['plan-form'].trigger('submit');
+
+  assert.ok(events.length >= 3);
+  events.forEach(event => {
+    assert.ok([
+      'tool_started',
+      'sample_data_used',
+      'calculation_completed'
+    ].includes(event.name));
+    assert.deepEqual(Object.keys(event.metadata), ['action']);
+    assert.ok(['upload', 'paste', 'sample'].includes(event.metadata.action));
+  });
+  assert.equal(
+    events.filter(event => (
+      event.name === 'tool_started' && event.metadata.action === 'paste'
+    )).length,
+    1
+  );
+  assert.equal(
+    events.filter(event => (
+      event.name === 'tool_started' && event.metadata.action === 'sample'
+    )).length,
+    1
+  );
+  assert.equal(
+    events.filter(event => event.name === 'sample_data_used').length,
+    1
+  );
+  assert.equal(
+    events.filter(event => event.name === 'calculation_completed').length,
+    1
+  );
+  const serialized = JSON.stringify(events);
+  assert.doesNotMatch(serialized, /Private channel|1234|5678|2024-W01/);
+  assert.doesNotMatch(serialized, new RegExp(
+    window.MangroveBudgetSampleData.text.split('\n')[1].split(',')[1]
+  ));
+});
+
+test('replacement telemetry is emitted once only after the replacement is confirmed', () => {
+  const { elements, events } = loadDomApp();
+  elements['use-sample-data'].trigger('click');
+  assert.equal(events.length, 2);
+
+  elements['use-sample-data'].trigger('click');
+  assert.equal(events.length, 2);
+  elements['cancel-replacement'].trigger('click');
+  assert.equal(events.length, 2);
+
+  elements['use-sample-data'].trigger('click');
+  assert.equal(events.length, 2);
+  elements['confirm-replacement'].trigger('click');
+
+  assert.deepEqual(events.slice(2), [
+    { name: 'sample_data_used', metadata: { action: 'sample' } },
+    { name: 'tool_started', metadata: { action: 'sample' } }
+  ]);
+});
+
+test('correction guidance is generated only on click with a fixed local filename', () => {
+  const { elements, downloads } = loadDomApp();
+  const privateValue = 'customer-secret-text';
+  elements['history-paste'].value = [
+    'period,channel,spend,conversions',
+    `2026-W02,Paid search,${privateValue},28`
+  ].join('\n');
+
+  elements['parse-pasted-history'].trigger('click');
+
+  assert.equal(downloads.createdBlobs.size, 0);
+  elements['download-correction-guide'].trigger('click');
+  const download = downloads.latest();
+  assert.equal(download.download, 'mangrove-budget-correction-guide.txt');
+  assert.equal(download.blob.type, 'text/plain;charset=utf-8');
+  assert.match(download.blob.text, /Budget Advisor correction guide/);
+  assert.doesNotMatch(download.blob.text, new RegExp(privateValue));
+});
+
+test('cleaned CSV is serialized only on click with a fixed local filename', () => {
+  const { elements, downloads, window } = loadDomApp();
+  let cleanCsvCalls = 0;
+  const originalToCleanCsv = window.MangroveHistoryData.toCleanCsv;
+  window.MangroveHistoryData.toCleanCsv = history => {
+    cleanCsvCalls += 1;
+    return originalToCleanCsv(history);
+  };
+
+  elements['use-sample-data'].trigger('click');
+
+  assert.equal(cleanCsvCalls, 0);
+  assert.equal(downloads.createdBlobs.size, 0);
+  elements['download-cleaned-data'].trigger('click');
+  const download = downloads.latest();
+  assert.equal(cleanCsvCalls, 1);
+  assert.equal(download.download, 'mangrove-budget-cleaned-history.csv');
+  assert.equal(download.blob.type, 'text/csv;charset=utf-8');
+  assert.match(download.blob.text, /^period,channel,spend,conversions,revenue/m);
+});
+
+test('allocation JSON is projected only on click without raw observations or imported fields', () => {
+  const { elements, downloads, window } = loadDomApp();
+  const privateMarker = 'normalized-private-marker';
+  const originalAllocate = window.MangroveBudgetAllocator.allocatePlan;
+  window.MangroveBudgetAllocator.allocatePlan = input => {
+    const result = originalAllocate(input);
+    result.normalizedRawRows = [{ privateMarker }];
+    result.allocation[0].importedField = privateMarker;
+    return result;
+  };
+
+  elements['use-sample-data'].trigger('click');
+  elements['plan-form'].trigger('submit');
+
+  assert.equal(downloads.createdBlobs.size, 0);
+  elements['download-allocation'].trigger('click');
+  const download = downloads.latest();
+  assert.equal(download.download, 'mangrove-budget-allocation.json');
+  assert.equal(download.blob.type, 'application/json;charset=utf-8');
+  const payload = JSON.parse(download.blob.text);
+  assert.deepEqual(Object.keys(payload), [
+    'version',
+    'objective',
+    'allocation',
+    'modelDiagnostics'
+  ]);
+  assert.equal(payload.version, 1);
+  assert.equal(payload.objective.key, 'revenue');
+  assert.ok(payload.allocation.rows.length > 0);
+  assert.ok(payload.modelDiagnostics.length > 0);
+  assert.doesNotMatch(
+    download.blob.text,
+    /observations|periodKey|dimensions|normalizedRawRows|importedField|normalized-private-marker/
+  );
+});
+
 test('closed model inspector waits to paint until opened and repaints on each reopen', () => {
   const { elements, chartCalls } = loadDomApp();
   elements['use-sample-data'].trigger('click');
@@ -1036,6 +1229,53 @@ test('response charts debounce resize by 150ms and replacement cancels the pendi
   elements['use-sample-data'].trigger('click');
   elements['confirm-replacement'].trigger('click');
   assert.equal(timers.pendingCount(), 0);
+});
+
+test('confirmed replacement clears prior UI, object URLs, and timers before reading the next source', () => {
+  const harness = loadDomApp();
+  const { elements, window, downloads, timers } = harness;
+  elements['use-sample-data'].trigger('click');
+  elements['model-inspector'].open = true;
+  elements['plan-form'].trigger('submit');
+  elements['download-cleaned-data'].trigger('click');
+  elements['download-allocation'].trigger('click');
+  window.trigger('resize');
+  const priorUrls = Array.from(downloads.activeObjectUrls);
+  let replacementSnapshot = null;
+  let inspections = 0;
+  const originalInspect = window.MangroveHistoryData.inspectHistory;
+  window.MangroveHistoryData.inspectHistory = function inspectReplacement(...args) {
+    inspections += 1;
+    if (inspections === 1) {
+      replacementSnapshot = {
+        resultsHidden: elements.results.hidden,
+        resultText: elements.results.textContent,
+        constraintCount: elements['constraints-list'].children.length,
+        readinessCount: elements['readiness-summary'].children.length,
+        activeUrls: downloads.activeObjectUrls.size,
+        pendingTimers: timers.pendingCount()
+      };
+    }
+    return originalInspect(...args);
+  };
+
+  elements['use-sample-data'].trigger('click');
+  elements['confirm-replacement'].trigger('click');
+
+  assert.deepEqual(replacementSnapshot, {
+    resultsHidden: true,
+    resultText: '',
+    constraintCount: 0,
+    readinessCount: 0,
+    activeUrls: 0,
+    pendingTimers: 0
+  });
+  assert.deepEqual(
+    downloads.revokedObjectUrls.slice().sort(),
+    priorUrls.slice().sort()
+  );
+  assert.equal(elements['history-paste'].value, '');
+  assert.equal(elements['replacement-warning'].hidden, true);
 });
 
 test('imported channel and dimension strings remain text and never become IDs', () => {

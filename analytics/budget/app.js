@@ -21,7 +21,9 @@
   const allocationTableWrap = document.getElementById('allocation-table-wrap');
   const allocationTbody = document.getElementById('allocation-tbody');
   const nextSteps = document.getElementById('next-steps');
+  const resultsPanel = document.getElementById('results');
   const EXTRAS = window.MangroveToolExtras || {};
+  const MOTION = window.MangroveMotion || {};
   const recommendationExplanation = document.getElementById('recommendation-explanation');
   const explanationConfidence = document.getElementById('explanation-confidence');
   const explanationDriver = document.getElementById('explanation-driver');
@@ -150,6 +152,7 @@
       resultsNote.textContent = 'Not enough data to run the model.';
       nextSteps.hidden = true;
       hideExplanation();
+      if (MOTION.resetResult) MOTION.resetResult(resultsPanel);
       return;
     }
 
@@ -199,6 +202,7 @@
     });
 
     nextSteps.hidden = false;
+    if (MOTION.revealResult) MOTION.revealResult(resultsPanel);
   }
 
   /** Populate and run the built-in small-business example */
@@ -249,6 +253,7 @@
     if (totalBudget <= 0) {
       resultsNote.textContent = 'Enter a total budget greater than zero.';
       hideExplanation();
+      if (MOTION.resetResult) MOTION.resetResult(resultsPanel);
       return;
     }
 

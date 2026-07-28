@@ -7,7 +7,11 @@
 (function () {
   // DOM refs
   const form = document.getElementById('budget-form');
+  const periodSel = document.getElementById('period');
+  const totalBudgetInput = document.getElementById('total-budget');
   const numChannelsSel = document.getElementById('num-channels');
+  const targetMetricSel = document.getElementById('target-metric');
+  const sampleDataButton = document.getElementById('use-sample-data');
   const channelRows = document.getElementById('channel-rows');
   const resultsNote = document.getElementById('results-note');
   const totalConversions = document.getElementById('total-conversions');
@@ -17,6 +21,11 @@
   const allocationTableWrap = document.getElementById('allocation-table-wrap');
   const allocationTbody = document.getElementById('allocation-tbody');
   const nextSteps = document.getElementById('next-steps');
+  const EXTRAS = window.MangroveToolExtras || {};
+  const recommendationExplanation = document.getElementById('recommendation-explanation');
+  const explanationConfidence = document.getElementById('explanation-confidence');
+  const explanationDriver = document.getElementById('explanation-driver');
+  const explanationCaveat = document.getElementById('explanation-caveat');
 
   // Channel name presets
   const CHANNEL_PRESETS = [
@@ -31,41 +40,35 @@
       const preset = CHANNEL_PRESETS[i] || `Channel ${i + 1}`;
       const row = document.createElement('div');
       row.className = 'channel-row field-wide';
-      row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;padding:0.75rem 0;border-top:1px solid var(--line);';
       row.innerHTML = `
-        <div class="field" style="grid-column:1/-1;display:flex;flex-direction:column;gap:0.3rem;">
-          <label style="font-size:0.72rem;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--ink-soft);">
+        <div class="field channel-name-field">
+          <label>
             Channel ${i + 1}
           </label>
           <input type="text" class="ch-name" value="${preset}"
-            style="width:100%;border:1px solid var(--line);border-radius:2px;padding:0.65rem 0.85rem;background:var(--surface);color:var(--ink);font:inherit;font-weight:500;"
             aria-label="Channel ${i + 1} name" />
         </div>
         <div class="field">
-          <label style="font-size:0.72rem;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--ink-soft);">Monthly spend ($)</label>
+          <label>Monthly spend ($)</label>
           <input type="number" class="ch-spend" inputmode="numeric" min="0" step="50"
             placeholder="e.g. 2000"
-            style="width:100%;border:1px solid var(--line);border-radius:2px;padding:0.65rem 0.85rem;background:var(--surface);color:var(--ink);font:inherit;"
             aria-label="Monthly spend for channel ${i + 1}" />
         </div>
         <div class="field">
-          <label style="font-size:0.72rem;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--ink-soft);">Monthly conversions</label>
+          <label>Monthly conversions</label>
           <input type="number" class="ch-conversions" inputmode="numeric" min="0" step="1"
             placeholder="e.g. 50"
-            style="width:100%;border:1px solid var(--line);border-radius:2px;padding:0.65rem 0.85rem;background:var(--surface);color:var(--ink);font:inherit;"
             aria-label="Monthly conversions for channel ${i + 1}" />
         </div>
         <div class="field">
-          <label style="font-size:0.72rem;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--ink-soft);">Months of data</label>
+          <label>Months represented</label>
           <input type="number" class="ch-months" inputmode="numeric" min="1" max="36" step="1"
             value="6" min="1"
-            style="width:100%;border:1px solid var(--line);border-radius:2px;padding:0.65rem 0.85rem;background:var(--surface);color:var(--ink);font:inherit;"
-            aria-label="Months of data for channel ${i + 1}" />
+            aria-label="Months represented for channel ${i + 1}" />
         </div>
         <div class="field">
-          <label style="font-size:0.72rem;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--ink-soft);">Min spend ($)</label>
+          <label>Min spend ($)</label>
           <input type="number" class="ch-min" inputmode="numeric" min="0" step="50" value="0"
-            style="width:100%;border:1px solid var(--line);border-radius:2px;padding:0.65rem 0.85rem;background:var(--surface);color:var(--ink);font:inherit;"
             aria-label="Minimum spend for channel ${i + 1}" />
         </div>
       `;
@@ -82,20 +85,15 @@
       const conversions = parseFloat(row.querySelector('.ch-conversions').value) || 0;
       const months = parseInt(row.querySelector('.ch-months').value, 10) || 6;
       const minSpend = parseFloat(row.querySelector('.ch-min').value) || 0;
+      const sampleDataPoints = row.dataset.sampleDataPoints
+        ? JSON.parse(row.dataset.sampleDataPoints)
+        : null;
 
-      // Synthesize monthly data points from aggregate
-      // This is a simplification: we use the monthly spend/conversions as one data point
-      // and create synthetic variation for the power-law fit
       const dataPoints = [];
-      if (months >= 1 && spend > 0 && conversions > 0) {
-        // Use the single aggregate as the representative point
+      if (sampleDataPoints) {
+        dataPoints.push(...sampleDataPoints);
+      } else if (months >= 1 && spend > 0 && conversions > 0) {
         dataPoints.push({ spend, conversions });
-        // Add a scaled-down synthetic point (20% spend) for curve fitting
-        if (spend > 50) {
-          const scaledSpend = spend * 0.2;
-          const scaledConversions = conversions * 0.2;
-          dataPoints.push({ spend: scaledSpend, conversions: scaledConversions });
-        }
       }
 
       return { channel: name, spend, conversions, months, minSpend, dataPoints };
@@ -115,6 +113,32 @@
     return '$' + Math.round(v).toLocaleString();
   }
 
+  function evidenceLabel(channels) {
+    if (channels.some(ch => ch.curve?.assumed)) return 'Assumption-driven';
+    const avgR2 = channels.reduce((sum, ch) => sum + (ch.curve?.r2 || 0), 0) / channels.length;
+    if (avgR2 >= 0.8) return 'Stronger in-sample fit';
+    if (avgR2 >= 0.55) return 'Moderate in-sample fit';
+    return 'Directional in-sample fit';
+  }
+
+  function renderExplanation(channels, result) {
+    if (!recommendationExplanation || result.length === 0) return;
+
+    const assumptionDriven = channels.some(ch => ch.curve?.assumed);
+    explanationConfidence.textContent = assumptionDriven
+      ? 'Assumption-driven — uses a 0.75 diminishing-return elasticity anchored to each channel’s entered spend and conversions.'
+      : `${evidenceLabel(channels)} — describes fit to the supplied history, not calibrated forecast accuracy.`;
+    explanationDriver.textContent = 'The optimizer balances modeled next-dollar returns across channels while honoring minimum-spend constraints.';
+    explanationCaveat.textContent = assumptionDriven
+      ? 'This is a scenario estimate, not a curve fitted from period-level history. Test the recommendation before changing live budgets.'
+      : 'Historical fit can break when tracking, creative, audience, pricing, or channel conditions change.';
+    recommendationExplanation.hidden = false;
+  }
+
+  function hideExplanation() {
+    if (recommendationExplanation) recommendationExplanation.hidden = true;
+  }
+
   /** Render results */
   function renderResults(channels, result, validation) {
     if (!validation.ok) {
@@ -125,6 +149,7 @@
       totalConversions.textContent = '—';
       resultsNote.textContent = 'Not enough data to run the model.';
       nextSteps.hidden = true;
+      hideExplanation();
       return;
     }
 
@@ -135,7 +160,10 @@
       ? Math.round(totalConv).toLocaleString() + ' expected conversions'
       : (totalConv / 1000).toFixed(1) + 'k expected conversions';
 
-    resultsNote.textContent = 'Based on your historical data and total budget.';
+    resultsNote.textContent = validation.evidence === 'assumption'
+      ? 'Scenario estimate using explicit diminishing-return assumptions anchored to your entries.'
+      : 'Based on the supplied period-level sample history and total budget.';
+    renderExplanation(channels, result);
 
     // Chart
     chartWrap.hidden = false;
@@ -173,13 +201,54 @@
     nextSteps.hidden = false;
   }
 
+  /** Populate and run the built-in small-business example */
+  function useSampleData() {
+    const sample = window.MangroveBudgetSampleData;
+    if (!sample) return;
+    trackEvent('sample_data_used', 'sample');
+    trackEvent('tool_started', 'sample');
+
+    periodSel.value = sample.period;
+    targetMetricSel.value = sample.targetMetric;
+    totalBudgetInput.value = String(sample.totalBudget);
+    numChannelsSel.value = String(sample.channels.length);
+    buildChannelRows(sample.channels.length);
+
+    const rows = channelRows.querySelectorAll('.channel-row');
+    sample.channels.forEach((channel, i) => {
+      const row = rows[i];
+      row.querySelector('.ch-name').value = channel.channel;
+      row.querySelector('.ch-spend').value = String(channel.spend);
+      row.querySelector('.ch-conversions').value = String(channel.conversions);
+      row.querySelector('.ch-months').value = String(channel.months);
+      row.querySelector('.ch-min').value = String(channel.minSpend);
+      row.dataset.sampleDataPoints = JSON.stringify(channel.dataPoints);
+    });
+
+    form._hasRunOnce = true;
+    handleSubmit(new Event('submit'), 'sample');
+    resultsNote.textContent = 'Sample small-business marketing data. Adjust any value to make it yours.';
+  }
+
+  function trackEvent(eventName, action) {
+    if (!EXTRAS.trackProductEvent) return;
+    EXTRAS.trackProductEvent(eventName, {
+      route: '/analytics/budget/',
+      tool: 'Budget Advisor',
+      action: action
+    });
+  }
+
   /** Handle form submit */
-  function handleSubmit(e) {
+  function handleSubmit(e, action) {
     e.preventDefault();
+    const eventAction = action || 'submit';
+    if (eventAction === 'submit') trackEvent('tool_started', eventAction);
 
     const totalBudget = parseFloat(document.getElementById('total-budget').value) || 0;
     if (totalBudget <= 0) {
       resultsNote.textContent = 'Enter a total budget greater than zero.';
+      hideExplanation();
       return;
     }
 
@@ -194,22 +263,32 @@
 
     // Fit curves and optimize
     const fittedChannels = channels.map(ch => {
-      const curve = MangroveResponseCurve.fitPowerLaw(ch.dataPoints);
+      const curve = ch.dataPoints.length >= 3
+        ? MangroveResponseCurve.fitPowerLaw(ch.dataPoints)
+        : MangroveResponseCurve.createAssumptionCurve(ch.spend, ch.conversions);
       return { ...ch, curve };
     }).filter(ch => ch.curve !== null);
 
     const result = MangroveResponseCurve.optimizeBudget(fittedChannels, totalBudget);
-    renderResults(fittedChannels, result, { ok: true, reason: '', supported: ['budget'] });
+    if (result.length === 0) {
+      renderResults(fittedChannels, [], {
+        ok: false,
+        reason: 'The total budget cannot satisfy the entered minimum or maximum spend constraints.',
+        supported: []
+      });
+      return;
+    }
+    renderResults(fittedChannels, result, validation);
+    trackEvent('calculation_completed', eventAction);
   }
 
   /** Budget slider sync */
   function setupBudgetSlider() {
-    const budgetInput = document.getElementById('total-budget');
-    budgetInput.addEventListener('input', () => {
+    totalBudgetInput.addEventListener('input', () => {
       // Re-run on slider change with debounce
-      clearTimeout(budgetInput._debounce);
-      budgetInput._debounce = setTimeout(() => {
-        if (form._hasRunOnce) handleSubmit(new Event('submit'));
+      clearTimeout(totalBudgetInput._debounce);
+      totalBudgetInput._debounce = setTimeout(() => {
+        if (form._hasRunOnce) handleSubmit(new Event('submit'), 'adjust');
       }, 400);
     });
   }
@@ -222,10 +301,18 @@
       buildChannelRows(parseInt(numChannelsSel.value, 10));
     });
 
+    channelRows.addEventListener('input', (event) => {
+      if (!event.target.matches('.ch-spend, .ch-conversions')) return;
+      const row = event.target.closest('.channel-row');
+      if (row) delete row.dataset.sampleDataPoints;
+    });
+
     form.addEventListener('submit', (e) => {
       form._hasRunOnce = true;
-      handleSubmit(e);
+      handleSubmit(e, 'submit');
     });
+
+    sampleDataButton.addEventListener('click', useSampleData);
 
     setupBudgetSlider();
   }

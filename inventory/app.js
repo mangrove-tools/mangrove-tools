@@ -3,6 +3,16 @@
   const form = document.getElementById("inventory-form");
   const result = document.getElementById("inventory-result");
   const affiliate = document.getElementById("affiliate-cta");
+  const EXTRAS = window.MangroveToolExtras || {};
+
+  function trackEvent(eventName, action) {
+    if (!EXTRAS.trackProductEvent) return;
+    EXTRAS.trackProductEvent(eventName, {
+      route: "/inventory/",
+      tool: "Inventory Planner",
+      action: action,
+    });
+  }
 
   function money(n) {
     return new Intl.NumberFormat("en-US", {
@@ -23,6 +33,7 @@
 
   form.addEventListener("submit", function (e) {
     e.preventDefault();
+    trackEvent("tool_started", "submit");
     const issues = num("issues-month");
     const slots = num("slots-issue");
     const fill = clamp(num("fill-rate"), 0, 100) / 100;
@@ -89,6 +100,7 @@
 
     result.hidden = false;
     affiliate.hidden = false;
+    trackEvent("calculation_completed", "submit");
 
     const base = (cfg.AFFILIATE_URL || "").trim();
     const utm = (cfg.UTM || "").trim();

@@ -52,7 +52,38 @@ function fitPowerLaw(dataPoints) {
   }
   const r2 = ssTot > 0 ? 1 - ssRes / ssTot : 0;
 
-  return { a, b, r2 };
+  return { a, b, r2, assumed: false };
+}
+
+/**
+ * Build an explicitly assumption-driven curve from one aggregate observation.
+ * This anchors the curve at the entered spend/conversions without pretending
+ * that multiple historical observations were supplied.
+ *
+ * @param {number} spend
+ * @param {number} conversions
+ * @param {number} elasticity
+ * @returns {{ a: number, b: number, r2: null, assumed: true } | null}
+ */
+function createAssumptionCurve(spend, conversions, elasticity = 0.75) {
+  if (
+    !Number.isFinite(spend)
+    || !Number.isFinite(conversions)
+    || !Number.isFinite(elasticity)
+    || spend <= 0
+    || conversions <= 0
+    || elasticity <= 0
+    || elasticity >= 1
+  ) {
+    return null;
+  }
+
+  return {
+    a: conversions / Math.pow(spend, elasticity),
+    b: elasticity,
+    r2: null,
+    assumed: true
+  };
 }
 
 /**
@@ -108,76 +139,85 @@ function computeContributions(channels) {
 function optimizeBudget(channels, totalBudget) {
   if (channels.length === 0 || totalBudget <= 0) return [];
 
-  // Initialize with current spend
-  let allocation = channels.map(ch => ({
+  const allocation = channels.map(ch => ({
     channel: ch.channel,
     currentSpend: ch.spend,
-    recommendedSpend: ch.spend,
     curve: ch.curve,
-    minSpend: ch.minSpend || 0,
-    maxSpend: ch.maxSpend || Infinity,
+    minSpend: Math.max(0, ch.minSpend || 0),
+    maxSpend: Number.isFinite(ch.maxSpend) ? ch.maxSpend : Infinity,
     conversions: ch.conversions
   }));
 
-  const MIN_ITER = 50;
-  const MAX_ITER = 500;
-  const TOLERANCE = 0.01; // $0.01 precision
+  const valid = allocation.every(item => (
+    item.curve
+    && Number.isFinite(item.curve.a)
+    && Number.isFinite(item.curve.b)
+    && item.curve.a > 0
+    && item.curve.b > 0
+    && item.curve.b < 1
+    && item.maxSpend >= item.minSpend
+  ));
+  if (!valid) return [];
 
-  for (let iter = 0; iter < MAX_ITER; iter++) {
-    const totalSpent = allocation.reduce((s, a) => s + a.recommendedSpend, 0);
-    const delta = totalBudget - totalSpent;
+  const minTotal = allocation.reduce((sum, item) => sum + item.minSpend, 0);
+  const maxTotal = allocation.reduce((sum, item) => sum + item.maxSpend, 0);
+  const tolerance = 0.001;
+  if (totalBudget < minTotal - tolerance || totalBudget > maxTotal + tolerance) {
+    return [];
+  }
 
-    if (Math.abs(delta) < TOLERANCE) break;
+  function spendAtLambda(item, lambda) {
+    const exponent = 1 / (1 - item.curve.b);
+    const logSpend = Math.log(item.curve.a * item.curve.b / lambda) * exponent;
+    const unconstrained = logSpend >= Math.log(Number.MAX_VALUE)
+      ? Infinity
+      : Math.exp(logSpend);
+    return Math.max(item.minSpend, Math.min(unconstrained, item.maxSpend));
+  }
 
-    // Compute marginal CPA for each channel at current allocation
-    const marginals = allocation.map(a => ({
-      ...a,
-      mCPA: marginalCPA(a.recommendedSpend, a.curve)
-    }));
+  function totalAtLambda(lambda) {
+    return allocation.reduce(
+      (sum, item) => sum + spendAtLambda(item, lambda),
+      0
+    );
+  }
 
-    if (delta > 0) {
-      // Allocate more: find channel with lowest marginal CPA (best ROI)
-      marginals.sort((a, b) => a.mCPA - b.mCPA);
-      let remaining = delta;
-      for (const ch of marginals) {
-        if (remaining <= 0) break;
-        const room = ch.maxSpend === Infinity ? remaining : Math.min(remaining, ch.maxSpend - ch.recommendedSpend);
-        if (room > 0) {
-          ch.recommendedSpend = Math.min(ch.recommendedSpend + room, ch.maxSpend === Infinity ? Infinity : ch.maxSpend);
-          remaining -= room;
-        }
-      }
-      // If still remaining, distribute evenly (all caps hit)
-      if (remaining > 0) {
-        const activeCount = allocation.filter(a => a.recommendedSpend < a.maxSpend).length;
-        if (activeCount > 0) {
-          const extra = remaining / activeCount;
-          for (const ch of allocation) {
-            if (ch.recommendedSpend < ch.maxSpend) {
-              ch.recommendedSpend = Math.min(ch.recommendedSpend + extra, ch.maxSpend);
-            }
-          }
-        }
-      }
+  let lowLambda = 1e-12;
+  let highLambda = 1;
+  while (totalAtLambda(lowLambda) < totalBudget && lowLambda > Number.MIN_VALUE) {
+    lowLambda /= 10;
+  }
+  while (totalAtLambda(highLambda) > totalBudget && highLambda < Number.MAX_VALUE / 10) {
+    highLambda *= 10;
+  }
+
+  for (let iteration = 0; iteration < 200; iteration++) {
+    const lambda = Math.sqrt(lowLambda * highLambda);
+    if (totalAtLambda(lambda) > totalBudget) {
+      lowLambda = lambda;
     } else {
-      // Deallocate: find channel with highest marginal CPA (worst ROI)
-      marginals.sort((a, b) => b.mCPA - a.mCPA);
-      let remaining = -delta;
-      for (const ch of marginals) {
-        if (remaining <= 0) break;
-        const room = ch.recommendedSpend - Math.max(ch.minSpend, 0);
-        if (room > 0) {
-          const cut = Math.min(room, remaining);
-          ch.recommendedSpend -= cut;
-          remaining -= cut;
-        }
-      }
+      highLambda = lambda;
     }
+  }
 
-    // Enforce constraints
-    for (const a of allocation) {
-      a.recommendedSpend = Math.max(a.minSpend, Math.min(a.recommendedSpend, a.maxSpend === Infinity ? Infinity : a.maxSpend));
-    }
+  const finalLambda = Math.sqrt(lowLambda * highLambda);
+  allocation.forEach(item => {
+    item.recommendedSpend = spendAtLambda(item, finalLambda);
+  });
+
+  const allocatedTotal = allocation.reduce(
+    (sum, item) => sum + item.recommendedSpend,
+    0
+  );
+  const residual = totalBudget - allocatedTotal;
+  if (Math.abs(residual) > tolerance) {
+    const adjustable = allocation.find(item => (
+      residual > 0
+        ? item.recommendedSpend < item.maxSpend
+        : item.recommendedSpend > item.minSpend
+    ));
+    if (!adjustable) return [];
+    adjustable.recommendedSpend += residual;
   }
 
   // Compute expected conversions and contributions
@@ -205,39 +245,40 @@ function validateDataQuality(channels) {
     return { ok: false, reason: 'No channels entered.', supported: [] };
   }
 
-  const dataMonthsPerChannel = channels.map(ch => {
-    if (!ch.dataPoints || ch.dataPoints.length < 3) return ch.dataPoints?.length || 0;
-    return ch.dataPoints.length;
-  });
-
-  const minMonths = Math.min(...dataMonthsPerChannel);
-
-  if (minMonths < 3) {
+  if (channels.length < 2) {
     return {
       ok: false,
-      reason: `This model needs at least 3 months of spend data per channel to produce reliable estimates. Add more historical data for: ${channels.filter((ch, i) => (ch.dataPoints?.length || 0) < 3).map(ch => ch.channel).join(', ') || 'your channels'}.`,
+      reason: 'At least 2 channels are required to compare budget allocation.',
       supported: []
     };
   }
 
-  const validChannels = channels.filter(ch => {
-    const curve = fitPowerLaw(ch.dataPoints || []);
-    return curve !== null;
+  const invalidChannels = channels.filter(ch => {
+    const dataPoints = ch.dataPoints || [];
+    if (dataPoints.length >= 3) {
+      const curve = fitPowerLaw(dataPoints);
+      return !curve || curve.b <= 0 || curve.b >= 1;
+    }
+    return createAssumptionCurve(ch.spend, ch.conversions) === null;
   });
 
-  if (validChannels.length < 2) {
+  if (invalidChannels.length > 0) {
     return {
       ok: false,
-      reason: 'At least 2 channels need positive spend and conversions data to model response curves. Check that spend and conversions are greater than zero in all periods.',
+      reason: `Enter positive spend and conversions for: ${invalidChannels.map(ch => ch.channel).join(', ')}.`,
       supported: []
     };
   }
 
-  return { ok: true, reason: '', supported: ['budget'] };
+  const evidence = channels.every(ch => (ch.dataPoints || []).length >= 3)
+    ? 'historical'
+    : 'assumption';
+  return { ok: true, reason: '', supported: ['budget'], evidence };
 }
 
 window.MangroveResponseCurve = {
   fitPowerLaw,
+  createAssumptionCurve,
   predictConversions,
   marginalCPA,
   computeContributions,

@@ -78,6 +78,7 @@ body.tool-page {
 
 .inputs,
 .results {
+  min-width: 0;
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -96,6 +97,11 @@ body.tool-page {
   border: 1px solid var(--line);
   background: var(--surface);
   border-radius: var(--radius);
+}
+
+.results .data-table-wrap {
+  min-width: 0;
+  max-width: 100%;
 }
 
 @media (min-width: 900px) {
@@ -196,6 +202,22 @@ body.tool-page {
   cursor: not-allowed;
 }
 
+.channel-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.channel-name-field {
+  grid-column: 1 / -1;
+}
+
+.channel-row input {
+  padding: 0.65rem 0.85rem;
+}
+
 .form-actions {
   grid-column: 1 / -1;
   display: grid;
@@ -245,7 +267,7 @@ body.tool-page {
 }
 
 .secondary-action:hover {
-  background: var(--surface-warm);
+  background: var(--surface-2);
   border-color: var(--line-strong);
 }
 
@@ -396,6 +418,52 @@ body.tool-page {
   color: var(--ink-soft);
   font-size: 0.95rem;
   line-height: 1.6;
+}
+
+.explanation-panel {
+  margin: 0 0 var(--space-lg);
+  padding: var(--space-sm) 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.explanation-panel h2 {
+  margin: 0 0 var(--space-xs);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.explanation-panel dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-sm);
+  margin: 0;
+}
+
+.explanation-panel div {
+  min-width: 0;
+}
+
+.explanation-panel dt {
+  margin: 0 0 0.2rem;
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  line-height: 1.25;
+  text-transform: uppercase;
+}
+
+.explanation-panel dd {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.88rem;
+  line-height: 1.45;
 }
 
 .streams {
@@ -618,8 +686,17 @@ body.tool-page {
     grid-column: auto;
   }
 
+  .channel-row {
+    grid-template-columns: 1fr;
+  }
+
   .results {
     padding: var(--space-md);
+  }
+
+  .explanation-panel dl {
+    grid-template-columns: 1fr;
+    gap: var(--space-xs);
   }
 }
 

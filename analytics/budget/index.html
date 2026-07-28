@@ -134,13 +134,39 @@
 
           <div id="channel-rows" class="field-wide"></div>
 
-          <button type="submit" class="primary">Optimize allocation</button>
+          <div class="form-actions">
+            <button type="button" class="secondary-action" id="use-sample-data" aria-describedby="small-business-sample-description">
+              Use sample data
+            </button>
+            <button type="submit" class="primary">Optimize allocation</button>
+          </div>
+          <p class="field-hint sample-note" id="small-business-sample-description">
+            Fills a monthly marketing budget example for a small local services business.
+          </p>
         </form>
 
         <div class="results" id="results">
           <p class="results-kicker">Recommended allocation</p>
           <p class="total" id="total-conversions" aria-live="polite">—</p>
           <p class="results-note" id="results-note">Add channel data above and optimize.</p>
+
+          <section id="recommendation-explanation" class="explanation-panel" role="note" aria-labelledby="explanation-title" hidden>
+            <h2 id="explanation-title">Why this recommendation?</h2>
+            <dl>
+              <div>
+                <dt>Evidence quality</dt>
+                <dd id="explanation-confidence"></dd>
+              </div>
+              <div>
+                <dt>Main driver</dt>
+                <dd id="explanation-driver"></dd>
+              </div>
+              <div>
+                <dt>Caveat</dt>
+                <dd id="explanation-caveat"></dd>
+              </div>
+            </dl>
+          </section>
 
           <div id="guardrail" class="guardrail" hidden>
             <p id="guardrail-text"></p>
@@ -272,6 +298,8 @@
 
     <script src="/shared/response-curve.js"></script>
     <script src="/shared/charts.js"></script>
+    <script src="/shared/tool-extras.js"></script>
+    <script src="/shared/budget-sample-data.js"></script>
     <script src="/analytics/budget/app.js"></script>
   </body>
 </html>

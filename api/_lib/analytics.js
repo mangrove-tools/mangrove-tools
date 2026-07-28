@@ -17,8 +17,44 @@ const ALLOWED_METADATA_KEYS = Object.freeze([
   "version",
 ]);
 
+const TOOL_PAGE_PATHS = Object.freeze({
+  budget: "/analytics/budget/",
+  forecast: "/analytics/forecast/",
+  inventory: "/inventory/",
+  letterroi: "/letterroi/",
+  mediakit: "/mediakit/",
+  sponsorquote: "/sponsorquote/",
+  subtarget: "/subtarget/",
+});
+
+const ALLOWED_METADATA_VALUES = Object.freeze({
+  affiliate_partner: new Set(["beehiiv"]),
+  cta_id: new Set([
+    "affiliate",
+    "analytics-cta",
+    "budget-tool",
+    "forecast-cross-sell",
+  ]),
+  result_state: new Set([
+    "complete",
+    "incomplete",
+    "invalid",
+    "likely",
+    "possible",
+    "profitable",
+    "unlikely",
+    "unprofitable",
+    "valid",
+  ]),
+  sample_id: new Set(["budget-sample", "forecast-sample"]),
+  source: new Set(["form", "navigation", "results", "sample"]),
+  step: new Set(["complete", "start"]),
+  surface: new Set(["footer", "form", "navigation", "results"]),
+});
+
 const MAX_TEXT_LENGTH = 160;
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const VERSION_PATTERN = /^v[1-9][0-9]{0,2}$/;
 
 function normalizeEventName(body) {
   return body.event_name || body.eventName || "";
@@ -52,7 +88,14 @@ function sanitizeMetadata(metadata) {
     const value = metadata[key];
     if (typeof value === "string") {
       const sanitized = sanitizeText(value);
-      if (sanitized) {
+      const allowedValues = ALLOWED_METADATA_VALUES[key];
+      if (
+        sanitized
+        && (
+          allowedValues?.has(sanitized)
+          || (key === "version" && VERSION_PATTERN.test(sanitized))
+        )
+      ) {
         clean[key] = sanitized;
       }
     } else if (typeof value === "boolean") {
@@ -69,15 +112,20 @@ function sanitizeEventPayload(body = {}) {
   }
 
   const toolSlug = sanitizeText(normalizeToolSlug(body));
-  if (!toolSlug || !SLUG_PATTERN.test(toolSlug)) {
-    throw new Error("A valid tool slug is required.");
+  if (!toolSlug || !Object.hasOwn(TOOL_PAGE_PATHS, toolSlug)) {
+    throw new Error("A supported tool slug is required.");
   }
 
   const pagePath = sanitizeText(normalizePagePath(body));
+  const canonicalPagePath = TOOL_PAGE_PATHS[toolSlug];
+  if (pagePath && pagePath !== canonicalPagePath) {
+    throw new Error("The page path must match the selected tool.");
+  }
+
   return {
     event_name: eventName,
     tool_slug: toolSlug,
-    page_path: pagePath && pagePath.startsWith("/") ? pagePath : null,
+    page_path: canonicalPagePath,
     metadata: sanitizeMetadata(body.metadata),
   };
 }

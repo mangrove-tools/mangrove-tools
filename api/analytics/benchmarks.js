@@ -21,20 +21,47 @@ function firstQueryValue(value) {
   return Array.isArray(value) ? value[0] : value;
 }
 
+function readOptionalFilter(query, key) {
+  const rawValue = firstQueryValue(query?.[key]);
+  if (rawValue === undefined) {
+    return null;
+  }
+  const sanitized = sanitizeFilter(rawValue);
+  if (!sanitized) {
+    throw new Error("Invalid benchmark filter.");
+  }
+  return sanitized;
+}
+
 function createBenchmarksHandler({ supabase } = {}) {
   return async function analyticsBenchmarks(req, res) {
     if (req.method !== "GET") {
       return methodNotAllowed(res, ["GET"]);
     }
 
-    const client = supabase || createServerSupabaseClient();
+    let toolSlug;
+    let metric;
+    let segment;
+    try {
+      toolSlug = readOptionalFilter(req.query, "tool_slug");
+      metric = readOptionalFilter(req.query, "metric");
+      segment = readOptionalFilter(req.query, "segment");
+    } catch (error) {
+      return sendJson(res, 400, { error: "Invalid benchmark filter." });
+    }
+
+    let client;
+    try {
+      client = supabase || createServerSupabaseClient();
+    } catch (error) {
+      return sendJson(res, 503, {
+        error: "Analytics benchmarks are unavailable.",
+      });
+    }
+
     let query = client
       .from("analytics_benchmarks")
       .select(BENCHMARK_COLUMNS);
-
-    const toolSlug = sanitizeFilter(firstQueryValue(req.query?.tool_slug));
-    const metric = sanitizeFilter(firstQueryValue(req.query?.metric));
-    const segment = sanitizeFilter(firstQueryValue(req.query?.segment));
 
     if (toolSlug) {
       query = query.eq("tool_slug", toolSlug);
@@ -46,7 +73,11 @@ function createBenchmarksHandler({ supabase } = {}) {
       query = query.eq("segment", segment);
     }
 
-    const { data, error } = await query.order("tool_slug", { ascending: true });
+    const { data, error } = await query
+      .order("tool_slug", { ascending: true })
+      .order("benchmark_key", { ascending: true })
+      .order("segment", { ascending: true })
+      .limit(100);
     if (error) {
       return sendJson(res, 502, { error: "Unable to read analytics benchmarks." });
     }

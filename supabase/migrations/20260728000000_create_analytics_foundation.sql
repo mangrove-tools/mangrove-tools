@@ -84,5 +84,28 @@ create index analytics_benchmarks_tool_metric_idx
 
 alter table public.analytics_benchmarks enable row level security;
 
+create function public.set_analytics_benchmark_updated_at()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+revoke all on function public.set_analytics_benchmark_updated_at() from public;
+grant execute on function public.set_analytics_benchmark_updated_at()
+  to service_role;
+
+create trigger analytics_benchmarks_set_updated_at
+before update on public.analytics_benchmarks
+for each row
+execute function public.set_analytics_benchmark_updated_at();
+
 revoke all on table public.analytics_events from anon, authenticated;
 revoke all on table public.analytics_benchmarks from anon, authenticated;
+
+grant insert on table public.analytics_events to service_role;
+grant select on table public.analytics_benchmarks to service_role;

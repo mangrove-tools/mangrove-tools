@@ -1,4 +1,6 @@
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
 const test = require("node:test");
 
 const {
@@ -7,6 +9,8 @@ const {
 } = require("../api/_lib/analytics");
 const { createEventHandler } = require("../api/analytics/events");
 const { createBenchmarksHandler } = require("../api/analytics/benchmarks");
+
+const root = path.resolve(__dirname, "..");
 
 function createResponse() {
   return {
@@ -65,9 +69,79 @@ test("event payload sanitizer drops raw calculator inputs and disallowed metadat
   });
 });
 
+test("event payload sanitizer rejects unknown tools and request-like page paths", () => {
+  assert.throws(
+    () => sanitizeEventPayload({
+      event_name: "calculation_completed",
+      tool_slug: "customer-acme",
+      page_path: "/analytics/budget/",
+    }),
+    /supported tool slug/i,
+  );
+  assert.throws(
+    () => sanitizeEventPayload({
+      event_name: "calculation_completed",
+      tool_slug: "budget",
+      page_path: "/analytics/budget/?email=founder@example.com",
+    }),
+    /page path/i,
+  );
+});
+
+test("event payload sanitizer drops request-like values under allowed metadata keys", () => {
+  const payload = sanitizeEventPayload({
+    event_name: "calculation_completed",
+    tool_slug: "budget",
+    page_path: "/analytics/budget/",
+    metadata: {
+      result_state: "profitable",
+      cta_id: "founder@example.com",
+      source: "my actual budget is 12000",
+      version: "v1",
+    },
+  });
+
+  assert.deepEqual(payload.metadata, {
+    result_state: "profitable",
+    version: "v1",
+  });
+});
+
+test("event endpoint is unavailable unless explicitly enabled", async () => {
+  let insertCalled = false;
+  const handler = createEventHandler({
+    supabase: {
+      from() {
+        return {
+          insert() {
+            insertCalled = true;
+            return { error: null };
+          },
+        };
+      },
+    },
+    eventsEnabled: false,
+  });
+  const res = createResponse();
+
+  await handler({
+    method: "POST",
+    body: {
+      event_name: "tool_started",
+      tool_slug: "budget",
+      page_path: "/analytics/budget/",
+    },
+  }, res);
+
+  assert.equal(res.statusCode, 503);
+  assert.equal(insertCalled, false);
+  assert.deepEqual(res.body, { error: "Analytics event collection is disabled." });
+});
+
 test("event endpoint rejects unsupported events without calling Supabase", async () => {
   let insertCalled = false;
   const handler = createEventHandler({
+    eventsEnabled: true,
     supabase: {
       from() {
         return {
@@ -99,6 +173,7 @@ test("event endpoint rejects unsupported events without calling Supabase", async
 test("event endpoint stores only sanitized allowlisted event fields", async () => {
   let inserted;
   const handler = createEventHandler({
+    eventsEnabled: true,
     supabase: {
       from(table) {
         assert.equal(table, "analytics_events");
@@ -154,6 +229,10 @@ test("benchmarks endpoint reads curated rows through Supabase server route", asy
     },
     order(column, options) {
       calls.push(["order", column, options]);
+      return this;
+    },
+    limit(value) {
+      calls.push(["limit", value]);
       return Promise.resolve({
         data: [
           {
@@ -202,5 +281,73 @@ test("benchmarks endpoint reads curated rows through Supabase server route", asy
     ["eq", "tool_slug", "budget"],
     ["eq", "metric", "cac"],
     ["order", "tool_slug", { ascending: true }],
+    ["order", "benchmark_key", { ascending: true }],
+    ["order", "segment", { ascending: true }],
+    ["limit", 100],
   ]);
+});
+
+test("benchmarks endpoint rejects an invalid supplied filter", async () => {
+  let selectCalled = false;
+  const handler = createBenchmarksHandler({
+    supabase: {
+      from() {
+        return {
+          select() {
+            selectCalled = true;
+            return this;
+          },
+        };
+      },
+    },
+  });
+  const res = createResponse();
+
+  await handler({
+    method: "GET",
+    query: { metric: "cac?customer=email@example.com" },
+  }, res);
+
+  assert.equal(res.statusCode, 400);
+  assert.equal(selectCalled, false);
+  assert.deepEqual(res.body, { error: "Invalid benchmark filter." });
+});
+
+test("migration grants only the server role and maintains benchmark timestamps", () => {
+  const migration = fs.readFileSync(
+    path.join(
+      root,
+      "supabase/migrations/20260728000000_create_analytics_foundation.sql",
+    ),
+    "utf8",
+  );
+
+  assert.match(
+    migration,
+    /grant insert on table public\.analytics_events to service_role;/i,
+  );
+  assert.match(
+    migration,
+    /grant select on table public\.analytics_benchmarks to service_role;/i,
+  );
+  assert.match(
+    migration,
+    /create trigger analytics_benchmarks_set_updated_at/i,
+  );
+  assert.doesNotMatch(
+    migration,
+    /grant\s+(?:insert|update|delete|select).*\b(?:anon|authenticated)\b/i,
+  );
+});
+
+test("ops documentation uses canonical API routes and keeps writes disabled by default", () => {
+  const docs = fs.readFileSync(
+    path.join(root, "docs/ops/SUPABASE_BACKEND.md"),
+    "utf8",
+  );
+
+  assert.match(docs, /POST `?\/api\/analytics\/events\/`?/);
+  assert.match(docs, /GET `?\/api\/analytics\/benchmarks\/`?/);
+  assert.match(docs, /ANALYTICS_EVENTS_ENABLED=false/);
+  assert.match(docs, /rate limit/i);
 });

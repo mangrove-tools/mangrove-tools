@@ -2,10 +2,19 @@ const { sanitizeEventPayload } = require("../_lib/analytics");
 const { methodNotAllowed, sendJson } = require("../_lib/http");
 const { createServerSupabaseClient } = require("../_lib/supabase");
 
-function createEventHandler({ supabase } = {}) {
+function createEventHandler({
+  supabase,
+  eventsEnabled = process.env.ANALYTICS_EVENTS_ENABLED === "true",
+} = {}) {
   return async function analyticsEvents(req, res) {
     if (req.method !== "POST") {
       return methodNotAllowed(res, ["POST"]);
+    }
+
+    if (!eventsEnabled) {
+      return sendJson(res, 503, {
+        error: "Analytics event collection is disabled.",
+      });
     }
 
     let eventPayload;
@@ -15,7 +24,14 @@ function createEventHandler({ supabase } = {}) {
       return sendJson(res, 400, { error: error.message });
     }
 
-    const client = supabase || createServerSupabaseClient();
+    let client;
+    try {
+      client = supabase || createServerSupabaseClient();
+    } catch (error) {
+      return sendJson(res, 503, {
+        error: "Analytics event collection is unavailable.",
+      });
+    }
     const { error } = await client.from("analytics_events").insert([eventPayload]);
     if (error) {
       return sendJson(res, 502, { error: "Unable to record analytics event." });

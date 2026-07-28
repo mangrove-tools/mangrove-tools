@@ -34,11 +34,14 @@ PROTECTED_FILES = {
     Path(".github/CODEOWNERS"),
     Path(".vercelignore"),
     Path("AGENTS.md"),
+    Path("package-lock.json"),
+    Path("package.json"),
     Path("scripts/check-links.py"),
     Path("scripts/test_validate_site.py"),
     Path("scripts/validate_site.py"),
     Path("vercel.json"),
 }
+PROTECTED_TOP_LEVEL_DIRECTORIES = {"api", "supabase"}
 PROTECTED_VALUES = {
     "affiliate identifier": re.compile(r"AFFILIATE_URL|[?&]via="),
     "Google Analytics identity": re.compile(r"\bG-[A-Z0-9]{6,}\b"),
@@ -261,7 +264,11 @@ def detect_protected_changes(
     errors = [
         f"protected change requires owner approval label: {path}"
         for path in paths
-        if path in PROTECTED_FILES or path.parts[:2] == (".github", "workflows")
+        if (
+            path in PROTECTED_FILES
+            or path.parts[:2] == (".github", "workflows")
+            or (path.parts and path.parts[0] in PROTECTED_TOP_LEVEL_DIRECTORIES)
+        )
     ]
     for path in paths:
         if not protected_value_path(path):

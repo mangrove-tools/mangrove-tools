@@ -196,6 +196,27 @@ class ValidateSiteTests(unittest.TestCase):
         self.assertEqual(1, len(errors))
         self.assertIn("vercel.json", errors[0])
 
+    def test_backend_and_runtime_dependency_changes_require_approval(self) -> None:
+        paths = [
+            Path("api/analytics/events.js"),
+            Path("supabase/migrations/001.sql"),
+            Path("package.json"),
+            Path("package-lock.json"),
+            Path("shared/tool-extras.js"),
+        ]
+
+        errors = detect_protected_changes(
+            root=ROOT,
+            base_ref="HEAD",
+            changed_files=paths,
+            allow_protected=False,
+        )
+
+        self.assertEqual(4, len(errors))
+        for path in paths[:4]:
+            self.assertTrue(any(str(path) in error for error in errors))
+        self.assertFalse(any("shared/tool-extras.js" in error for error in errors))
+
     def test_validator_implementation_files_are_protected(self) -> None:
         paths = [
             Path("scripts/validate_site.py"),

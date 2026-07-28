@@ -94,14 +94,41 @@ function parseCSVData(text) {
  * @returns {Array<{x: number, y: number, month: string}>}
  */
 function prepareTimeSeries(data) {
-  // Sort by month (simple string sort works for YYYY-MM and MM/YYYY formats)
   const sorted = [...data].sort((a, b) => {
-    const ma = a.month.length === 7 ? a.month + '-01' : a.month;
-    const mb = b.month.length === 7 ? b.month + '-01' : b.month;
-    return ma.localeCompare(mb);
+    const aParts = parseMonthParts(a.month);
+    const bParts = parseMonthParts(b.month);
+    if (!aParts || !bParts) return String(a.month).localeCompare(String(b.month));
+    return (aParts.year * 12 + aParts.month) - (bParts.year * 12 + bParts.month);
   });
 
   return sorted.map((d, i) => ({ x: i, y: d.value, month: d.month }));
+}
+
+function parseMonthParts(month) {
+  const value = String(month || '').trim();
+  const isoMonth = /^(\d{4})-(\d{2})$/.exec(value);
+  const slashMonth = /^(\d{1,2})\/(\d{4})$/.exec(value);
+
+  let year;
+  let monthNumber;
+  if (isoMonth) {
+    year = Number(isoMonth[1]);
+    monthNumber = Number(isoMonth[2]);
+  } else if (slashMonth) {
+    year = Number(slashMonth[2]);
+    monthNumber = Number(slashMonth[1]);
+  } else {
+    return null;
+  }
+
+  if (monthNumber < 1 || monthNumber > 12) return null;
+  return { year, month: monthNumber - 1 };
+}
+
+function parseMonthStart(month) {
+  const parts = parseMonthParts(month);
+  if (!parts) return new Date(NaN);
+  return new Date(Date.UTC(parts.year, parts.month, 1));
 }
 
 /**
@@ -119,10 +146,13 @@ function computeSeasonalIndices(detrended, ts) {
   for (let m = 0; m < 12; m++) byCalendarMonth[m] = [];
 
   for (let i = 0; i < detrended.length; i++) {
-    const date = new Date(ts[i].month);
+    const date = parseMonthStart(ts[i].month);
     if (!isNaN(date.getTime())) {
-      const calMonth = date.getMonth(); // 0-11
-      byCalendarMonth[calMonth].push(detrended[i].y / ts[i].y); // ratio of actual to trend
+      const calMonth = date.getUTCMonth(); // 0-11
+      const trendValue = detrended[i].y;
+      byCalendarMonth[calMonth].push(
+        trendValue > 0 ? ts[i].y / trendValue : 1
+      ); // ratio of actual to trend
     }
   }
 
@@ -193,9 +223,9 @@ function generateForecast(timeSeries, horizon, useSeasonality) {
 
     if (seasonalIndices) {
       // Get calendar month for seasonal index
-      const date = new Date(lastMonth);
+      const date = parseMonthStart(lastMonth);
       if (!isNaN(date.getTime())) {
-        const calMonth = (date.getMonth() + h) % 12;
+        const calMonth = (date.getUTCMonth() + h) % 12;
         const seasonalFactor = seasonalIndices[calMonth] || 1.0;
         value = baseValue * seasonalFactor;
       }
@@ -207,9 +237,9 @@ function generateForecast(timeSeries, horizon, useSeasonality) {
     upper = value + confidenceWidth;
 
     // Project month string
-    const projDate = new Date(lastMonth);
+    const projDate = parseMonthStart(lastMonth);
     if (!isNaN(projDate.getTime())) {
-      projDate.setMonth(projDate.getMonth() + h);
+      projDate.setUTCMonth(projDate.getUTCMonth() + h);
       const projMonth = projDate.toISOString().slice(0, 7);
       forecast.push({ month: projMonth, value, lower, upper });
     }
@@ -244,7 +274,7 @@ function probabilityOfHittingTarget(forecast, target) {
   // Z-score for target
   const z = (target - avgExpected) / sigma;
   // Standard normal CDF approximation
-  const prob = 0.5 * (1 + erf(z / Math.sqrt(2)));
+  const prob = 1 - (0.5 * (1 + erf(z / Math.sqrt(2))));
   return Math.max(0, Math.min(1, prob));
 }
 
@@ -276,12 +306,28 @@ function validateHistoricalData(data) {
     return { ok: false, reason: 'At least 3 months of data needed to generate a meaningful forecast.', issues: ['Insufficient data rows'] };
   }
 
+  const invalidMonths = data
+    .map(row => row.month)
+    .filter(month => parseMonthParts(month) === null);
+  if (invalidMonths.length > 0) {
+    return {
+      ok: false,
+      reason: 'Use a valid month format (YYYY-MM or MM/YYYY) with a month from 1 to 12.',
+      issues: [`Invalid month values: ${invalidMonths.join(', ')}`]
+    };
+  }
+
   // Check for missing months (gaps)
-  const sorted = [...data].sort((a, b) => a.month.localeCompare(b.month));
+  const sorted = [...data].sort((a, b) => {
+    const aParts = parseMonthParts(a.month);
+    const bParts = parseMonthParts(b.month);
+    return (aParts.year * 12 + aParts.month) - (bParts.year * 12 + bParts.month);
+  });
   for (let i = 1; i < sorted.length; i++) {
-    const prev = new Date(sorted[i-1].month);
-    const curr = new Date(sorted[i].month);
-    const monthsDiff = (curr.getFullYear() - prev.getFullYear()) * 12 + (curr.getMonth() - prev.getMonth());
+    const prev = parseMonthStart(sorted[i-1].month);
+    const curr = parseMonthStart(sorted[i].month);
+    const monthsDiff = (curr.getUTCFullYear() - prev.getUTCFullYear()) * 12
+      + (curr.getUTCMonth() - prev.getUTCMonth());
     if (monthsDiff > 1) {
       issues.push(`Gap detected between ${sorted[i-1].month} and ${sorted[i].month}`);
     }

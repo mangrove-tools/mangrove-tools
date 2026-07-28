@@ -1469,6 +1469,22 @@ summary:focus-visible {
   border-bottom-color: var(--accent-text);
 }
 
+.analytics-next-step {
+  margin: 1.15rem 0 0;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+
+.analytics-next-step .analytics-cta {
+  display: inline-flex;
+}
+
+.analytics-cta:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: var(--focus-offset);
+  border-radius: var(--radius);
+}
+
 /* ─── Analytics-first hero ─── */
 .hero-feature {
   display: grid;

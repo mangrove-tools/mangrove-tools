@@ -3,6 +3,16 @@
   const form = document.getElementById("mediakit-form");
   const out = document.getElementById("kit-out");
   const affiliate = document.getElementById("affiliate-cta");
+  const EXTRAS = window.MangroveToolExtras || {};
+
+  function trackEvent(eventName, action) {
+    if (!EXTRAS.trackProductEvent) return;
+    EXTRAS.trackProductEvent(eventName, {
+      route: "/mediakit/",
+      tool: "Media Kit Generator",
+      action: action,
+    });
+  }
 
   function money(n) {
     if (!isFinite(n)) return "—";
@@ -84,7 +94,9 @@
 
   form.addEventListener("submit", function (e) {
     e.preventDefault();
+    trackEvent("tool_started", "submit");
     render();
+    if (!out.hidden) trackEvent("calculation_completed", "submit");
   });
 
   document.getElementById("copy-rates").addEventListener("click", function () {

@@ -21,8 +21,29 @@
   const targetProb = document.getElementById('target-prob');
   const targetProbText = document.getElementById('target-prob-text');
   const nextSteps = document.getElementById('next-steps');
+  const sampleDataBtn = document.getElementById('use-sample-data');
+  const recommendationExplanation = document.getElementById('recommendation-explanation');
+  const explanationConfidence = document.getElementById('explanation-confidence');
+  const explanationDriver = document.getElementById('explanation-driver');
+  const explanationCaveat = document.getElementById('explanation-caveat');
+  const EXTRAS = window.MangroveToolExtras || {};
 
   const METRIC_LABELS = { revenue: 'Revenue', conversions: 'Conversions' };
+  const SAMPLE_REVENUE_CSV = [
+    'date,value',
+    '2025-01,28600',
+    '2025-02,30100',
+    '2025-03,31850',
+    '2025-04,33400',
+    '2025-05,35900',
+    '2025-06,38250',
+    '2025-07,37100',
+    '2025-08,39400',
+    '2025-09,41750',
+    '2025-10,44100',
+    '2025-11,46800',
+    '2025-12,52300'
+  ].join('\n');
 
   let manualRowCount = 6;
 
@@ -92,7 +113,36 @@
     return metric === 'revenue' ? fmtValue(v, 'revenue') : Math.round(v).toLocaleString() + ' conversions';
   }
 
-  function renderResults(historical, forecast, validation, metric, growthTarget) {
+  function modelFitLabel(historical, model) {
+    const values = historical.map(row => row.value);
+    const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
+    const residualRatio = mean > 0 ? model.residualStdDev / mean : 1;
+    if (historical.length >= 12 && model.r2 >= 0.75 && residualRatio <= 0.15) return 'Stronger model fit';
+    if (historical.length >= 6 && model.r2 >= 0.45 && residualRatio <= 0.3) return 'Moderate model fit';
+    return 'Directional model fit';
+  }
+
+  function renderExplanation(historical, model, seasonality) {
+    if (!recommendationExplanation || !model || !model.trend) return;
+
+    const modelFit = modelFitLabel(historical, model);
+    const slope = model.trend.slope;
+    const direction = slope > 0 ? 'upward' : slope < 0 ? 'downward' : 'mostly flat';
+    const driver = model.seasonalIndices && seasonality
+      ? `The forecast follows the ${direction} trend and applies the detected seasonal pattern.`
+      : `The forecast is driven mainly by the ${direction} historical trend.`;
+
+    explanationConfidence.textContent = `${modelFit} — an in-sample fit description based on ${historical.length} historical months, not calibrated forecast confidence.`;
+    explanationDriver.textContent = driver;
+    explanationCaveat.textContent = 'The model assumes current trajectory continues; launches, price changes, channel shifts, or market shocks can break the forecast.';
+    recommendationExplanation.hidden = false;
+  }
+
+  function hideExplanation() {
+    if (recommendationExplanation) recommendationExplanation.hidden = true;
+  }
+
+  function renderResults(historical, forecast, validation, metric, growthTarget, model, seasonality) {
     if (!validation.ok) {
       guardrail.hidden = false;
       guardrailText.textContent = validation.reason;
@@ -102,6 +152,7 @@
       forecastSummary.textContent = '—';
       resultsNote.textContent = 'Fix the data issues above.';
       nextSteps.hidden = true;
+      hideExplanation();
       return;
     }
 
@@ -119,6 +170,7 @@
     }
 
     resultsNote.textContent = 'Historical data + forecast with 95% confidence band.';
+    renderExplanation(historical, model, seasonality);
 
     // Chart
     const ts = MangroveForecast.prepareTimeSeries(historical);
@@ -154,8 +206,20 @@
     nextSteps.hidden = false;
   }
 
+  function trackEvent(eventName, action) {
+    if (!EXTRAS.trackProductEvent) return;
+    EXTRAS.trackProductEvent(eventName, {
+      route: '/analytics/forecast/',
+      tool: 'Revenue Forecaster',
+      action: action
+    });
+  }
+
   function handleSubmit(e) {
     e.preventDefault();
+    const eventAction = form.dataset.eventAction || 'submit';
+    delete form.dataset.eventAction;
+    trackEvent('tool_started', eventAction);
 
     const metric = document.getElementById('metric-type').value;
     const horizon = parseInt(document.getElementById('horizon').value, 10);
@@ -168,14 +232,33 @@
     const validation = MangroveForecast.validateHistoricalData(historical);
 
     if (!validation.ok) {
-      renderResults(historical, [], validation, metric, growthTarget);
+      renderResults(historical, [], validation, metric, growthTarget, null, seasonality);
       return;
     }
 
     const timeSeries = MangroveForecast.prepareTimeSeries(historical);
     const result = MangroveForecast.generateForecast(timeSeries, horizon, seasonality);
 
-    renderResults(historical, result.forecast, { ok: true, reason: '', issues: [] }, metric, growthTarget);
+    renderResults(historical, result.forecast, { ok: true, reason: '', issues: [] }, metric, growthTarget, result, seasonality);
+    trackEvent('calculation_completed', eventAction);
+  }
+
+  function useSampleData() {
+    trackEvent('sample_data_used', 'sample');
+    document.getElementById('metric-type').value = 'revenue';
+    document.getElementById('horizon').value = '6';
+    document.getElementById('growth-target').value = '42000';
+    document.getElementById('seasonality-toggle').value = 'true';
+    dataMethodSel.value = 'paste';
+    pasteArea.hidden = false;
+    manualArea.hidden = true;
+    document.getElementById('csv-input').value = SAMPLE_REVENUE_CSV;
+    form.dataset.eventAction = 'sample';
+    if (typeof form.requestSubmit === 'function') {
+      form.requestSubmit();
+    } else {
+      handleSubmit({ preventDefault() {} });
+    }
   }
 
   function init() {
@@ -204,6 +287,7 @@
     });
 
     form.addEventListener('submit', handleSubmit);
+    sampleDataBtn.addEventListener('click', useSampleData);
   }
 
   init();

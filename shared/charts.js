@@ -90,18 +90,20 @@ function drawAllocationChart(canvas, data, unit) {
   });
 
   // Legend
+  const recommendedLegend = W < 360 ? 'Rec.' : 'Recommended';
+  const legendX = Math.max(labelWidth, W - (recommendedLegend === 'Rec.' ? 112 : 180));
   const legendY = H - 18;
   ctx.fillStyle = colors.current;
-  ctx.fillRect(W - 140, legendY, 12, 8);
+  ctx.fillRect(legendX, legendY, 12, 8);
   ctx.fillStyle = colors.muted;
   ctx.font = '500 11px IBM Plex Sans, sans-serif';
   ctx.textAlign = 'left';
-  ctx.fillText('Current', W - 124, legendY + 7);
+  ctx.fillText('Current', legendX + 16, legendY + 7);
 
   ctx.fillStyle = colors.recommended;
-  ctx.fillRect(W - 72, legendY, 12, 8);
+  ctx.fillRect(legendX + 72, legendY, 12, 8);
   ctx.fillStyle = colors.muted;
-  ctx.fillText('Recommended', W - 56, legendY + 7);
+  ctx.fillText(recommendedLegend, legendX + 88, legendY + 7);
 }
 
 /**

@@ -150,13 +150,35 @@
             <button type="button" id="add-row" class="ghost-btn add-row">+ Add month</button>
           </div>
 
-          <button type="submit" class="primary">Generate forecast</button>
+          <div class="form-actions" aria-label="Forecast actions">
+            <button type="button" id="use-sample-data" class="secondary-action" aria-describedby="sample-data-note">Use sample data</button>
+            <button type="submit" class="primary">Generate forecast</button>
+          </div>
+          <p class="field-hint sample-note" id="sample-data-note">Loads 12 months of example revenue from a neighborhood bakery and generates a forecast.</p>
         </form>
 
         <div class="results" id="results">
           <p class="results-kicker">Forecast</p>
           <p class="total" id="forecast-summary" aria-live="polite">—</p>
           <p class="results-note" id="results-note">Add historical data and generate your forecast.</p>
+
+          <section id="recommendation-explanation" class="explanation-panel" role="note" aria-labelledby="explanation-title" hidden>
+            <h2 id="explanation-title">Why this recommendation?</h2>
+            <dl>
+              <div>
+                <dt>Evidence quality</dt>
+                <dd id="explanation-confidence"></dd>
+              </div>
+              <div>
+                <dt>Main driver</dt>
+                <dd id="explanation-driver"></dd>
+              </div>
+              <div>
+                <dt>Caveat</dt>
+                <dd id="explanation-caveat"></dd>
+              </div>
+            </dl>
+          </section>
 
           <div id="guardrail" class="guardrail" hidden>
             <p id="guardrail-text"></p>
@@ -254,8 +276,8 @@
         <div>
           <p class="foot-brand">Mangrove Tools</p>
           <p class="foot-note">
-            Free marketing analytics and newsletter calculators from Naples,
-            Florida. Client-side only.
+            Free client-side marketing analytics for small businesses,
+            with supporting newsletter calculators from Naples, Florida.
           </p>
         </div>
         <div class="foot-col">
@@ -291,6 +313,7 @@
 
     <script src="/shared/forecast-engine.js"></script>
     <script src="/shared/charts.js"></script>
+    <script src="/shared/tool-extras.js"></script>
     <script src="/analytics/forecast/app.js"></script>
   </body>
 </html>

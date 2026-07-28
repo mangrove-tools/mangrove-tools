@@ -40,6 +40,7 @@ function makeCanvas(width = 500, height = 260) {
   const fills = [];
   const strokes = [];
   const paths = [];
+  const arcs = [];
   const fonts = [];
   const labels = [];
   const context = {
@@ -59,7 +60,9 @@ function makeCanvas(width = 500, height = 260) {
       paths.at(-1)?.push({ type: 'lineTo', x, y });
     },
     closePath() {},
-    arc() {},
+    arc(x, y) {
+      arcs.push({ x, y, style: this.fillStyle });
+    },
     setLineDash() {},
     fillRect(...args) {
       fillRects.push({ style: this.fillStyle, args });
@@ -91,6 +94,7 @@ function makeCanvas(width = 500, height = 260) {
     fills,
     strokes,
     paths,
+    arcs,
     fonts,
     labels
   };
@@ -239,6 +243,33 @@ test('response curve preserves observed-only channels without a fitted line', ()
   assert.ok(!view.strokes.some(({ style }) => style === cssValues['--accent']));
   assert.ok(view.labels.some(({ text }) => text === 'OBSERVED ONLY'));
   assert.ok(view.fonts.every((font) => font.includes('IBM Plex Mono')));
+});
+
+test('response curve excludes zero for a tightly clustered high-baseline series', () => {
+  const charts = loadCharts();
+  const view = makeCanvas(300, 260);
+
+  charts.drawResponseCurve(
+    view.canvas,
+    {
+      channel: 'Brand search',
+      status: 'preserved',
+      observations: [
+        { spend: 90, outcome: 90 },
+        { spend: 100, outcome: 100 }
+      ],
+      curve: null
+    },
+    { currentSpendRate: 90, recommendedSpendRate: 100 },
+    responseOptions
+  );
+
+  const observedPoints = view.arcs.filter(({ style }) => style === cssValues['--signal']);
+  assert.ok(observedPoints.length >= 2);
+  assert.ok(
+    Math.min(...observedPoints.map(({ x }) => x)) <= 80,
+    'the lowest observed spend should start near the plot edge instead of the right quarter'
+  );
 });
 
 test('marginal efficiency chart labels each modeled allocation and metric', () => {

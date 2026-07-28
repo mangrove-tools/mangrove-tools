@@ -325,10 +325,11 @@ function finiteNonNegative(value) {
 
 function chartBounds(values) {
   const finiteValues = values.filter(finiteNonNegative);
-  const observedMinimum = Math.min(...finiteValues, 0);
+  const observedMinimum = finiteValues.length > 0 ? Math.min(...finiteValues) : 0;
   const maximum = Math.max(...finiteValues, 1);
-  const positiveMinimum = Math.min(...finiteValues.filter(value => value > 0), maximum);
-  const includeZero = positiveMinimum / maximum < 0.75;
+  const positiveValues = finiteValues.filter(value => value > 0);
+  const positiveMinimum = positiveValues.length > 0 ? Math.min(...positiveValues) : 0;
+  const includeZero = positiveMinimum === 0 || positiveMinimum / maximum < 0.75;
   const minimum = includeZero ? 0 : observedMinimum;
   const span = Math.max(maximum - minimum, maximum * 0.08, 1);
 

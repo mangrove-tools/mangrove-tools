@@ -89,6 +89,35 @@ test('parses escaped quotes and trailing empty fields without shifting columns',
   assert.deepEqual(result.rows[0].dimensions.campaign, []);
 });
 
+test('strips exactly one document-leading BOM before parsing quoted CSV and TSV headers', () => {
+  [',', '\t'].forEach(delimiter => {
+    const result = inspect([
+      '\uFEFF"period"' + delimiter + '"channel"' + delimiter + '"spend"' + delimiter + '"conversions"',
+      '2026-W02' + delimiter + 'Search' + delimiter + '1200' + delimiter + '28'
+    ].join('\r\n'));
+
+    assert.equal(result.ok, true);
+    assert.deepEqual(result.headers, ['period', 'channel', 'spend', 'conversions']);
+  });
+
+  const secondLeadingBom = inspect(
+    '\uFEFF\uFEFF"period","channel","spend","conversions"\n2026-W02,Search,1200,28'
+  );
+  const nonleadingHeaderBom = inspect(
+    '"period","\uFEFFchannel","spend","conversions"\n2026-W02,Search,1200,28'
+  );
+  const dataBom = inspect(
+    'period,channel,spend,conversions\n\uFEFF2026-W02,Search,1200,28'
+  );
+
+  assert.equal(secondLeadingBom.ok, false);
+  assert.ok(secondLeadingBom.exclusions.some(item => item.code === 'malformed_quote'));
+  assert.equal(nonleadingHeaderBom.ok, false);
+  assert.ok(nonleadingHeaderBom.exclusions.some(item => item.code === 'missing_column'));
+  assert.equal(dataBom.ok, false);
+  assert.ok(dataBom.exclusions.some(item => item.code === 'invalid_period'));
+});
+
 test('preserves valid quoted delimiters, newlines, empty cells, and unquoted apostrophes', () => {
   const csv = inspect([
     'period,channel,spend,conversions,campaign',
@@ -114,11 +143,15 @@ test('rejects malformed quote structure without accepting earlier rows or reprod
   const cases = [
     [
       'unmatched opening quote',
-      'period,channel,spend,conversions\n2026-W02,"private-unmatched,1200,28'
+      'period,channel,spend,conversions\n2026-W02,"private-unmatched,1200,28',
+      1,
+      2
     ],
     [
       'quote inside an unquoted field',
-      'period,channel,spend,conversions\n2026-W02,private"midquote,1200,28'
+      'period,channel,spend,conversions\n2026-W02,private"midquote,1200,28',
+      1,
+      2
     ],
     [
       'characters after a closing quote',
@@ -126,17 +159,34 @@ test('rejects malformed quote structure without accepting earlier rows or reprod
         'period,channel,spend,conversions',
         '2026-W02,Earlier valid row,100,2',
         '2026-W03,"private-closed"trailing,1200,28'
-      ].join('\n')
+      ].join('\n'),
+      2,
+      3
+    ],
+    [
+      'characters after a multiline quoted field',
+      [
+        'period,channel,spend,conversions',
+        '2026-W02,Earlier valid row,100,2',
+        '2026-W03,"private-multiline',
+        'continued"trailing,1200,28'
+      ].join('\r\n'),
+      2,
+      3
     ]
   ];
 
-  cases.forEach(([name, sourceText]) => {
+  cases.forEach(([name, sourceText, inputRows, rowNumber]) => {
     const result = inspect(sourceText);
     const serialized = JSON.stringify(result.exclusions);
 
     assert.equal(result.ok, false, name);
     assert.equal(result.rows.length, 0, name);
+    assert.equal(result.summary.inputRows, inputRows, name);
+    assert.equal(result.summary.acceptedRows, 0, name);
+    assert.equal(result.summary.excludedRows, 1, name);
     assert.ok(result.exclusions.some(item => item.code === 'malformed_quote'), name);
+    assert.equal(result.exclusions[0].rowNumber, rowNumber, name);
     assert.doesNotMatch(serialized, /private-|Earlier valid row/, name);
   });
 });
@@ -396,6 +446,81 @@ test('daily dates that aggregate into a future ISO week are never admitted', () 
   assert.deepEqual(result.rows.map(row => row.periodKey), ['2026-W30']);
   assert.equal(result.summary.completePeriods, 1);
   assert.ok(result.exclusions.some(item => item.code === 'future_period'));
+});
+
+test('future full dates cannot distort weekly cadence inference', () => {
+  const result = inspect([
+    'date,channel,spend,conversions',
+    '2026-06-01,Search,100,2',
+    '2026-06-08,Search,110,3',
+    '2026-06-15,Search,120,4',
+    '2026-08-04,private-future-weekly,130,5'
+  ].join('\n'));
+
+  assert.equal(result.ok, false);
+  assert.equal(result.cadence, 'weekly');
+  assert.deepEqual(result.rows.map(row => row.periodKey), [
+    '2026-W23',
+    '2026-W24',
+    '2026-W25'
+  ]);
+  assert.equal(result.summary.inputRows, 4);
+  assert.equal(result.summary.acceptedRows, 3);
+  assert.equal(result.summary.excludedRows, 1);
+  assert.deepEqual(result.exclusions.map(item => item.code), ['future_period']);
+  assert.doesNotMatch(JSON.stringify(result.exclusions), /private-future/);
+});
+
+test('future full dates are isolated from complete daily history before aggregation', () => {
+  const lines = ['date,channel,spend,conversions'];
+  for (let day = 0; day < 7; day += 1) {
+    lines.push(`2026-06-${String(day + 1).padStart(2, '0')},Search,100,10`);
+  }
+  lines.push('2026-08-04,private-future-daily,100,10');
+
+  const result = inspect(lines.join('\n'));
+
+  assert.equal(result.ok, false);
+  assert.equal(result.cadence, 'weekly');
+  assert.deepEqual(result.rows.map(row => row.periodKey), ['2026-W23']);
+  assert.equal(result.summary.acceptedRows, 7);
+  assert.equal(result.summary.excludedRows, 1);
+  assert.deepEqual(result.exclusions.map(item => item.code), ['future_period']);
+  assert.doesNotMatch(JSON.stringify(result.exclusions), /private-future/);
+});
+
+test('current and future full dates use stable UTC boundaries without changing past cadence', () => {
+  const sourceText = [
+    'date,channel,spend,conversions',
+    '2026-12-07,Search,100,2',
+    '2026-12-14,Search,110,3',
+    '2026-12-21,Search,120,4',
+    '2026-12-29,private-current-boundary,130,5',
+    '2027-01-02,private-future-boundary,140,6'
+  ].join('\n');
+  const instants = [
+    '2027-01-01T00:30:00Z',
+    '2026-12-31T19:30:00-05:00'
+  ];
+
+  instants.forEach(now => {
+    const result = history.inspectHistory(sourceText, { now: new Date(now) });
+
+    assert.equal(result.ok, false);
+    assert.equal(result.cadence, 'weekly');
+    assert.deepEqual(result.rows.map(row => row.periodKey), [
+      '2026-W50',
+      '2026-W51',
+      '2026-W52'
+    ]);
+    assert.deepEqual(
+      result.exclusions.map(item => item.code),
+      ['incomplete_period', 'future_period']
+    );
+    assert.equal(result.summary.acceptedRows, 3);
+    assert.equal(result.summary.excludedRows, 2);
+    assert.doesNotMatch(JSON.stringify(result.exclusions), /private-/);
+  });
 });
 
 test('period boundaries use the UTC instant supplied by the caller', () => {

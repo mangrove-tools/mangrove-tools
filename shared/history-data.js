@@ -23,6 +23,10 @@
     return { rowNumber: rowNumber, field: field, code: code, message: message };
   }
 
+  function trimCell(value) {
+    return String(value).replace(/^[^\S\uFEFF]+|[^\S\uFEFF]+$/g, '');
+  }
+
   function emptyInspection() {
     return {
       ok: false,
@@ -75,6 +79,7 @@
     function malformedQuote() {
       return {
         records: rows,
+        logicalRows: rows.length + 1,
         error: finding(
           rowLine,
           'row',
@@ -133,7 +138,7 @@
 
     if (state === 'quoted') return malformedQuote();
     if (field !== '' || fields.length > 0 || state === 'after_quote') finishRow();
-    return { records: rows, error: null };
+    return { records: rows, logicalRows: rows.length, error: null };
   }
 
   function countUnquoted(text, delimiter) {
@@ -158,7 +163,7 @@
   }
 
   function headerKey(header) {
-    return header.replace(/^\uFEFF/, '').trim().toLowerCase();
+    return trimCell(header).toLowerCase();
   }
 
   function sourceHeader(headers, requested) {
@@ -222,7 +227,7 @@
   }
 
   function parsePeriod(value) {
-    const text = value.trim();
+    const text = trimCell(value);
     let match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
     if (match) {
       const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
@@ -251,7 +256,7 @@
   }
 
   function finiteNumber(value) {
-    const text = value.trim();
+    const text = trimCell(value);
     if (text === '') return null;
     const number = Number(text);
     return Number.isFinite(number) ? number : null;
@@ -289,7 +294,7 @@
       gross_profit: 'Gross profit',
       profit: 'Profit'
     };
-    const sourceText = typeof source === 'string' ? source.trim() : '';
+    const sourceText = typeof source === 'string' ? trimCell(source) : '';
     const sourceKey = headerKey(sourceText);
     return Object.prototype.hasOwnProperty.call(labels, sourceKey)
       ? labels[sourceKey]
@@ -318,11 +323,13 @@
     const inspection = emptyInspection();
     const settings = options && typeof options === 'object' ? options : {};
     const sourceText = typeof text === 'string' ? text : '';
-    inspection.delimiter = detectDelimiter(sourceText);
-    const parsed = parseDelimited(sourceText, inspection.delimiter);
+    const parseText = sourceText[0] === '\uFEFF' ? sourceText.slice(1) : sourceText;
+    inspection.delimiter = detectDelimiter(parseText);
+    const parsed = parseDelimited(parseText, inspection.delimiter);
     const records = parsed.records;
     if (parsed.error) {
-      inspection.summary.inputRows = Math.max(0, records.length - 1);
+      inspection.summary.inputRows = Math.max(0, parsed.logicalRows - 1);
+      inspection.summary.excludedRows = records.length > 0 ? 1 : 0;
       inspection.exclusions.push(parsed.error);
       return inspectionError(inspection);
     }
@@ -332,7 +339,7 @@
     }
 
     inspection.headers = records[0].fields.map(function normalizeHeader(header) {
-      return header.replace(/^\uFEFF/, '').trim();
+      return trimCell(header);
     });
     inspection.summary.inputRows = records.length - 1;
     inspection.columnMap = mapColumns(inspection.headers, settings.columnMap, inspection.exclusions);
@@ -363,6 +370,13 @@
     Object.keys(inspection.columnMap).forEach(function findIndex(field) {
       indexes[field] = inspection.columnMap[field] === null ? -1 : inspection.headers.indexOf(inspection.columnMap[field]);
     });
+    const suppliedNow = settings.now && typeof settings.now.getTime === 'function'
+      ? settings.now.getTime()
+      : NaN;
+    const now = Number.isFinite(suppliedNow) ? new Date(suppliedNow) : new Date();
+    const currentDateStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    const currentWeekStart = isoWeekStart(now);
+    const currentMonthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
     const validRecords = [];
     records.slice(1).forEach(function validateRecord(record) {
       if (record.fields.length !== inspection.headers.length) {
@@ -373,7 +387,7 @@
       const rowFindings = [];
       const period = indexes.period === -1 ? null : parsePeriod(record.fields[indexes.period]);
       if (!period) rowFindings.push(finding(record.rowNumber, 'period', 'invalid_period', 'Use YYYY-MM-DD, YYYY-Www, or YYYY-MM.'));
-      const channel = indexes.channel === -1 ? '' : record.fields[indexes.channel].trim();
+      const channel = indexes.channel === -1 ? '' : trimCell(record.fields[indexes.channel]);
       if (!channel) rowFindings.push(finding(record.rowNumber, 'channel', 'required_value', 'A channel value is required.'));
       const spend = indexes.spend === -1 ? null : finiteNumber(record.fields[indexes.spend]);
       if (spend === null) rowFindings.push(finding(record.rowNumber, 'spend', 'invalid_number', 'Use a finite number.'));
@@ -388,10 +402,20 @@
         inspection.summary.excludedRows += 1;
         return;
       }
+      if (period.sourceCadence === 'date' && period.date.getTime() > currentDateStart.getTime()) {
+        inspection.exclusions.push(finding(record.rowNumber, 'period', 'future_period', 'Future periods cannot be modeled.'));
+        inspection.summary.excludedRows += 1;
+        return;
+      }
+      if (period.sourceCadence === 'date' && period.date.getTime() >= currentWeekStart.getTime()) {
+        inspection.exclusions.push(finding(record.rowNumber, 'period', 'incomplete_period', 'The current ISO week is not complete.'));
+        inspection.summary.excludedRows += 1;
+        return;
+      }
       const dimensions = { campaign: [], segment: [] };
       DIMENSION_FIELDS.forEach(function readDimension(field) {
-        if (indexes[field] !== -1 && record.fields[indexes[field]].trim() !== '') {
-          dimensions[field].push(record.fields[indexes[field]].trim());
+        if (indexes[field] !== -1 && trimCell(record.fields[indexes[field]]) !== '') {
+          dimensions[field].push(trimCell(record.fields[indexes[field]]));
         }
       });
       validRecords.push({
@@ -436,12 +460,6 @@
     inspection.cadence = dailyAggregation ? 'weekly' : sourceCadence;
     inspection.cadenceDays = cadenceDays(inspection.cadence);
 
-    const suppliedNow = settings.now && typeof settings.now.getTime === 'function'
-      ? settings.now.getTime()
-      : NaN;
-    const now = Number.isFinite(suppliedNow) ? new Date(suppliedNow) : new Date();
-    const currentWeekStart = isoWeekStart(now);
-    const currentMonthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
     const grouped = new Map();
     validRecords.forEach(function normalizeRecord(record) {
       let periodKey;

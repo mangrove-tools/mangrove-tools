@@ -58,7 +58,7 @@
     const rows = [];
     let fields = [];
     let field = '';
-    let inQuotes = false;
+    let state = 'unquoted';
     let line = 1;
     let rowLine = 1;
 
@@ -69,22 +69,59 @@
       }
       fields = [];
       field = '';
-      rowLine = line;
+      state = 'unquoted';
+    }
+
+    function malformedQuote() {
+      return {
+        records: rows,
+        error: finding(
+          rowLine,
+          'row',
+          'malformed_quote',
+          'Quoted fields must use valid CSV or TSV quoting.'
+        )
+      };
     }
 
     for (let index = 0; index < text.length; index += 1) {
       const character = text[index];
-      if (character === '"') {
-        if (inQuotes && text[index + 1] === '"') {
+      if (state === 'quoted') {
+        if (character === '"' && text[index + 1] === '"') {
           field += '"';
           index += 1;
+        } else if (character === '"') {
+          state = 'after_quote';
         } else {
-          inQuotes = !inQuotes;
+          field += character;
+          if (character === '\r' && text[index + 1] === '\n') {
+            field += '\n';
+            index += 1;
+            line += 1;
+          } else if (character === '\r' || character === '\n') {
+            line += 1;
+          }
         }
-      } else if (character === delimiter && !inQuotes) {
+      } else if (state === 'after_quote') {
+        if (character === delimiter) {
+          fields.push(field);
+          field = '';
+          state = 'unquoted';
+        } else if (character === '\n' || character === '\r') {
+          if (character === '\r' && text[index + 1] === '\n') index += 1;
+          finishRow();
+          line += 1;
+          rowLine = line;
+        } else {
+          return malformedQuote();
+        }
+      } else if (character === '"') {
+        if (field !== '') return malformedQuote();
+        state = 'quoted';
+      } else if (character === delimiter) {
         fields.push(field);
         field = '';
-      } else if ((character === '\n' || character === '\r') && !inQuotes) {
+      } else if (character === '\n' || character === '\r') {
         if (character === '\r' && text[index + 1] === '\n') index += 1;
         finishRow();
         line += 1;
@@ -94,8 +131,9 @@
       }
     }
 
-    if (field !== '' || fields.length > 0) finishRow();
-    return rows;
+    if (state === 'quoted') return malformedQuote();
+    if (field !== '' || fields.length > 0 || state === 'after_quote') finishRow();
+    return { records: rows, error: null };
   }
 
   function countUnquoted(text, delimiter) {
@@ -281,7 +319,13 @@
     const settings = options && typeof options === 'object' ? options : {};
     const sourceText = typeof text === 'string' ? text : '';
     inspection.delimiter = detectDelimiter(sourceText);
-    const records = parseDelimited(sourceText, inspection.delimiter);
+    const parsed = parseDelimited(sourceText, inspection.delimiter);
+    const records = parsed.records;
+    if (parsed.error) {
+      inspection.summary.inputRows = Math.max(0, records.length - 1);
+      inspection.exclusions.push(parsed.error);
+      return inspectionError(inspection);
+    }
     if (records.length === 0) {
       inspection.exclusions.push(finding(1, 'history', 'missing_header', 'A header row is required.'));
       return inspectionError(inspection);
@@ -397,7 +441,7 @@
       : NaN;
     const now = Number.isFinite(suppliedNow) ? new Date(suppliedNow) : new Date();
     const currentWeekStart = isoWeekStart(now);
-    const currentMonth = now.getUTCFullYear() + '-' + String(now.getUTCMonth() + 1).padStart(2, '0');
+    const currentMonthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
     const grouped = new Map();
     validRecords.forEach(function normalizeRecord(record) {
       let periodKey;
@@ -405,8 +449,13 @@
       if (inspection.cadence === 'monthly') {
         periodKey = record.date.getUTCFullYear() + '-' + String(record.date.getUTCMonth() + 1).padStart(2, '0');
         periodStart = new Date(Date.UTC(record.date.getUTCFullYear(), record.date.getUTCMonth(), 1));
-        if (periodKey === currentMonth) {
+        if (periodStart.getTime() === currentMonthStart.getTime()) {
           inspection.exclusions.push(finding(record.rowNumber, 'period', 'incomplete_period', 'The current month is not complete.'));
+          inspection.summary.excludedRows += 1;
+          return;
+        }
+        if (periodStart.getTime() > currentMonthStart.getTime()) {
+          inspection.exclusions.push(finding(record.rowNumber, 'period', 'future_period', 'Future periods cannot be modeled.'));
           inspection.summary.excludedRows += 1;
           return;
         }
@@ -415,6 +464,11 @@
         periodKey = isoWeekKey(periodStart);
         if (periodStart.getTime() === currentWeekStart.getTime()) {
           inspection.exclusions.push(finding(record.rowNumber, 'period', 'incomplete_period', 'The current ISO week is not complete.'));
+          inspection.summary.excludedRows += 1;
+          return;
+        }
+        if (periodStart.getTime() > currentWeekStart.getTime()) {
+          inspection.exclusions.push(finding(record.rowNumber, 'period', 'future_period', 'Future periods cannot be modeled.'));
           inspection.summary.excludedRows += 1;
           return;
         }

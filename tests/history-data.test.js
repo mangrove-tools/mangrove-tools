@@ -89,6 +89,58 @@ test('parses escaped quotes and trailing empty fields without shifting columns',
   assert.deepEqual(result.rows[0].dimensions.campaign, []);
 });
 
+test('preserves valid quoted delimiters, newlines, empty cells, and unquoted apostrophes', () => {
+  const csv = inspect([
+    'period,channel,spend,conversions,campaign',
+    '2026-W02,"Paid, Search",1200,28,"Brand',
+    'North"',
+    '2026-W03,Owner\'s Search,1300,30,""'
+  ].join('\r\n'));
+  const tsv = inspect([
+    'period\tchannel\tspend\tconversions',
+    '2026-W02\t"Paid\tSearch"\t1200\t28'
+  ].join('\n'));
+
+  assert.equal(csv.ok, true);
+  assert.equal(csv.rows[0].channel, 'Paid, Search');
+  assert.deepEqual(csv.rows[0].dimensions.campaign, ['Brand\r\nNorth']);
+  assert.equal(csv.rows[1].channel, "Owner's Search");
+  assert.deepEqual(csv.rows[1].dimensions.campaign, []);
+  assert.equal(tsv.ok, true);
+  assert.equal(tsv.rows[0].channel, 'Paid\tSearch');
+});
+
+test('rejects malformed quote structure without accepting earlier rows or reproducing cells', () => {
+  const cases = [
+    [
+      'unmatched opening quote',
+      'period,channel,spend,conversions\n2026-W02,"private-unmatched,1200,28'
+    ],
+    [
+      'quote inside an unquoted field',
+      'period,channel,spend,conversions\n2026-W02,private"midquote,1200,28'
+    ],
+    [
+      'characters after a closing quote',
+      [
+        'period,channel,spend,conversions',
+        '2026-W02,Earlier valid row,100,2',
+        '2026-W03,"private-closed"trailing,1200,28'
+      ].join('\n')
+    ]
+  ];
+
+  cases.forEach(([name, sourceText]) => {
+    const result = inspect(sourceText);
+    const serialized = JSON.stringify(result.exclusions);
+
+    assert.equal(result.ok, false, name);
+    assert.equal(result.rows.length, 0, name);
+    assert.ok(result.exclusions.some(item => item.code === 'malformed_quote'), name);
+    assert.doesNotMatch(serialized, /private-|Earlier valid row/, name);
+  });
+});
+
 test('matches aliases independently of the browser locale', () => {
   function inspectInTurkishLikeLocale(moduleSource) {
     const localeContext = { window: {} };
@@ -298,6 +350,75 @@ test('excludes the current complete-period candidate without rejecting older row
   assert.equal(monthly.ok, true);
   assert.equal(monthly.rows.length, 1);
   assert.equal(monthly.rows[0].periodKey, '2026-06');
+});
+
+test('future weekly and monthly periods are controlled exclusions, never complete history', () => {
+  const weekly = inspect([
+    'period,channel,spend,conversions',
+    '2026-W30,Search,100,2',
+    '2026-W31,Search,200,4',
+    '2027-W02,private-future-week,300,6'
+  ].join('\n'));
+  const monthly = inspect([
+    'period,channel,spend,conversions',
+    '2026-06,Search,100,2',
+    '2026-07,Search,200,4',
+    '2027-01,private-future-month,300,6'
+  ].join('\n'));
+
+  [weekly, monthly].forEach(result => {
+    assert.equal(result.ok, false);
+    assert.equal(result.rows.length, 1);
+    assert.equal(result.summary.completePeriods, 1);
+    assert.ok(result.exclusions.some(item => item.code === 'incomplete_period'));
+    assert.ok(result.exclusions.some(item => item.code === 'future_period'));
+    assert.doesNotMatch(JSON.stringify(result.exclusions), /private-future/);
+  });
+  assert.equal(weekly.rows[0].periodKey, '2026-W30');
+  assert.equal(monthly.rows[0].periodKey, '2026-06');
+});
+
+test('daily dates that aggregate into a future ISO week are never admitted', () => {
+  const lines = ['date,channel,spend,conversions'];
+  [
+    Date.UTC(2026, 6, 20),
+    Date.UTC(2026, 7, 3)
+  ].forEach(weekStart => {
+    for (let day = 0; day < 7; day += 1) {
+      const date = new Date(weekStart + day * 86400000).toISOString().slice(0, 10);
+      lines.push(`${date},Search,100,10`);
+    }
+  });
+
+  const result = inspect(lines.join('\n'));
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.rows.map(row => row.periodKey), ['2026-W30']);
+  assert.equal(result.summary.completePeriods, 1);
+  assert.ok(result.exclusions.some(item => item.code === 'future_period'));
+});
+
+test('period boundaries use the UTC instant supplied by the caller', () => {
+  const sourceText = [
+    'period,channel,spend,conversions',
+    '2026-W30,Search,100,2',
+    '2026-W31,Search,200,4',
+    '2026-W32,Search,300,6'
+  ].join('\n');
+  const utc = history.inspectHistory(sourceText, {
+    now: new Date('2026-07-27T00:30:00Z')
+  });
+  const offsetEquivalent = history.inspectHistory(sourceText, {
+    now: new Date('2026-07-26T20:30:00-04:00')
+  });
+
+  [utc, offsetEquivalent].forEach(result => {
+    assert.deepEqual(result.rows.map(row => row.periodKey), ['2026-W30']);
+    assert.deepEqual(
+      result.exclusions.map(item => item.code),
+      ['incomplete_period', 'future_period']
+    );
+  });
 });
 
 test('uses the caller-provided now date across the browser boundary', () => {

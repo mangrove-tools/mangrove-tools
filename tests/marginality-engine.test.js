@@ -117,6 +117,20 @@ test('preserves a curve when a high-leverage period changes its current predicti
   assert.ok(channel.failedGates.includes('current_prediction_stability'));
 });
 
+test('preserves a curve when the recent-spend reference is zero and cannot support comparison', () => {
+  const rows = series('Paid search', variedSpends, 0.31, 0.62);
+  rows.slice(-4).forEach(row => {
+    row.spend = 0;
+    row.outcomes.conversions = 0;
+  });
+  const channel = channelFor(modelFor(rows), 'conversions');
+
+  assert.equal(channel.diagnostics.positiveCoverage, 0.75);
+  assert.equal(channel.preservedSpendRate, 0);
+  assert.equal(channel.status, 'preserved');
+  assert.ok(channel.failedGates.includes('current_prediction_stability'));
+});
+
 test('preserves a curve with unstable leave-one-out elasticities', () => {
   const rows = series('Paid search', variedSpends, 0.31, 0.62);
   [100, 0.01, 100, 0.01, 100, 0.01, 100, 0.01, 0.01, 100, 0.01, 100, 0.01, 100, 0.01, 100]
@@ -125,6 +139,23 @@ test('preserves a curve with unstable leave-one-out elasticities', () => {
 
   assert.equal(channel.status, 'preserved');
   assert.ok(channel.failedGates.includes('elasticity_stability'));
+});
+
+test('admits elasticities strictly inside the boundary even when very close to zero', () => {
+  const elasticity = 5e-10;
+  const rows = variedSpends.map((spend, index) => ({
+    periodKey: `2026-W${String(index + 2).padStart(2, '0')}`,
+    periodStart: new Date(Date.UTC(2026, 0, 5 + index * 7)).toISOString().slice(0, 10),
+    cadence: 'weekly',
+    channel: 'Paid search',
+    spend,
+    outcomes: { conversions: Math.pow(spend, elasticity) }
+  }));
+  const channel = channelFor(modelFor(rows), 'conversions');
+
+  assert.equal(channel.status, 'modelable');
+  assert.equal(channel.failedGates.includes('elasticity'), false);
+  assert.ok(channel.curve.b > 0 && channel.curve.b < 1);
 });
 
 test('keeps conversions, revenue, and treated financial outcomes as separate objective models', () => {

@@ -22,7 +22,6 @@
     'elasticity_stability',
     'current_prediction_stability'
   ];
-  const ELASTICITY_TOLERANCE = 1e-9;
 
   function quantile(sorted, probability) {
     const position = (sorted.length - 1) * probability;
@@ -78,7 +77,9 @@
     });
     if (!Number.isFinite(sumXX) || sumXX <= 0 || !Number.isFinite(sumXY)) return null;
 
-    const b = sumXY / sumXX;
+    const b = values.every(function constantLogOutcome(value) {
+      return value.y === values[0].y;
+    }) ? 0 : sumXY / sumXX;
     const intercept = meanY - b * meanX;
     const a = Math.exp(intercept);
     if (!Number.isFinite(a) || a < 0 || !Number.isFinite(b)) return null;
@@ -95,9 +96,7 @@
   }
 
   function stableElasticity(curve) {
-    return Boolean(curve)
-      && curve.b > ELASTICITY_TOLERANCE
-      && curve.b < 1 - ELASTICITY_TOLERANCE;
+    return Boolean(curve) && curve.b > 0 && curve.b < 1;
   }
 
   function objectiveDefinitions(metrics) {
@@ -169,7 +168,8 @@
     const preservedSpendRate = median(recentSpends);
     const currentSpendRate = observations.length > 0 ? observations[observations.length - 1].spend : 0;
     const fullPrediction = predict(curve, preservedSpendRate);
-    const maximumCurrentPredictionChange = fullPrediction > 0
+    const hasComparableCurrentPrediction = fullPrediction > 0;
+    const maximumCurrentPredictionChange = hasComparableCurrentPrediction
       ? leaveOneOut.reduce(function maximumChange(maximum, candidate) {
         const candidatePrediction = predict(candidate, preservedSpendRate);
         const change = Math.abs(candidatePrediction - fullPrediction) / fullPrediction;
@@ -192,7 +192,8 @@
       spend_variation: robustSpendVariation < POLICY.minimumRobustSpendVariation,
       elasticity: !stableElasticity(curve),
       elasticity_stability: !allLeaveOneOutElasticitiesStable || elasticityIqr > POLICY.maximumElasticityIqr,
-      current_prediction_stability: maximumCurrentPredictionChange > POLICY.maximumCurrentPredictionChange
+      current_prediction_stability: !hasComparableCurrentPrediction
+        || maximumCurrentPredictionChange > POLICY.maximumCurrentPredictionChange
     };
     const failedGates = GATE_CODES.filter(function failedGate(code) { return gateResults[code]; });
 

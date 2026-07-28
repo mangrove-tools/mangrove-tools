@@ -25,7 +25,7 @@ Work in this order. Do **not** invent five new tools before the existing site is
 - Remove dead weight; keep deploy as static root → Vercel.
 
 ### 2) Make it professional, modern, and easy to use
-- Elevate visual polish within Mangrove brand (paper / pine, Fraunces + Outfit).
+- Elevate visual polish within Mangrove brand (paper / pine, Source Serif 4 + IBM Plex Sans).
 - Craft inspiration: curated indexes like [httpster.net](https://httpster.net/) — brand-forward hero, numbered work lists, calm type, intentional motion — without copying foreign palettes.
 - Simplify IA and copy so a first-time visitor understands the site in seconds.
 - Improve form clarity, results hierarchy, CTAs, spacing, typography — **easy to use** over clever.
@@ -108,7 +108,7 @@ If uncertain, choose the safer reversible path and document the assumption.
 | Trust | `about/`, `faq/`, `privacy/`, `contact/` |
 | Discoverability | `robots.txt`, `sitemap.xml`, `llms.txt` |
 | Ops (not public) | `docs/ops/` |
-| Fonts | Fraunces + Outfit |
+| Fonts | Source Serif 4 + IBM Plex Sans |
 
 ## Architecture rules
 

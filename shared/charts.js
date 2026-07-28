@@ -60,7 +60,7 @@ function drawAllocationChart(canvas, data, unit) {
 
     // Label
     ctx.fillStyle = colors.text;
-    ctx.font = '500 12px Outfit, sans-serif';
+    ctx.font = '500 12px IBM Plex Sans, sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     const label = d.label.length > 14 ? d.label.slice(0, 13) + '...' : d.label;
@@ -81,7 +81,7 @@ function drawAllocationChart(canvas, data, unit) {
 
     // Values
     ctx.fillStyle = colors.muted;
-    ctx.font = '600 11px Outfit, sans-serif';
+    ctx.font = '600 11px IBM Plex Sans, sans-serif';
     ctx.textAlign = 'right';
     const fmt = (v) => unit === '$' ? `$${Math.round(v).toLocaleString()}` : Math.round(v).toLocaleString();
     ctx.fillText(fmt(d.current), barStart + barMaxWidth + 4, y + (rowH - padding * 2) * 0.28);
@@ -96,7 +96,7 @@ function drawAllocationChart(canvas, data, unit) {
   ctx.fillStyle = colors.current;
   ctx.fillRect(legendX, legendY, 12, 8);
   ctx.fillStyle = colors.muted;
-  ctx.font = '500 11px Outfit, sans-serif';
+  ctx.font = '500 11px IBM Plex Sans, sans-serif';
   ctx.textAlign = 'left';
   ctx.fillText('Current', legendX + 16, legendY + 7);
 
@@ -165,7 +165,7 @@ function drawForecastChart(canvas, historical, forecast, unit) {
 
     const val = maxY - (g / 4) * (maxY - minY);
     ctx.fillStyle = colors.text;
-    ctx.font = '500 10px Outfit, sans-serif';
+    ctx.font = '500 10px IBM Plex Sans, sans-serif';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
     const label = unit === '$' ? `$${Math.round(val).toLocaleString()}` : Math.round(val).toLocaleString();
@@ -267,7 +267,7 @@ function drawForecastChart(canvas, historical, forecast, unit) {
 
     // "Forecast" label
     ctx.fillStyle = colors.text;
-    ctx.font = '500 10px Outfit, sans-serif';
+    ctx.font = '500 10px IBM Plex Sans, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.fillText('Forecast', scaleX(historical.length + forecast.length / 2), H - pad.bottom + 4);
@@ -275,7 +275,7 @@ function drawForecastChart(canvas, historical, forecast, unit) {
 
   // X-axis labels
   ctx.fillStyle = colors.text;
-  ctx.font = '500 10px Outfit, sans-serif';
+  ctx.font = '500 10px IBM Plex Sans, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
 

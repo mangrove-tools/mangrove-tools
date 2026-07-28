@@ -22,7 +22,7 @@
   margin: 0 0 0.75rem;
   font-family: var(--font-display);
   font-size: clamp(1.35rem, 2.5vw, 1.65rem);
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
 }
 
 .studio-step {
@@ -98,6 +98,11 @@
   font-size: 0.85rem;
   font-weight: 400;
   color: var(--ink-soft);
+}
+
+.field .hint a,
+.studio-result a {
+  color: var(--ink);
 }
 
 .field input[type="text"],
@@ -272,14 +277,14 @@
   margin: 0 0 0.65rem;
   font-family: var(--font-display);
   font-size: 1.45rem;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
 }
 
 .studio-result h3 {
   margin: 1.25rem 0 0.5rem;
   font-family: var(--font-display);
   font-size: 1.15rem;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   color: var(--ink);
 }
 
@@ -376,7 +381,7 @@
   margin: 0 0 0.35rem;
   font-family: var(--font-display);
   font-size: 1.75rem;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
 }
 
 .kit-compose .kit-tag {
@@ -464,7 +469,7 @@
   font-family: var(--font-display);
   font-size: 1.55rem;
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   color: var(--ink);
 }
 
@@ -479,6 +484,11 @@
   max-width: 46ch;
   color: var(--ink-soft);
   font-size: 0.95rem;
+}
+
+.soft-cta .text-cta {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
 }
 
 .field-error {

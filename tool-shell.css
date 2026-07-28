@@ -29,7 +29,7 @@ body.tool-page {
   font-family: var(--font-display);
   font-size: clamp(1.15rem, 2.5vw, 1.35rem);
   font-weight: 700;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
   line-height: 1.1;
   text-decoration: none;
 }
@@ -48,7 +48,7 @@ body.tool-page {
   font-family: var(--font-display);
   font-size: clamp(2.35rem, 5.5vw, 3.4rem);
   font-weight: 700;
-  letter-spacing: -0.035em;
+  letter-spacing: 0;
   line-height: 1.12;
   color: var(--ink);
 }
@@ -347,7 +347,7 @@ body.tool-page {
   font-family: var(--font-display);
   font-size: clamp(2.1rem, 4.5vw, 2.9rem);
   font-weight: 700;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
   line-height: 1.12;
   color: var(--ink);
 }
@@ -402,13 +402,13 @@ body.tool-page {
   margin: 0 0 var(--space-xs);
   font-family: var(--font-display);
   font-size: 1.35rem;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   line-height: 1.25;
 }
 
 .cta p {
   margin: 0 0 var(--space-md);
-  color: rgba(253, 251, 247, 0.78);
+  color: var(--paper);
   font-size: 0.94rem;
   line-height: 1.6;
 }
@@ -445,7 +445,7 @@ body.tool-page {
 .cta-fine {
   margin: var(--space-sm) 0 0 !important;
   font-size: 0.78rem !important;
-  color: rgba(253, 251, 247, 0.72) !important;
+  color: var(--paper) !important;
 }
 
 .content-block {
@@ -460,7 +460,7 @@ body.tool-page {
   margin: 0 0 var(--space-sm);
   font-family: var(--font-display);
   font-size: clamp(1.35rem, 3vw, 1.65rem);
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   line-height: 1.25;
 }
 

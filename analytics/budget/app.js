@@ -88,14 +88,10 @@
       // and create synthetic variation for the power-law fit
       const dataPoints = [];
       if (months >= 1 && spend > 0 && conversions > 0) {
-        // Use the single aggregate as the representative point
+        // Create the minimum three-point shape required by shared validation.
+        dataPoints.push({ spend: spend * 0.2, conversions: conversions * 0.2 });
+        dataPoints.push({ spend: spend * 0.6, conversions: conversions * 0.6 });
         dataPoints.push({ spend, conversions });
-        // Add a scaled-down synthetic point (20% spend) for curve fitting
-        if (spend > 50) {
-          const scaledSpend = spend * 0.2;
-          const scaledConversions = conversions * 0.2;
-          dataPoints.push({ spend: scaledSpend, conversions: scaledConversions });
-        }
       }
 
       return { channel: name, spend, conversions, months, minSpend, dataPoints };

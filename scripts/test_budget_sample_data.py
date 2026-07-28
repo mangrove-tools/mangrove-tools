@@ -47,7 +47,7 @@ class BudgetSampleDataTest(unittest.TestCase):
         self.assertIn("Use sample data", " ".join(button["text"]))
         self.assertIn("small-business", button["attrs"].get("aria-describedby", ""))
 
-    def test_sample_data_produces_valid_budget_optimization(self):
+    def test_sample_data_produces_complete_partially_modelable_allocation(self):
         script = textwrap.dedent(
             """
             const fs = require('fs');
@@ -55,28 +55,42 @@ class BudgetSampleDataTest(unittest.TestCase):
 
             const sandbox = { window: {}, console };
             vm.createContext(sandbox);
-            vm.runInContext(fs.readFileSync('shared/response-curve.js', 'utf8'), sandbox);
+            vm.runInContext(fs.readFileSync('shared/history-data.js', 'utf8'), sandbox);
+            vm.runInContext(fs.readFileSync('shared/marginality-engine.js', 'utf8'), sandbox);
+            vm.runInContext(fs.readFileSync('shared/budget-allocator.js', 'utf8'), sandbox);
             vm.runInContext(fs.readFileSync('shared/budget-sample-data.js', 'utf8'), sandbox);
 
             const sample = sandbox.window.MangroveBudgetSampleData;
-            const engine = sandbox.window.MangroveResponseCurve;
-            const validation = engine.validateDataQuality(sample.channels);
-            const fitted = sample.channels
-              .map((channel) => ({
-                ...channel,
-                curve: engine.fitPowerLaw(channel.dataPoints),
-              }))
-              .filter((channel) => channel.curve !== null);
-            const result = engine.optimizeBudget(fitted, sample.totalBudget);
+            const history = sandbox.window.MangroveHistoryData.inspectHistory(
+              sample.text,
+              { now: new Date('2026-07-28T12:00:00Z') }
+            );
+            const analysis = sandbox.window.MangroveMarginality.analyzeHistory(history);
+            const model = analysis.models[analysis.recommendedObjective];
+            const modelChannels = model && Array.isArray(model.channels) ? model.channels : [];
+            const plan = sandbox.window.MangroveBudgetAllocator.allocatePlan({
+              model,
+              totalBudget: sample.totalBudget,
+              planDays: sample.planDays,
+              constraints: {}
+            });
+            const finitePlan = plan.ok
+              && Number.isFinite(plan.totals.allocatedBudget)
+              && Number.isFinite(plan.totals.optimizedBudget)
+              && Number.isFinite(plan.totals.preservedBudget)
+              && plan.allocation.every((row) => Number.isFinite(row.recommendedSpend)
+                && (row.predictedOutcome === null || Number.isFinite(row.predictedOutcome))
+                && (row.marginalMetric === null || Number.isFinite(row.marginalMetric.value)));
 
             process.stdout.write(JSON.stringify({
-              channelCount: sample.channels.length,
-              hasExampleName: sample.exampleName.includes('small-business'),
-              minDataPoints: Math.min(...sample.channels.map((channel) => channel.dataPoints.length)),
-              validationOk: validation.ok,
-              resultCount: result.length,
-              recommendedTotal: result.reduce((sum, row) => sum + row.recommendedSpend, 0),
-              expectedConversions: result.reduce((sum, row) => sum + row.expectedConversions, 0),
+              historyOk: history.ok,
+              completePeriods: history.summary.completePeriods,
+              channels: history.summary.channels,
+              modelableChannels: modelChannels.filter((channel) => channel.status === 'modelable').length,
+              preservedChannels: modelChannels.filter((channel) => channel.status === 'preserved').length,
+              allocatedTotal: plan.ok ? plan.totals.allocatedBudget : null,
+              finitePlan,
+              hasAssumptionCurve: modelChannels.some((channel) => channel.curve && channel.curve.assumption === true),
             }));
             """
         )
@@ -89,13 +103,14 @@ class BudgetSampleDataTest(unittest.TestCase):
         )
         actual = json.loads(completed.stdout)
 
-        self.assertTrue(actual["hasExampleName"])
-        self.assertEqual(actual["channelCount"], 4)
-        self.assertGreaterEqual(actual["minDataPoints"], 3)
-        self.assertTrue(actual["validationOk"])
-        self.assertEqual(actual["resultCount"], 4)
-        self.assertAlmostEqual(actual["recommendedTotal"], 12000, delta=1)
-        self.assertGreater(actual["expectedConversions"], 0)
+        self.assertTrue(actual["historyOk"])
+        self.assertEqual(actual["completePeriods"], 16)
+        self.assertEqual(actual["channels"], 4)
+        self.assertEqual(actual["modelableChannels"], 3)
+        self.assertEqual(actual["preservedChannels"], 1)
+        self.assertEqual(actual["allocatedTotal"], 72000)
+        self.assertTrue(actual["finitePlan"])
+        self.assertFalse(actual["hasAssumptionCurve"])
 
     def test_manual_entry_is_an_explicit_assumption_not_fake_history(self):
         app_source = (REPO_ROOT / "analytics/budget/app.js").read_text()

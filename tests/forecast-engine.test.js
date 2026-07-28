@@ -62,3 +62,34 @@ assert(
   decemberForecast.value > novemberForecast.value,
   'a recurring December peak should remain a peak in the seasonal forecast'
 );
+
+const slashHistorical = [
+  { month: '10/2025', value: 44100 },
+  { month: '11/2025', value: 46800 },
+  { month: '12/2025', value: 52300 }
+];
+const slashSeries = context.window.MangroveForecast.prepareTimeSeries(slashHistorical);
+const slashResult = context.window.MangroveForecast.generateForecast(
+  slashSeries,
+  3,
+  false
+);
+
+assert.strictEqual(
+  slashResult.forecast.map(row => row.month).join(','),
+  '2026-01,2026-02,2026-03'
+);
+
+for (const invalidMonth of ['2025-00', '2025-13', '13/2025', 'not-a-month']) {
+  const validation = context.window.MangroveForecast.validateHistoricalData([
+    { month: '2025-10', value: 100 },
+    { month: '2025-11', value: 110 },
+    { month: invalidMonth, value: 120 }
+  ]);
+  assert.strictEqual(
+    validation.ok,
+    false,
+    `${invalidMonth} should be rejected instead of normalized`
+  );
+  assert.match(validation.reason, /month format/i);
+}

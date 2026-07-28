@@ -7,6 +7,12 @@ const vm = require('vm');
 
 const root = path.resolve(__dirname, '..');
 const appSource = fs.readFileSync(path.join(root, 'analytics/forecast/app.js'), 'utf8');
+const pageSource = fs.readFileSync(
+  path.join(root, 'analytics/forecast/index.html'),
+  'utf8'
+);
+
+assert.match(pageSource, /id="use-sample-data"/);
 
 function createElement(tagName) {
   const listeners = {};

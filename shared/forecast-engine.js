@@ -94,22 +94,41 @@ function parseCSVData(text) {
  * @returns {Array<{x: number, y: number, month: string}>}
  */
 function prepareTimeSeries(data) {
-  // Sort by month (simple string sort works for YYYY-MM and MM/YYYY formats)
   const sorted = [...data].sort((a, b) => {
-    const ma = a.month.length === 7 ? a.month + '-01' : a.month;
-    const mb = b.month.length === 7 ? b.month + '-01' : b.month;
-    return ma.localeCompare(mb);
+    const aParts = parseMonthParts(a.month);
+    const bParts = parseMonthParts(b.month);
+    if (!aParts || !bParts) return String(a.month).localeCompare(String(b.month));
+    return (aParts.year * 12 + aParts.month) - (bParts.year * 12 + bParts.month);
   });
 
   return sorted.map((d, i) => ({ x: i, y: d.value, month: d.month }));
 }
 
-function parseMonthStart(month) {
-  const isoMonth = /^(\d{4})-(\d{2})$/.exec(month);
+function parseMonthParts(month) {
+  const value = String(month || '').trim();
+  const isoMonth = /^(\d{4})-(\d{2})$/.exec(value);
+  const slashMonth = /^(\d{1,2})\/(\d{4})$/.exec(value);
+
+  let year;
+  let monthNumber;
   if (isoMonth) {
-    return new Date(Date.UTC(Number(isoMonth[1]), Number(isoMonth[2]) - 1, 1));
+    year = Number(isoMonth[1]);
+    monthNumber = Number(isoMonth[2]);
+  } else if (slashMonth) {
+    year = Number(slashMonth[2]);
+    monthNumber = Number(slashMonth[1]);
+  } else {
+    return null;
   }
-  return new Date(month);
+
+  if (monthNumber < 1 || monthNumber > 12) return null;
+  return { year, month: monthNumber - 1 };
+}
+
+function parseMonthStart(month) {
+  const parts = parseMonthParts(month);
+  if (!parts) return new Date(NaN);
+  return new Date(Date.UTC(parts.year, parts.month, 1));
 }
 
 /**
@@ -287,8 +306,23 @@ function validateHistoricalData(data) {
     return { ok: false, reason: 'At least 3 months of data needed to generate a meaningful forecast.', issues: ['Insufficient data rows'] };
   }
 
+  const invalidMonths = data
+    .map(row => row.month)
+    .filter(month => parseMonthParts(month) === null);
+  if (invalidMonths.length > 0) {
+    return {
+      ok: false,
+      reason: 'Use a valid month format (YYYY-MM or MM/YYYY) with a month from 1 to 12.',
+      issues: [`Invalid month values: ${invalidMonths.join(', ')}`]
+    };
+  }
+
   // Check for missing months (gaps)
-  const sorted = [...data].sort((a, b) => a.month.localeCompare(b.month));
+  const sorted = [...data].sort((a, b) => {
+    const aParts = parseMonthParts(a.month);
+    const bParts = parseMonthParts(b.month);
+    return (aParts.year * 12 + aParts.month) - (bParts.year * 12 + bParts.month);
+  });
   for (let i = 1; i < sorted.length; i++) {
     const prev = parseMonthStart(sorted[i-1].month);
     const curr = parseMonthStart(sorted[i].month);

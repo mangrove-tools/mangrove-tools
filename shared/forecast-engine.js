@@ -104,6 +104,14 @@ function prepareTimeSeries(data) {
   return sorted.map((d, i) => ({ x: i, y: d.value, month: d.month }));
 }
 
+function parseMonthStart(month) {
+  const isoMonth = /^(\d{4})-(\d{2})$/.exec(month);
+  if (isoMonth) {
+    return new Date(Number(isoMonth[1]), Number(isoMonth[2]) - 1, 1);
+  }
+  return new Date(month);
+}
+
 /**
  * Compute seasonal indices (multiplicative) for each month of year.
  * Returns array of 12 indices (Jan-Dec), where 1.0 = average.
@@ -119,7 +127,7 @@ function computeSeasonalIndices(detrended, ts) {
   for (let m = 0; m < 12; m++) byCalendarMonth[m] = [];
 
   for (let i = 0; i < detrended.length; i++) {
-    const date = new Date(ts[i].month);
+    const date = parseMonthStart(ts[i].month);
     if (!isNaN(date.getTime())) {
       const calMonth = date.getMonth(); // 0-11
       byCalendarMonth[calMonth].push(detrended[i].y / ts[i].y); // ratio of actual to trend
@@ -193,7 +201,7 @@ function generateForecast(timeSeries, horizon, useSeasonality) {
 
     if (seasonalIndices) {
       // Get calendar month for seasonal index
-      const date = new Date(lastMonth);
+      const date = parseMonthStart(lastMonth);
       if (!isNaN(date.getTime())) {
         const calMonth = (date.getMonth() + h) % 12;
         const seasonalFactor = seasonalIndices[calMonth] || 1.0;
@@ -207,7 +215,7 @@ function generateForecast(timeSeries, horizon, useSeasonality) {
     upper = value + confidenceWidth;
 
     // Project month string
-    const projDate = new Date(lastMonth);
+    const projDate = parseMonthStart(lastMonth);
     if (!isNaN(projDate.getTime())) {
       projDate.setMonth(projDate.getMonth() + h);
       const projMonth = projDate.toISOString().slice(0, 7);

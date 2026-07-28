@@ -150,7 +150,11 @@
             <button type="button" id="add-row" class="ghost-btn add-row">+ Add month</button>
           </div>
 
-          <button type="submit" class="primary">Generate forecast</button>
+          <div class="form-actions" aria-label="Forecast actions">
+            <button type="button" id="use-sample-data" class="secondary-action" aria-describedby="sample-data-note">Use sample data</button>
+            <button type="submit" class="primary">Generate forecast</button>
+          </div>
+          <p class="field-hint sample-note" id="sample-data-note">Loads 12 months of example revenue from a neighborhood bakery and generates a forecast.</p>
         </form>
 
         <div class="results" id="results">

@@ -21,8 +21,24 @@
   const targetProb = document.getElementById('target-prob');
   const targetProbText = document.getElementById('target-prob-text');
   const nextSteps = document.getElementById('next-steps');
+  const sampleDataBtn = document.getElementById('use-sample-data');
 
   const METRIC_LABELS = { revenue: 'Revenue', conversions: 'Conversions' };
+  const SAMPLE_REVENUE_CSV = [
+    'date,value',
+    '2025-01,28600',
+    '2025-02,30100',
+    '2025-03,31850',
+    '2025-04,33400',
+    '2025-05,35900',
+    '2025-06,38250',
+    '2025-07,37100',
+    '2025-08,39400',
+    '2025-09,41750',
+    '2025-10,44100',
+    '2025-11,46800',
+    '2025-12,52300'
+  ].join('\n');
 
   let manualRowCount = 6;
 
@@ -178,6 +194,22 @@
     renderResults(historical, result.forecast, { ok: true, reason: '', issues: [] }, metric, growthTarget);
   }
 
+  function useSampleData() {
+    document.getElementById('metric-type').value = 'revenue';
+    document.getElementById('horizon').value = '6';
+    document.getElementById('growth-target').value = '42000';
+    document.getElementById('seasonality-toggle').value = 'true';
+    dataMethodSel.value = 'paste';
+    pasteArea.hidden = false;
+    manualArea.hidden = true;
+    document.getElementById('csv-input').value = SAMPLE_REVENUE_CSV;
+    if (typeof form.requestSubmit === 'function') {
+      form.requestSubmit();
+    } else {
+      handleSubmit({ preventDefault() {} });
+    }
+  }
+
   function init() {
     buildManualRows(manualRowCount);
 
@@ -204,6 +236,7 @@
     });
 
     form.addEventListener('submit', handleSubmit);
+    sampleDataBtn.addEventListener('click', useSampleData);
   }
 
   init();

@@ -65,12 +65,18 @@
     return value === null || Number.isFinite(value);
   }
 
-  function validPublishedMetric(metric) {
-    return metric === null
-      || (metric
-        && typeof metric === 'object'
-        && typeof metric.key === 'string'
-        && finiteOrNull(metric.value));
+  function marginalKeyForObjective(objective) {
+    if (objective === 'conversions') return 'marginal_cpa';
+    if (objective === 'revenue') return 'marginal_roas';
+    return objective === 'contribution' ? 'marginal_roi' : null;
+  }
+
+  function validPublishedMetric(metric, expectedKey, required) {
+    if (metric === null) return required === false;
+    return Boolean(metric)
+      && typeof metric === 'object'
+      && metric.key === expectedKey
+      && (required ? Number.isFinite(metric.value) : finiteOrNull(metric.value));
   }
 
   function validPublishedAllocation(result) {
@@ -78,6 +84,8 @@
       || !Array.isArray(result.allocation) || !result.totals) {
       return false;
     }
+    const expectedMetricKey = marginalKeyForObjective(result.objective);
+    if (!expectedMetricKey) return false;
     const rowsValid = result.allocation.every(function validPublishedRow(row) {
       if (!row || (row.status !== 'modelable' && row.status !== 'preserved')
         || !Number.isFinite(row.currentSpend)
@@ -89,7 +97,11 @@
         return row.predictedOutcome === null && row.marginalMetric === null;
       }
       return Number.isFinite(row.predictedOutcome)
-        && validPublishedMetric(row.marginalMetric);
+        && validPublishedMetric(
+          row.marginalMetric,
+          expectedMetricKey,
+          row.recommendedSpend > 0
+        );
     });
     return rowsValid
       && Number.isFinite(result.totals.requestedBudget)
@@ -299,7 +311,6 @@
     const horizonFactor = input.planDays / model.cadenceDays;
     const requestedCents = safeCents(input.totalBudget);
     if (!Number.isFinite(horizonFactor) || horizonFactor <= 0 || requestedCents == null) return invalidInput();
-    if (!Number.isFinite(fromCents(requestedCents) / horizonFactor)) return predictionOverflow();
     const derivedItems = normalized.map(function buildItem(entry) {
       return deriveConstraint(entry.channel, entry.constraint, horizonFactor);
     });
@@ -324,6 +335,7 @@
     if (requestedCents > minimumCents && modelable.length === 0) {
       return failure('no_defensible_remainder', 'No admitted response curve can receive the remaining budget.', fromCents(minimumCents), maximumCents == null ? null : fromCents(maximumCents), []);
     }
+    if (!Number.isFinite(fromCents(requestedCents) / horizonFactor)) return predictionOverflow();
 
     const modeledMinimumCents = safeSum(modelable.map(function minimumOf(item) { return item.minimumCents; }));
     if (modeledMinimumCents == null) return invalidInput();

@@ -366,6 +366,61 @@ test('a marginal CPA reciprocal overflow fails closed', () => {
   assert.equal(Object.hasOwn(result, 'totals'), false);
 });
 
+test('positive modeled spend requires a finite objective-specific marginal metric', () => {
+  const cases = [
+    { key: 'conversions', label: 'Conversions', costTreatment: null },
+    { key: 'revenue', label: 'Revenue', costTreatment: null },
+    { key: 'financial', label: 'Contribution', costTreatment: 'before_marketing' },
+    { key: 'financial', label: 'Contribution', costTreatment: 'after_marketing' }
+  ];
+
+  cases.forEach(metric => {
+    const result = allocate({
+      model: model([
+        channel('Paid search', { a: 1e208, b: 0.5 }, {
+          currentSpendRate: 0,
+          preservedSpendRate: 0
+        })
+      ], metric),
+      totalBudget: 0.01,
+      planDays: 1e200,
+      constraints: {
+        'Paid search': { minimum: 0.01, maximum: 0.01, excluded: false }
+      }
+    });
+
+    assert.equal(result.ok, false);
+    assert.equal(result.code, 'prediction_overflow');
+    assert.equal(Object.hasOwn(result, 'allocation'), false);
+    assert.equal(Object.hasOwn(result, 'totals'), false);
+  });
+});
+
+test('minimum infeasibility takes precedence over a subnormal horizon', () => {
+  const result = allocate({
+    model: model([
+      channel('Local partnerships', null, {
+        currentSpendRate: 0,
+        preservedSpendRate: 0
+      })
+    ], { key: 'revenue', label: 'Revenue', costTreatment: null }, 1),
+    totalBudget: 1,
+    planDays: Number.MIN_VALUE,
+    constraints: {
+      'Local partnerships': { minimum: 2, maximum: null, excluded: false }
+    }
+  });
+
+  assert.deepEqual(result, {
+    ok: false,
+    code: 'minimums_exceed_budget',
+    message: 'The preserved and minimum allocations require $2.',
+    minimumBudget: 2,
+    maximumBudget: null,
+    conflicts: ['Local partnerships']
+  });
+});
+
 test('negative, nonfinite, and unit-inconsistent inputs fail closed', () => {
   [
     { totalBudget: -1 },

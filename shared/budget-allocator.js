@@ -5,6 +5,7 @@
 
 (function attachBudgetAllocator(root) {
   const TOLERANCE = 0.001;
+  const MAX_RECONCILIATION_STEPS = 100;
 
   function finiteNonNegative(value) {
     return Number.isFinite(value) && value >= 0;
@@ -220,6 +221,11 @@
     return Math.max(item.minimumCents, Math.min(cents, item.maximumCents));
   }
 
+  function geometricMidpoint(low, high) {
+    if (low === 0 || high === 0) return 0;
+    return Math.sqrt(low) * Math.sqrt(high);
+  }
+
   function balance(modelable, budgetCents, horizonFactor) {
     function totalAt(threshold) {
       return modelable.reduce(function sumSpend(total, item) {
@@ -233,11 +239,11 @@
     if (totalAt(high) > budgetCents + TOLERANCE * 100) return null;
 
     for (let iteration = 0; iteration < 200; iteration += 1) {
-      const midpoint = Math.sqrt(low * high);
+      const midpoint = geometricMidpoint(low, high);
       if (totalAt(midpoint) > budgetCents) low = midpoint;
       else high = midpoint;
     }
-    const threshold = Math.sqrt(low * high);
+    const threshold = geometricMidpoint(low, high);
     const allocations = modelable.map(function allocate(item) {
       const allocatedCents = safeCents(spendAtThreshold(item, threshold, horizonFactor) / 100);
       return allocatedCents == null ? null : Object.assign({}, item, { allocatedCents: allocatedCents });
@@ -251,8 +257,17 @@
   }
 
   function reconcile(modelable, targetCents, horizonFactor) {
-    let delta = targetCents - modelable.reduce(function total(sum, item) { return sum + item.allocatedCents; }, 0);
+    const allocatedTotal = safeSum(modelable.map(function allocated(item) { return item.allocatedCents; }));
+    if (allocatedTotal == null) return false;
+    let delta = targetCents - allocatedTotal;
+    const roundingBound = Math.ceil(modelable.length / 2) + 1;
+    const stepLimit = Math.min(roundingBound, MAX_RECONCILIATION_STEPS);
+    // Nearest-cent rounding contributes at most half a cent per channel. The
+    // extra cent covers the balance tolerance and floating-point boundary.
+    if (!Number.isSafeInteger(delta) || Math.abs(delta) > stepLimit) return false;
+    let steps = 0;
     while (delta !== 0) {
+      if (steps >= stepLimit) return false;
       const candidates = modelable.filter(function hasCapacity(item) {
         return delta > 0 ? item.allocatedCents < item.maximumCents : item.allocatedCents > item.minimumCents;
       }).sort(function byMarginalThenName(left, right) {
@@ -266,6 +281,7 @@
       if (candidates.length === 0) return false;
       candidates[0].allocatedCents += delta > 0 ? 1 : -1;
       delta += delta > 0 ? -1 : 1;
+      steps += 1;
     }
     return true;
   }

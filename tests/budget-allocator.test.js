@@ -13,6 +13,19 @@ vm.createContext(context);
 vm.runInContext(source, context);
 const allocator = context.window.MangroveBudgetAllocator;
 
+function allocatorInternals() {
+  const assignment = 'root.MangroveBudgetAllocator = { allocatePlan: allocatePlan };';
+  const instrumented = source.replace(
+    assignment,
+    'root.MangroveBudgetAllocator = { allocatePlan: allocatePlan, __testOnly: { geometricMidpoint: geometricMidpoint, reconcile: reconcile } };'
+  );
+  assert.notEqual(instrumented, source);
+  const internalContext = { window: {} };
+  vm.createContext(internalContext);
+  vm.runInContext(instrumented, internalContext);
+  return internalContext.window.MangroveBudgetAllocator.__testOnly;
+}
+
 function channel(name, curve, options) {
   const settings = options || {};
   return {
@@ -54,6 +67,69 @@ test('symmetric admitted curves split the budget equally', () => {
   assert.equal(result.ok, true);
   assert.equal(row(result, 'Paid search').recommendedSpend, 30000);
   assert.equal(row(result, 'Paid social').recommendedSpend, 30000);
+});
+
+test('geometric midpoint remains finite across overflow and zero-bound edges', () => {
+  const { geometricMidpoint } = allocatorInternals();
+  const overflowSafe = geometricMidpoint(1e200, 1e300);
+
+  assert.equal(Number.isFinite(overflowSafe), true);
+  assert.ok(Math.abs((overflowSafe / 1e250) - 1) < 1e-15);
+  assert.equal(geometricMidpoint(0, Number.MAX_VALUE), 0);
+  assert.equal(geometricMidpoint(Number.MAX_VALUE, 0), 0);
+});
+
+test('reconciliation rejects pathological deltas without cent-by-cent mutation', () => {
+  const { reconcile } = allocatorInternals();
+  const rows = [{
+    channel: 'Paid search',
+    curve: { a: 2, b: 0.5 },
+    allocatedCents: 0,
+    minimumCents: 0,
+    maximumCents: Infinity
+  }];
+
+  assert.equal(reconcile(rows, 1000000, 1), false);
+  assert.equal(rows[0].allocatedCents, 0);
+});
+
+test('extreme accepted curves complete promptly with finite output or a controlled reconciliation failure', () => {
+  const started = process.hrtime.bigint();
+  const result = allocate({
+    model: model([
+      channel('Paid search', { a: 1e306, b: 0.5 }, {
+        currentSpendRate: 0,
+        preservedSpendRate: 0
+      }),
+      channel('Paid social', { a: 9e305, b: 0.5 }, {
+        currentSpendRate: 0,
+        preservedSpendRate: 0
+      })
+    ], { key: 'revenue', label: 'Revenue', costTreatment: null }),
+    totalBudget: 10000,
+    planDays: 7
+  });
+  const elapsedMilliseconds = Number(process.hrtime.bigint() - started) / 1e6;
+
+  assert.ok(
+    elapsedMilliseconds < 1000,
+    `extreme allocation took ${elapsedMilliseconds.toFixed(1)}ms`
+  );
+  if (!result.ok) {
+    assert.equal(result.code, 'currency_reconciliation_failed');
+    return;
+  }
+  assert.equal(result.code, 'allocated');
+  assert.equal(result.totals.allocatedBudget, 10000);
+  assert.equal(
+    result.allocation.reduce((sum, item) => sum + item.recommendedSpend, 0),
+    10000
+  );
+  result.allocation.forEach(item => {
+    assert.equal(Number.isFinite(item.recommendedSpend), true);
+    assert.equal(Number.isFinite(item.predictedOutcome), true);
+    assert.equal(Number.isFinite(item.marginalMetric.value), true);
+  });
 });
 
 test('asymmetric curves balance marginal outcome approximately', () => {

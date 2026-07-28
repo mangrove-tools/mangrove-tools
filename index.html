@@ -211,53 +211,161 @@
       <!-- Analytics-first hero -->
       <section class="hero-feature" aria-label="Marketing analytics for small business">
         <div class="hero-feature-copy">
-          <p class="eyebrow">Marketing Analytics</p>
-          <h1 class="hero-headline">Know where your budget is working.</h1>
+          <p class="eyebrow">Marketing decision support</p>
+          <h1 class="hero-headline">
+            Make the next marketing decision with evidence.
+          </h1>
           <p class="hero-sub">
-            Agency-level marketing analytics for founders and small businesses.
-            Budget optimization, marginality analysis, and revenue forecasting
-            — without the agency price tag.
+            Use the history you already have to compare channels, surface
+            uncertainty, and choose a measured next step.
           </p>
           <div class="hero-cta-row">
             <a class="btn" href="/analytics/">Explore Analytics</a>
             <a class="text-cta" href="/calculators/">Browse Calculators</a>
           </div>
           <p class="hero-note">
-            Free, in-browser, no accounts. Your data never leaves your machine.
+            Free, in-browser, no accounts. Inputs stay on your device.
           </p>
         </div>
-        <figure class="hero-visual" aria-hidden="true">
-          <svg viewBox="0 0 480 280" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="hero-viz-fill" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stop-color="#308e7b" stop-opacity="0.32" />
-                <stop offset="100%" stop-color="#308e7b" stop-opacity="0" />
-              </linearGradient>
-            </defs>
-            <!-- Axes -->
-            <line x1="40" y1="220" x2="450" y2="220" stroke="rgba(245,243,239,0.18)" stroke-width="1" />
-            <line x1="40" y1="20" x2="40" y2="220" stroke="rgba(245,243,239,0.18)" stroke-width="1" />
-            <!-- Filled area under curve -->
-            <path d="M 40 210 C 100 180, 150 100, 220 60 S 340 30, 450 28 L 450 220 L 40 220 Z" fill="url(#hero-viz-fill)" />
-            <!-- Curve line (diminishing returns) -->
-            <path d="M 40 210 C 100 180, 150 100, 220 60 S 340 30, 450 28" fill="none" stroke="#308e7b" stroke-width="2.5" stroke-linecap="round" />
-            <!-- Marginal-CPA hint (the slope flattens) -->
-            <line x1="280" y1="40" x2="380" y2="32" stroke="rgba(245,243,239,0.35)" stroke-width="1" stroke-dasharray="3 4" />
-            <!-- Optimal point -->
-            <line x1="220" y1="60" x2="220" y2="220" stroke="#256860" stroke-width="1" stroke-dasharray="3 3" opacity="0.7" />
-            <circle cx="220" cy="60" r="10" fill="none" stroke="#256860" stroke-width="1" opacity="0.5" />
-            <circle cx="220" cy="60" r="5" fill="#256860" />
-            <!-- Axis labels -->
-            <text x="20" y="125" text-anchor="middle" fill="#9e9a93" font-size="10" font-family="IBM Plex Sans, sans-serif" transform="rotate(-90 20 125)">Conversions</text>
-            <text x="245" y="260" text-anchor="middle" fill="#9e9a93" font-size="10" font-family="IBM Plex Sans, sans-serif">Spend →</text>
-            <text x="220" y="248" text-anchor="middle" fill="#256860" font-size="10" font-family="IBM Plex Sans, sans-serif" font-weight="600">Optimal</text>
-            <text x="395" y="22" text-anchor="end" fill="#9e9a93" font-size="10" font-family="IBM Plex Sans, sans-serif">Diminishing returns</text>
-          </svg>
-          <figcaption class="hero-visual-meta">
-            <span>Response curve</span>
-            <span><strong>●</strong> Find the optimum</span>
-          </figcaption>
-        </figure>
+        <aside class="decision-brief" aria-labelledby="decision-brief-title">
+          <p class="decision-brief-label">Illustrative decision brief</p>
+          <h2 id="decision-brief-title">A useful answer sets a limit.</h2>
+          <dl class="decision-brief-points">
+            <div>
+              <dt>Observation</dt>
+              <dd>
+                Paid search has converted more efficiently than paid social
+                across the available four-week history.
+              </dd>
+            </div>
+            <div>
+              <dt>Bounded move</dt>
+              <dd>
+                Shift up to 10% of the paid social allocation to paid search.
+              </dd>
+            </div>
+            <div>
+              <dt>Recheck</dt>
+              <dd>
+                Review after 30 days. Stop or revise if blended acquisition
+                cost rises or conversion quality falls.
+              </dd>
+            </div>
+          </dl>
+          <p class="decision-brief-caveat">
+            Example only. The evidence determines whether a move is warranted.
+          </p>
+        </aside>
+      </section>
+
+      <section
+        class="section-block decision-story"
+        aria-labelledby="decision-story-title"
+      >
+        <div class="decision-story-head">
+          <p class="section-kicker">From records to a measured move</p>
+          <h2 id="decision-story-title">
+            Put a boundary around the next decision.
+          </h2>
+          <p>
+            A short operating history can narrow the choice without pretending
+            to remove uncertainty.
+          </p>
+        </div>
+        <ol class="decision-story-stages">
+          <li class="decision-story-stage" data-story-stage="evidence">
+            <p class="story-stage-index">01 / Evidence</p>
+            <h3>Bring the evidence together.</h3>
+            <p class="story-stage-copy">
+              Start with comparable observations. This illustrative four-week
+              snapshot is evidence to inspect, not proof of causation.
+            </p>
+            <div class="story-table-wrap">
+              <table>
+                <caption>
+                  Illustrative channel snapshot
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Channel</th>
+                    <th scope="col">Spend</th>
+                    <th scope="col">Conversions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Paid search</th>
+                    <td>$12,400</td>
+                    <td>372</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Paid social</th>
+                    <td>$9,800</td>
+                    <td>196</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Referrals</th>
+                    <td>$4,600</td>
+                    <td>138</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </li>
+          <li class="decision-story-stage" data-story-stage="checks">
+            <p class="story-stage-index">02 / Checks</p>
+            <h3>Test what the history supports.</h3>
+            <p class="story-stage-copy">
+              Before moving budget, inspect the conditions behind the apparent
+              difference.
+            </p>
+            <dl class="story-checks">
+              <div>
+                <dt>Coverage</dt>
+                <dd>Enough comparable periods and complete channel records.</dd>
+              </div>
+              <div>
+                <dt>Response shape</dt>
+                <dd>Evidence of diminishing returns at the current spend.</dd>
+              </div>
+              <div>
+                <dt>Timing</dt>
+                <dd>Seasonality or campaign changes where they are relevant.</dd>
+              </div>
+              <div>
+                <dt>Uncertainty</dt>
+                <dd>A range that reflects how little history is available.</dd>
+              </div>
+            </dl>
+          </li>
+          <li class="decision-story-stage" data-story-stage="boundary">
+            <p class="story-stage-index">03 / Boundary</p>
+            <h3>Set the decision boundary.</h3>
+            <p class="story-stage-copy">
+              Turn the result into a small, reversible test rather than a
+              permanent allocation.
+            </p>
+            <div class="story-boundary">
+              <p class="story-boundary-action">
+                Reallocate <strong>up to 10%</strong> from paid social to paid
+                search.
+              </p>
+              <dl>
+                <div>
+                  <dt>Recheck window</dt>
+                  <dd>30 days</dd>
+                </div>
+                <div>
+                  <dt>Stop or revise</dt>
+                  <dd>
+                    If blended acquisition cost rises, conversion quality
+                    falls, or the difference disappears.
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          </li>
+        </ol>
       </section>
 
       <!-- Featured analytics tools -->

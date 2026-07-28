@@ -217,6 +217,14 @@
       if (!state.pendingImport) setImportStatus(phaseMessage(phase));
     }
 
+    function clearAllocationResult() {
+      state.allocation = null;
+      if (resultsNote) resultsNote.textContent = 'Choose a budget and horizon to build the plan.';
+      if (downloadAllocation) downloadAllocation.disabled = true;
+      if (MOTION.resetResult) MOTION.resetResult(resultsPanel);
+      syncPhase();
+    }
+
     function revokeDownloads() {
       while (downloadUrls.length > 0) {
         const url = downloadUrls.pop();
@@ -452,6 +460,7 @@
       state.selectedObjective = analysis.recommendedObjective;
       state.allocation = null;
       activeCorrectionText = null;
+      if (state.sourceKind === 'paste') historyPaste.value = '';
       renderReadiness();
       renderCleanedHistory(inspection);
       if (SAMPLE.totalBudget && state.sourceKind === 'sample') {
@@ -593,7 +602,9 @@
     });
 
     cancelReplacement.addEventListener('click', function keepHistory() {
+      const pendingSourceKind = state.pendingImport && state.pendingImport.sourceKind;
       state.pendingImport = null;
+      if (pendingSourceKind === 'paste') historyPaste.value = '';
       replacementWarning.hidden = true;
       syncPhase();
     });
@@ -624,6 +635,7 @@
 
     planForm.addEventListener('submit', function buildPlan(event) {
       event.preventDefault();
+      clearAllocationResult();
       const model = modelFor(state.analysis, state.selectedObjective);
       const totalBudget = Number(totalBudgetInput.value);
       const planDays = Number(planDaysInput.value);

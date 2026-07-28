@@ -79,18 +79,18 @@ class MotionIntegrationTests(unittest.TestCase):
                     source,
                 )
 
-    def test_budget_invalid_total_clears_a_prior_ready_result(self) -> None:
+    def test_budget_replacement_clears_prior_result_motion(self) -> None:
         source = (ROOT / "analytics/budget/app.js").read_text(encoding="utf-8")
-        invalid_total_branch = re.search(
-            r"if \(totalBudget <= 0\) \{(?P<body>.*?)\n\s*\}",
+        replacement_clear = re.search(
+            r"function clearPriorDecision\(\) \{(?P<body>.*?)\n\s*\}",
             source,
             re.DOTALL,
         )
 
-        self.assertIsNotNone(invalid_total_branch)
+        self.assertIsNotNone(replacement_clear)
         self.assertIn(
             "MOTION.resetResult(resultsPanel)",
-            invalid_total_branch.group("body"),
+            replacement_clear.group("body"),
         )
 
     def test_styles_are_scoped_to_helper_controlled_states(self) -> None:

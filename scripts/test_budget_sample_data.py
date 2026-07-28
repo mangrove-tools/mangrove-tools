@@ -45,7 +45,10 @@ class BudgetSampleDataTest(unittest.TestCase):
         button = sample_buttons[0]
         self.assertEqual(button["attrs"].get("type"), "button")
         self.assertIn("Use sample data", " ".join(button["text"]))
-        self.assertIn("small-business", button["attrs"].get("aria-describedby", ""))
+        self.assertEqual(
+            button["attrs"].get("aria-describedby"),
+            "sample-description",
+        )
 
     def test_sample_data_produces_complete_partially_modelable_allocation(self):
         script = textwrap.dedent(
@@ -123,17 +126,16 @@ class BudgetSampleDataTest(unittest.TestCase):
         self.assertTrue(actual["finitePlan"])
         self.assertFalse(actual["hasAssumptionCurve"])
 
-    def test_manual_entry_is_an_explicit_assumption_not_fake_history(self):
+    def test_budget_app_uses_historical_import_without_manual_assumptions(self):
         app_source = (REPO_ROOT / "analytics/budget/app.js").read_text()
 
-        self.assertIn("createAssumptionCurve", app_source)
+        self.assertIn("requestImport(SAMPLE.text, 'sample')", app_source)
+        self.assertIn("HISTORY.inspectHistory(text, options || {})", app_source)
+        self.assertIn("MARGINALITY.analyzeHistory(inspection)", app_source)
+        self.assertNotIn("createAssumptionCurve", app_source)
+        self.assertNotIn("MangroveResponseCurve", app_source)
         self.assertNotIn("spend * 0.6", app_source)
         self.assertNotIn("Math.pow(0.65", app_source)
-        self.assertIn("delete row.dataset.sampleDataPoints", app_source)
-        self.assertIn(
-            "event.target.matches('.ch-spend, .ch-conversions')",
-            app_source,
-        )
 
     def test_budget_layout_contains_narrow_results(self):
         tool_css = (REPO_ROOT / "tool-shell.css").read_text()

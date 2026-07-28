@@ -17,7 +17,7 @@ function allocatorInternals() {
   const assignment = 'root.MangroveBudgetAllocator = { allocatePlan: allocatePlan };';
   const instrumented = source.replace(
     assignment,
-    'root.MangroveBudgetAllocator = { allocatePlan: allocatePlan, __testOnly: { geometricMidpoint: geometricMidpoint, reconcile: reconcile } };'
+    'root.MangroveBudgetAllocator = { allocatePlan: allocatePlan, __testOnly: { geometricMidpoint: geometricMidpoint, projectToBoundedBudget: projectToBoundedBudget, reconcile: reconcile } };'
   );
   assert.notEqual(instrumented, source);
   const internalContext = { window: {} };
@@ -203,6 +203,95 @@ test('near-safe-integer two-channel allocation reconciles its floating-precision
     result.allocation.reduce((sum, item) => sum + Math.round(item.recommendedSpend * 100), 0),
     Math.round(totalBudget * 100)
   );
+});
+
+test('near-one elasticities project to prompt exact symmetric allocations', () => {
+  [35, 40, 48, 52].forEach(power => {
+    const elasticity = 1 - (2 ** -power);
+    const started = process.hrtime.bigint();
+    const result = allocate({
+      model: model([
+        channel('Paid search', { a: 2, b: elasticity }, {
+          currentSpendRate: 0,
+          preservedSpendRate: 0
+        }),
+        channel('Paid social', { a: 2, b: elasticity }, {
+          currentSpendRate: 0,
+          preservedSpendRate: 0
+        })
+      ], { key: 'revenue', label: 'Revenue', costTreatment: null }),
+      totalBudget: 10000.01,
+      planDays: 7
+    });
+    const elapsedMilliseconds = Number(process.hrtime.bigint() - started) / 1e6;
+
+    assert.ok(
+      elapsedMilliseconds < 1000,
+      `b=1-2^-${power} allocation took ${elapsedMilliseconds.toFixed(1)}ms`
+    );
+    assert.equal(result.ok, true);
+    assert.equal(result.totals.allocatedBudget, 10000.01);
+    const cents = result.allocation.map(item => Math.round(item.recommendedSpend * 100));
+    assert.equal(cents[0] + cents[1], 1000001);
+    assert.ok(Math.abs(cents[0] - cents[1]) <= 1);
+    result.allocation.forEach(item => {
+      assert.equal(Number.isFinite(item.predictedOutcome), true);
+      assert.equal(Number.isFinite(item.marginalMetric.value), true);
+    });
+  });
+});
+
+test('near-one projection preserves bounds while reconciling the exact budget', () => {
+  const elasticity = 1 - (2 ** -48);
+  const result = allocate({
+    model: model([
+      channel('Paid search', { a: 2, b: elasticity }, {
+        currentSpendRate: 0,
+        preservedSpendRate: 0
+      }),
+      channel('Paid social', { a: 2, b: elasticity }, {
+        currentSpendRate: 0,
+        preservedSpendRate: 0
+      }),
+      channel('Paid video', { a: 2, b: elasticity }, {
+        currentSpendRate: 0,
+        preservedSpendRate: 0
+      })
+    ], { key: 'revenue', label: 'Revenue', costTreatment: null }),
+    totalBudget: 10000.01,
+    planDays: 7,
+    constraints: {
+      'Paid search': { minimum: 0, maximum: 1000, excluded: false }
+    }
+  });
+
+  assert.equal(result.ok, true);
+  assert.ok(row(result, 'Paid search').recommendedSpend <= 1000);
+  assert.equal(
+    result.allocation.reduce((sum, item) => sum + Math.round(item.recommendedSpend * 100), 0),
+    1000001
+  );
+  assert.ok(
+    Math.abs(
+      row(result, 'Paid social').recommendedSpend
+      - row(result, 'Paid video').recommendedSpend
+    ) <= 0.01
+  );
+});
+
+test('bounded-simplex projection fixes active caps atomically', () => {
+  const { projectToBoundedBudget } = allocatorInternals();
+  const items = [
+    { minimumCents: 0, maximumCents: 4000 },
+    { minimumCents: 0, maximumCents: Infinity },
+    { minimumCents: 0, maximumCents: Infinity }
+  ];
+  const rawCents = [5000, 2000, 2000];
+  const projection = projectToBoundedBudget(items, rawCents, 10000);
+
+  assert.deepEqual(Array.from(projection.values), [4000, 3000, 3000]);
+  assert.deepEqual(rawCents, [5000, 2000, 2000]);
+  assert.equal(projection.passes, 2);
 });
 
 test('extreme accepted curves complete promptly with exact finite allocations', () => {

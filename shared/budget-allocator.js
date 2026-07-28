@@ -6,8 +6,14 @@
 (function attachBudgetAllocator(root) {
   const TOLERANCE = 0.001;
   const BALANCE_ITERATIONS = 200;
-  const SPEND_AT_THRESHOLD_OPERATIONS = 9;
-  const RECONCILIATION_OPERATIONS_PER_CHANNEL = 2;
+  const PROJECTION_RESIDUAL_TOLERANCE_CENTS = TOLERANCE * 100;
+  // Per channel: two compensated sums (8), cent conversion (2), delta sum (1).
+  const PROJECTION_FIXED_BASE_OPERATIONS = 1;
+  const PROJECTION_BASE_OPERATIONS_PER_CHANNEL = 11;
+  // Per pass/channel: compensated active/fixed sum (4), shifted candidate (1).
+  const PROJECTION_PASS_OPERATIONS_PER_CHANNEL = 5;
+  // Per pass: subtract fixed and active totals, then divide by active count.
+  const PROJECTION_PASS_FIXED_OPERATIONS = 3;
 
   function finiteNonNegative(value) {
     return Number.isFinite(value) && value >= 0;
@@ -26,6 +32,19 @@
   function safeSum(values) {
     const sum = values.reduce(function add(total, value) { return total + value; }, 0);
     return Number.isSafeInteger(sum) ? sum : null;
+  }
+
+  function compensatedSum(values) {
+    let sum = 0;
+    let correction = 0;
+    for (let index = 0; index < values.length; index += 1) {
+      if (!Number.isFinite(values[index])) return null;
+      const adjusted = values[index] - correction;
+      const next = sum + adjusted;
+      correction = (next - sum) - adjusted;
+      sum = next;
+    }
+    return Number.isFinite(sum) ? sum : null;
   }
 
   function fromCents(value) {
@@ -228,6 +247,90 @@
     return Math.sqrt(low) * Math.sqrt(high);
   }
 
+  function projectionOperationCount(channelCount, passes) {
+    const count = PROJECTION_FIXED_BASE_OPERATIONS
+      + PROJECTION_BASE_OPERATIONS_PER_CHANNEL * channelCount
+      + passes * (
+        PROJECTION_PASS_OPERATIONS_PER_CHANNEL * channelCount
+        + PROJECTION_PASS_FIXED_OPERATIONS
+      );
+    return Number.isSafeInteger(count) && count > 0 ? count : null;
+  }
+
+  function projectToBoundedBudget(modelable, rawCents, targetCents) {
+    const rawTotal = compensatedSum(rawCents);
+    if (rawTotal == null) return null;
+    const residual = targetCents - rawTotal;
+    if (!Number.isFinite(residual)) return null;
+    if (Math.abs(residual) <= PROJECTION_RESIDUAL_TOLERANCE_CENTS) {
+      const operations = projectionOperationCount(modelable.length, 0);
+      return operations == null ? null : {
+        values: rawCents,
+        passes: 0,
+        operations: operations
+      };
+    }
+
+    const projected = rawCents.slice();
+    const fixed = new Array(modelable.length).fill(false);
+    let activeCount = modelable.length;
+    // Euclidean box-simplex projection has y_i = clamp(raw_i + shift).
+    // Every nonconverged pass fixes at least one new bound, so channelCount + 1
+    // passes are sufficient without an input-independent cutoff.
+    for (let pass = 1; pass <= modelable.length + 1; pass += 1) {
+      if (activeCount === 0) {
+        const operations = projectionOperationCount(modelable.length, pass);
+        return operations == null ? null : {
+          values: projected,
+          passes: pass,
+          operations: operations
+        };
+      }
+
+      const activeValues = [];
+      const fixedValues = [];
+      for (let index = 0; index < modelable.length; index += 1) {
+        if (fixed[index]) fixedValues.push(projected[index]);
+        else activeValues.push(rawCents[index]);
+      }
+      const activeTotal = compensatedSum(activeValues);
+      const fixedTotal = compensatedSum(fixedValues);
+      if (activeTotal == null || fixedTotal == null) return null;
+      const shift = (targetCents - fixedTotal - activeTotal) / activeCount;
+      if (!Number.isFinite(shift)) return null;
+
+      let newlyFixed = 0;
+      for (let index = 0; index < modelable.length; index += 1) {
+        if (fixed[index]) continue;
+        const candidate = rawCents[index] + shift;
+        if (!Number.isFinite(candidate)) return null;
+        if (candidate < modelable[index].minimumCents) {
+          projected[index] = modelable[index].minimumCents;
+          fixed[index] = true;
+          newlyFixed += 1;
+        } else if (candidate > modelable[index].maximumCents) {
+          projected[index] = modelable[index].maximumCents;
+          fixed[index] = true;
+          newlyFixed += 1;
+        } else {
+          projected[index] = candidate;
+        }
+      }
+
+      const operations = projectionOperationCount(modelable.length, pass);
+      if (operations == null) return null;
+      if (newlyFixed === 0) {
+        return {
+          values: projected,
+          passes: pass,
+          operations: operations
+        };
+      }
+      activeCount -= newlyFixed;
+    }
+    return null;
+  }
+
   function balance(modelable, budgetCents, horizonFactor) {
     function totalAt(threshold) {
       return modelable.reduce(function sumSpend(total, item) {
@@ -246,12 +349,20 @@
       else high = midpoint;
     }
     const threshold = geometricMidpoint(low, high);
-    const allocations = modelable.map(function allocate(item) {
-      const allocatedCents = safeCents(spendAtThreshold(item, threshold, horizonFactor) / 100);
+    const rawCents = modelable.map(function rawAllocation(item) {
+      return spendAtThreshold(item, threshold, horizonFactor);
+    });
+    const projection = projectToBoundedBudget(modelable, rawCents, budgetCents);
+    if (!projection) return null;
+    const allocations = modelable.map(function allocate(item, index) {
+      const allocatedCents = safeCents(projection.values[index] / 100);
       return allocatedCents == null ? null : Object.assign({}, item, { allocatedCents: allocatedCents });
     });
     if (allocations.some(function invalidAllocation(item) { return item == null; })) return null;
-    return allocations;
+    return {
+      allocations: allocations,
+      precisionOperations: projection.operations
+    };
   }
 
   function marginalAtCents(item, cents, horizonFactor) {
@@ -288,12 +399,7 @@
     return first;
   }
 
-  function reconciliationPrecisionBound(channelCount, magnitude) {
-    // n = 200 balance refinements + 9 spend/clamp operations
-    // + 2 conversion/summation operations per channel.
-    const operationCount = BALANCE_ITERATIONS
-      + SPEND_AT_THRESHOLD_OPERATIONS
-      + RECONCILIATION_OPERATIONS_PER_CHANNEL * channelCount;
+  function reconciliationPrecisionBound(operationCount, magnitude) {
     const scaledEpsilon = operationCount * Number.EPSILON;
     if (!Number.isFinite(scaledEpsilon) || scaledEpsilon >= 1) return null;
     // Standard forward-error allowance: gamma_n = n*u / (1 - n*u).
@@ -302,7 +408,7 @@
     return Number.isSafeInteger(bound) ? bound : null;
   }
 
-  function reconcile(modelable, targetCents, horizonFactor) {
+  function reconcile(modelable, targetCents, horizonFactor, projectedOperations) {
     let delta = targetCents;
     for (let index = 0; index < modelable.length; index += 1) {
       delta -= modelable[index].allocatedCents;
@@ -310,12 +416,16 @@
     }
     const roundingBound = Math.ceil(modelable.length / 2);
     const precisionMagnitude = Math.abs(targetCents) + Math.abs(delta);
-    const precisionBound = reconciliationPrecisionBound(modelable.length, precisionMagnitude);
+    const operationCount = projectedOperations == null
+      ? projectionOperationCount(modelable.length, 0)
+      : projectedOperations;
+    if (operationCount == null) return false;
+    const precisionBound = reconciliationPrecisionBound(operationCount, precisionMagnitude);
     if (precisionBound == null) return false;
     const adjustmentBound = roundingBound + precisionBound;
     // Nearest-cent rounding contributes at most half a cent per channel.
-    // The standard gamma_n term covers 200 threshold refinements, nine
-    // threshold-to-cents operations, and conversion plus summation per channel.
+    // The gamma_n term covers only projection, cent conversion, and summation;
+    // ill-conditioned curve inversion is removed by the budget projection.
     if (!Number.isSafeInteger(delta) || Math.abs(delta) > adjustmentBound) return false;
     if (delta === 0) return true;
     const direction = delta > 0 ? 1 : -1;
@@ -431,9 +541,10 @@
     const fixedCents = minimumCents - modeledMinimumCents;
     const modeledTargetCents = requestedCents - fixedCents;
     if (!Number.isSafeInteger(fixedCents) || !Number.isSafeInteger(modeledTargetCents)) return invalidInput();
-    const balanced = balance(modelable, modeledTargetCents, horizonFactor);
-    if (!balanced) return failure('no_defensible_remainder', 'No admitted response curve can receive the remaining budget.', fromCents(minimumCents), maximumCents == null ? null : fromCents(maximumCents), []);
-    if (!reconcile(balanced, modeledTargetCents, horizonFactor)) {
+    const balanceResult = balance(modelable, modeledTargetCents, horizonFactor);
+    if (!balanceResult) return failure('no_defensible_remainder', 'No admitted response curve can receive the remaining budget.', fromCents(minimumCents), maximumCents == null ? null : fromCents(maximumCents), []);
+    const balanced = balanceResult.allocations;
+    if (!reconcile(balanced, modeledTargetCents, horizonFactor, balanceResult.precisionOperations)) {
       return failure('currency_reconciliation_failed', 'The allocation could not be reconciled to whole cents.', fromCents(minimumCents), maximumCents == null ? null : fromCents(maximumCents), []);
     }
     const allocations = new Map(balanced.map(function byName(item) { return [item.channel, item]; }));

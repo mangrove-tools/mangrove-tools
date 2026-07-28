@@ -55,6 +55,7 @@ function makeInteractiveInstrument() {
     assert.strictEqual(selector, '[data-instrument-focus]');
     return Object.values(targets);
   };
+  instrument.contains = (element) => Object.values(targets).includes(element);
   return { instrument, targets };
 }
 
@@ -172,6 +173,15 @@ function loadMotion({
   assert.strictEqual(instrument.dataset.focusState, 'bound');
   targets.bound.dispatch('pointerleave');
   assert.strictEqual(instrument.dataset.focusState, 'observation');
+
+  instrument.dispatch('pointerleave');
+  assert.strictEqual('focusState' in instrument.dataset, false);
+
+  targets.observation.dispatch('click');
+  instrument.dispatch('focusout', { relatedTarget: targets.bound });
+  assert.strictEqual(instrument.dataset.focusState, 'observation');
+  instrument.dispatch('focusout', { relatedTarget: makeElement() });
+  assert.strictEqual('focusState' in instrument.dataset, false);
 
   targets.recheck.dispatch('click');
   assert.strictEqual(instrument.dataset.focusState, 'recheck');

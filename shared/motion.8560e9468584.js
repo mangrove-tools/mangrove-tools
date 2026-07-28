@@ -43,6 +43,11 @@
       }
     }
 
+    function clearSelection() {
+      selectedState = "";
+      showState("");
+    }
+
     function stateFor(target) {
       return target && target.dataset
         ? target.dataset.instrumentFocus || ""
@@ -72,10 +77,20 @@
     }
 
     if (typeof instrument.addEventListener === "function") {
+      instrument.addEventListener("pointerleave", clearSelection);
+      instrument.addEventListener("focusout", function (event) {
+        if (
+          event.relatedTarget &&
+          typeof instrument.contains === "function" &&
+          instrument.contains(event.relatedTarget)
+        ) {
+          return;
+        }
+        clearSelection();
+      });
       instrument.addEventListener("keydown", function (event) {
         if (event.key !== "Escape") return;
-        selectedState = "";
-        showState("");
+        clearSelection();
       });
     }
 

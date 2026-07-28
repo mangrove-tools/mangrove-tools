@@ -78,8 +78,10 @@
   Exercise `initDecisionInstrument()` against real event behavior:
 
   - pointer entry and keyboard focus apply a transient `data-focus-state`;
-  - leaving or blurring restores a click-selected state;
+  - leaving or blurring a readout restores a click-selected state while the
+    visitor remains inside the instrument;
   - clicking a readout selects it and selecting another replaces it;
+  - leaving the instrument clears the selection;
   - `Escape` clears the selection;
   - reduced-motion mode skips entrance frames but retains instantaneous focus behavior;
   - missing query/event APIs fail safely.
@@ -100,7 +102,7 @@
   - maintain one selected state in closure;
   - preview on pointer/focus and restore the selection on leave/blur;
   - persist or replace selection on click;
-  - clear on `Escape`;
+  - clear on instrument exit or `Escape`;
   - attach the controller before the reduced-motion/static entrance branches.
 
   Do not redraw the SVG, add timers, or create looping animation.

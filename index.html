@@ -227,35 +227,102 @@
             Free, in-browser, no accounts. Inputs stay on your device.
           </p>
         </div>
-        <aside class="decision-brief" aria-labelledby="decision-brief-title">
-          <p class="decision-brief-label">Illustrative decision brief</p>
-          <h2 id="decision-brief-title">A useful answer sets a limit.</h2>
-          <dl class="decision-brief-points">
+        <figure
+          class="decision-instrument"
+          data-decision-instrument
+          aria-labelledby="decision-instrument-title"
+        >
+          <figcaption class="instrument-head">
             <div>
-              <dt>Observation</dt>
+              <p class="instrument-overline">Decision model / 04-week sample</p>
+              <h2 id="decision-instrument-title">
+                A useful answer sets a limit.
+              </h2>
+            </div>
+            <span class="instrument-status">Illustrative</span>
+          </figcaption>
+
+          <div class="instrument-plot">
+            <svg
+              viewBox="0 0 540 240"
+              role="img"
+              aria-labelledby="instrument-chart-title instrument-chart-desc"
+            >
+              <title id="instrument-chart-title">
+                Illustrative channel response comparison
+              </title>
+              <desc id="instrument-chart-desc">
+                Paid search shows a stronger response than paid social in a
+                four-week example. A marked decision zone limits a possible
+                reallocation to ten percent.
+              </desc>
+              <g class="instrument-grid" aria-hidden="true">
+                <path d="M54 24V198M148 24V198M242 24V198M336 24V198M430 24V198" />
+                <path d="M54 48H500M54 98H500M54 148H500M54 198H500" />
+              </g>
+              <path
+                class="instrument-band"
+                d="M54 188C132 173 193 133 250 93C310 51 377 36 500 28L500 66C390 70 327 81 270 118C211 157 145 191 54 204Z"
+              />
+              <path
+                class="instrument-curve instrument-curve-search"
+                pathLength="1"
+                d="M54 194C130 180 190 138 250 94C315 46 385 31 500 28"
+              />
+              <path
+                class="instrument-curve instrument-curve-social"
+                pathLength="1"
+                d="M54 199C135 190 203 165 266 132C337 95 405 83 500 79"
+              />
+              <g class="instrument-bound" aria-hidden="true">
+                <rect x="299" y="24" width="42" height="174" rx="2" />
+                <path d="M320 24V198" />
+                <path d="M307 41L320 28L333 41" />
+              </g>
+              <g class="instrument-points" aria-hidden="true">
+                <circle class="instrument-point-search" cx="320" cy="53" r="5" />
+                <circle class="instrument-point-social" cx="320" cy="107" r="5" />
+              </g>
+              <g class="instrument-axis-labels">
+                <text x="54" y="224">CURRENT SPEND</text>
+                <text x="500" y="224" text-anchor="end">ADDITIONAL SPEND →</text>
+                <text x="320" y="17" text-anchor="middle">≤10% TEST BOUND</text>
+              </g>
+            </svg>
+            <div class="instrument-legend" aria-hidden="true">
+              <span><i class="legend-search"></i>Paid search</span>
+              <span><i class="legend-social"></i>Paid social</span>
+              <span><i class="legend-band"></i>Uncertainty range</span>
+            </div>
+          </div>
+
+          <dl class="instrument-readout">
+            <div>
+              <dt><span>01</span> Observation</dt>
               <dd>
-                Paid search has converted more efficiently than paid social
-                across the available four-week history.
+                Paid search converted more efficiently across the available
+                four-week history.
               </dd>
             </div>
             <div>
-              <dt>Bounded move</dt>
+              <dt><span>02</span> Bounded move</dt>
               <dd>
-                Shift up to 10% of the paid social allocation to paid search.
+                Shift <strong>up to 10%</strong> of paid social allocation to
+                paid search.
               </dd>
             </div>
             <div>
-              <dt>Recheck</dt>
+              <dt><span>03</span> Recheck</dt>
               <dd>
-                Review after 30 days. Stop or revise if blended acquisition
-                cost rises or conversion quality falls.
+                Review after <strong>30 days</strong>. Stop if acquisition cost
+                rises or conversion quality falls.
               </dd>
             </div>
           </dl>
-          <p class="decision-brief-caveat">
+          <p class="instrument-caveat">
             Example only. The evidence determines whether a move is warranted.
           </p>
-        </aside>
+        </figure>
       </section>
 
       <section

@@ -95,9 +95,43 @@ function loadMotion({
 
 {
   const { motion } = loadMotion();
+  assert.strictEqual(typeof motion.initDecisionInstrument, 'function');
   assert.strictEqual(typeof motion.initDecisionStory, 'function');
   assert.strictEqual(typeof motion.revealResult, 'function');
   assert.strictEqual(typeof motion.resetResult, 'function');
+}
+
+{
+  const instrument = makeElement();
+  const { motion, frames } = loadMotion({ reduce: true });
+
+  motion.initDecisionInstrument(instrument);
+
+  assert.strictEqual(instrument.dataset.motion, 'reduced');
+  assert.strictEqual(frames.length, 0);
+}
+
+{
+  const instrument = makeElement();
+  const { motion, frames } = loadMotion();
+
+  motion.initDecisionInstrument(instrument);
+
+  assert.strictEqual(instrument.dataset.motion, 'ready');
+  assert.strictEqual(frames.length, 1);
+  frames.shift()();
+  assert.strictEqual(frames.length, 1);
+  frames.shift()();
+  assert.strictEqual(instrument.dataset.motion, 'active');
+}
+
+{
+  const instrument = makeElement();
+  const { motion } = loadMotion({ withFrames: false });
+
+  motion.initDecisionInstrument(instrument);
+
+  assert.strictEqual(instrument.dataset.motion, 'static');
 }
 
 {
@@ -198,6 +232,7 @@ function loadMotion({
 
 {
   const { motion } = loadMotion();
+  assert.doesNotThrow(() => motion.initDecisionInstrument(null));
   assert.doesNotThrow(() => motion.initDecisionStory(null));
   assert.doesNotThrow(() => motion.revealResult(null));
   assert.doesNotThrow(() => motion.resetResult(null));

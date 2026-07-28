@@ -58,7 +58,7 @@
       content="Mangrove Tools — free marketing analytics from Naples, Florida"
     />
     <link rel="stylesheet" href="/fonts.435be0cb58b8.css" />
-    <link rel="stylesheet" href="/site.0204e74e6d5e.css" />
+    <link rel="stylesheet" href="/site.b95b63c49092.css" />
 
     <script type="application/ld+json">
       {
@@ -205,6 +205,11 @@
         <a href="/method/">Method</a>
         <a href="/about/">About</a>
       </nav>
+      <div class="header-signal-rail" aria-hidden="true">
+        <span data-signal="evidence">Evidence</span>
+        <span data-signal="bound">Bounded move</span>
+        <span data-signal="recheck">Recheck</span>
+      </div>
     </header>
 
     <main class="shell shell-home" id="main">
@@ -220,7 +225,10 @@
             uncertainty, and choose a measured next step.
           </p>
           <div class="hero-cta-row">
-            <a class="btn" href="/analytics/">Explore Analytics</a>
+            <a class="btn hero-primary-cta" href="/analytics/">
+              <span class="hero-cta-label">Explore Analytics</span>
+              <span class="hero-cta-arrow" aria-hidden="true"></span>
+            </a>
             <a class="text-cta" href="/calculators/">Browse Calculators</a>
           </div>
           <p class="hero-note">
@@ -232,6 +240,15 @@
           data-decision-instrument
           aria-labelledby="decision-instrument-title"
         >
+          <i class="instrument-locator locator-nw" aria-hidden="true"></i>
+          <i class="instrument-locator locator-ne" aria-hidden="true"></i>
+          <i class="instrument-locator locator-se" aria-hidden="true"></i>
+          <i class="instrument-locator locator-sw" aria-hidden="true"></i>
+          <div class="instrument-signal-rail" aria-hidden="true">
+            <span data-signal="evidence">Evidence</span>
+            <span data-signal="bound">Bound</span>
+            <span data-signal="recheck">Recheck</span>
+          </div>
           <figcaption class="instrument-head">
             <div>
               <p class="instrument-overline">Decision model / 04-week sample</p>
@@ -297,21 +314,21 @@
           </div>
 
           <dl class="instrument-readout">
-            <div>
+            <div data-instrument-focus="observation" tabindex="0">
               <dt><span>01</span> Observation</dt>
               <dd>
                 Paid search converted more efficiently across the available
                 four-week history.
               </dd>
             </div>
-            <div>
+            <div data-instrument-focus="bound" tabindex="0">
               <dt><span>02</span> Bounded move</dt>
               <dd>
                 Shift <strong>up to 10%</strong> of paid social allocation to
                 paid search.
               </dd>
             </div>
-            <div>
+            <div data-instrument-focus="recheck" tabindex="0">
               <dt><span>03</span> Recheck</dt>
               <dd>
                 Review after <strong>30 days</strong>. Stop if acquisition cost
@@ -685,6 +702,6 @@
 
     <script src="/shared/letterroi-model.js"></script>
     <script src="/shared/tool-extras.js"></script>
-    <script src="/shared/motion.f6254c48ff6f.js"></script>
+    <script src="/shared/motion.8560e9468584.js"></script>
   </body>
 </html>

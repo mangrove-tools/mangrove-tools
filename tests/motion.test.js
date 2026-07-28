@@ -21,11 +21,42 @@ function makeClassList() {
   };
 }
 
-function makeElement() {
-  return {
+function makeElement(dataset = {}) {
+  const listeners = {};
+  const element = {
     dataset: {},
-    classList: makeClassList()
+    classList: makeClassList(),
+    addEventListener(name, handler) {
+      listeners[name] = listeners[name] || [];
+      listeners[name].push(handler);
+    },
+    dispatch(name, event = {}) {
+      const normalizedEvent = {
+        currentTarget: element,
+        key: '',
+        preventDefault() {},
+        ...event
+      };
+      (listeners[name] || []).forEach((handler) => handler(normalizedEvent));
+    }
   };
+  Object.assign(element.dataset, dataset);
+  return element;
+}
+
+function makeInteractiveInstrument() {
+  const targets = {
+    observation: makeElement({ instrumentFocus: 'observation' }),
+    bound: makeElement({ instrumentFocus: 'bound' }),
+    recheck: makeElement({ instrumentFocus: 'recheck' })
+  };
+  const instrument = makeElement();
+  instrument.querySelectorAll = (selector) => {
+    assert.strictEqual(selector, '[data-instrument-focus]');
+    return Object.values(targets);
+  };
+  instrument.contains = (element) => Object.values(targets).includes(element);
+  return { instrument, targets };
 }
 
 function loadMotion({
@@ -123,6 +154,56 @@ function loadMotion({
   assert.strictEqual(frames.length, 1);
   frames.shift()();
   assert.strictEqual(instrument.dataset.motion, 'active');
+}
+
+{
+  const { instrument, targets } = makeInteractiveInstrument();
+  const { motion } = loadMotion();
+
+  motion.initDecisionInstrument(instrument);
+
+  targets.observation.dispatch('pointerenter');
+  assert.strictEqual(instrument.dataset.focusState, 'observation');
+  targets.observation.dispatch('pointerleave');
+  assert.strictEqual('focusState' in instrument.dataset, false);
+
+  targets.observation.dispatch('click');
+  assert.strictEqual(instrument.dataset.focusState, 'observation');
+  targets.bound.dispatch('pointerenter');
+  assert.strictEqual(instrument.dataset.focusState, 'bound');
+  targets.bound.dispatch('pointerleave');
+  assert.strictEqual(instrument.dataset.focusState, 'observation');
+
+  instrument.dispatch('pointerleave');
+  assert.strictEqual('focusState' in instrument.dataset, false);
+
+  targets.observation.dispatch('click');
+  instrument.dispatch('focusout', { relatedTarget: targets.bound });
+  assert.strictEqual(instrument.dataset.focusState, 'observation');
+  instrument.dispatch('focusout', { relatedTarget: makeElement() });
+  assert.strictEqual('focusState' in instrument.dataset, false);
+
+  targets.recheck.dispatch('click');
+  assert.strictEqual(instrument.dataset.focusState, 'recheck');
+  targets.bound.dispatch('focus');
+  assert.strictEqual(instrument.dataset.focusState, 'bound');
+  targets.bound.dispatch('blur');
+  assert.strictEqual(instrument.dataset.focusState, 'recheck');
+
+  instrument.dispatch('keydown', { key: 'Escape' });
+  assert.strictEqual('focusState' in instrument.dataset, false);
+}
+
+{
+  const { instrument, targets } = makeInteractiveInstrument();
+  const { motion, frames } = loadMotion({ reduce: true });
+
+  motion.initDecisionInstrument(instrument);
+
+  assert.strictEqual(instrument.dataset.motion, 'reduced');
+  assert.strictEqual(frames.length, 0);
+  targets.bound.dispatch('click');
+  assert.strictEqual(instrument.dataset.focusState, 'bound');
 }
 
 {

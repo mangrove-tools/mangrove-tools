@@ -799,6 +799,36 @@ test('missing outcome presents explicit source and semantic mapping without gues
   assert.match(elements['cleaned-history-head'].textContent, /Conversions/);
 });
 
+test('ambiguous known outcome aliases render one usable semantic mapping control', () => {
+  const { elements } = loadDomApp();
+  const lines = ['period,channel,spend,orders,leads'];
+  for (let week = 1; week <= 12; week += 1) {
+    const spend = week * 100;
+    const outcome = Number((2 * Math.pow(spend, 0.6)).toFixed(6));
+    lines.push(
+      `2024-W${String(week).padStart(2, '0')},Search,${spend},${outcome},${outcome}`
+    );
+  }
+  elements['history-paste'].value = lines.join('\n');
+
+  elements['parse-pasted-history'].trigger('click');
+
+  assert.equal(elements['decision-canvas'].dataset.phase, 'needs_correction');
+  const selects = elements['column-mapping'].querySelectorAll('select[data-field]');
+  assert.deepEqual(selects.map(select => select.dataset.field), ['conversions']);
+  assert.ok(selects[0].options.some(option => option.textContent === 'orders'));
+  assert.ok(selects[0].options.some(option => option.textContent === 'leads'));
+
+  selects[0].value = 'orders';
+  elements['apply-corrections'].trigger('click');
+
+  assert.equal(elements['decision-canvas'].dataset.phase, 'ready');
+  assert.deepEqual(
+    elements.objective.options.map(option => option.textContent),
+    ['Conversions']
+  );
+});
+
 test('explicit financial mapping retains its source identity through treatment and explanation', () => {
   const { elements, events } = loadDomApp();
   const sourceHeader = 'gross margin dollars';

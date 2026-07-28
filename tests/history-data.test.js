@@ -364,6 +364,29 @@ test('explicit outcome mapping assigns a non-alias header without guessing seman
   assert.deepEqual(asRevenue.rows[0].outcomes, { revenue: 4 });
 });
 
+test('ambiguous recognized outcome aliases require only their semantic mapping', () => {
+  const sourceText = [
+    'period,channel,spend,orders,leads',
+    '2026-W02,Search,100,4,5'
+  ].join('\n');
+  const ambiguous = inspect(sourceText);
+
+  assert.equal(ambiguous.ok, false);
+  assert.ok(ambiguous.exclusions.some(item => (
+    item.field === 'conversions' && item.code === 'ambiguous_column'
+  )));
+  assert.equal(
+    ambiguous.exclusions.some(item => item.code === 'missing_outcome'),
+    false
+  );
+
+  const resolved = inspect(sourceText, {
+    columnMap: { conversions: 'orders' }
+  });
+  assert.equal(resolved.ok, true);
+  assert.deepEqual(resolved.rows[0].outcomes, { conversions: 4 });
+});
+
 test('financial metrics retain the mapped source identity and still require cost treatment', () => {
   const aliases = [
     ['contribution', 'Contribution'],
@@ -391,6 +414,21 @@ test('financial metrics retain the mapped source identity and still require cost
   assert.equal(explicit.metrics[0].label, 'gross margin dollars');
   assert.equal(explicit.metrics[0].costTreatment, 'before_marketing');
   assert.equal(analysis.models.contribution.metric.label, 'gross margin dollars');
+});
+
+test('prototype-like explicit financial headers remain truthful source labels', () => {
+  ['constructor', '__proto__', 'toString', 'valueOf', 'hasOwnProperty'].forEach(header => {
+    const result = inspect(
+      `period,channel,spend,${header}\n2026-W02,Search,100,20`,
+      {
+        columnMap: { financial: header },
+        financialTreatment: 'after_marketing'
+      }
+    );
+
+    assert.equal(result.ok, true);
+    assert.equal(result.metrics[0].label, header);
+  });
 });
 
 test('duplicate aggregation fails closed before a nonfinite value reaches normalized rows', () => {

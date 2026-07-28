@@ -252,7 +252,10 @@
       profit: 'Profit'
     };
     const sourceText = typeof source === 'string' ? source.trim() : '';
-    return labels[headerKey(sourceText)] || sourceText || 'Financial outcome';
+    const sourceKey = headerKey(sourceText);
+    return Object.prototype.hasOwnProperty.call(labels, sourceKey)
+      ? labels[sourceKey]
+      : sourceText || 'Financial outcome';
   }
 
   function metricDefinitions(columnMap, financialTreatment) {
@@ -299,7 +302,10 @@
     const outcomes = OUTCOME_FIELDS.filter(function mappedOutcome(field) {
       return inspection.columnMap[field] !== null;
     });
-    if (outcomes.length === 0) {
+    const hasAmbiguousOutcome = inspection.exclusions.some(function ambiguousOutcome(item) {
+      return item.code === 'ambiguous_column' && OUTCOME_FIELDS.indexOf(item.field) !== -1;
+    });
+    if (outcomes.length === 0 && !hasAmbiguousOutcome) {
       inspection.exclusions.push(finding(1, 'outcome', 'missing_outcome', 'At least one outcome column is required.'));
     }
     if (inspection.columnMap.financial !== null

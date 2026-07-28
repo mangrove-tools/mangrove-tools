@@ -6,7 +6,7 @@ Run from repo root: python3 scripts/apply-nav-footer.py
 import re
 from pathlib import Path
 
-REPO = Path("/Users/kylelawlor/.minimax/workspace/mangrove-tools")
+REPO = Path(__file__).resolve().parents[1]
 
 # Pages and their nav aria-current state
 # (file_relpath, current_section)
@@ -49,15 +49,15 @@ def nav_block(current):
     )
 
 # Common footer block (replacement)
-def footer_block():
+def footer_block(class_attr='class="foot"'):
     return (
-        '<footer class="foot">\n'
+        f'<footer {class_attr}>\n'
         '      <div class="foot-grid">\n'
         '        <div>\n'
         '          <p class="foot-brand">Mangrove Tools</p>\n'
         '          <p class="foot-note">\n'
-        '            Free marketing analytics and newsletter calculators from Naples,\n'
-        '            Florida. Client-side only.\n'
+        '            Free client-side marketing analytics for small businesses,\n'
+        '            with supporting newsletter calculators from Naples, Florida.\n'
         '          </p>\n'
         '        </div>\n'
         '        <div class="foot-col">\n'
@@ -95,8 +95,8 @@ def footer_block():
 # Match the existing nav block. Permissive on current.
 NAV_RE = re.compile(
     r'<nav class="site-nav" aria-label="Primary">\s*'
-    r'<a href="[^"]*"(?: aria-current="page")?>Tools</a>\s*'
     r'<a href="[^"]*"(?: aria-current="page")?>Analytics</a>\s*'
+    r'<a href="[^"]*"(?: aria-current="page")?>Calculators</a>\s*'
     r'<a href="[^"]*"(?: aria-current="page")?>About</a>\s*'
     r'</nav>',
     re.MULTILINE,
@@ -105,8 +105,8 @@ NAV_RE = re.compile(
 # Match the existing footer block (from <footer class="foot"> to </footer>)
 # Permissive on inner content.
 FOOTER_RE = re.compile(
-    r'<footer class="foot">.*?</footer>',
-    re.DOTALL,
+    r'<footer (?P<class>class="foot(?: [^"]+)?")>.*?^    </footer>',
+    re.DOTALL | re.MULTILINE,
 )
 
 def patch(rel, current):
@@ -114,9 +114,13 @@ def patch(rel, current):
     text = p.read_text(encoding="utf-8")
     original = text
     new_nav = nav_block(current)
-    new_footer = footer_block()
     text, n1 = NAV_RE.subn(new_nav, text, count=1)
-    text, n2 = FOOTER_RE.subn(new_footer, text, count=1)
+    footer_match = FOOTER_RE.search(text)
+    if footer_match:
+        new_footer = footer_block(footer_match.group("class"))
+        text, n2 = FOOTER_RE.subn(new_footer, text, count=1)
+    else:
+        n2 = 0
     if n1 != 1 or n2 != 1:
         print(f"  ! {rel}: nav={n1} footer={n2} (expected 1 each) — SKIPPED")
         return False

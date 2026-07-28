@@ -7,7 +7,11 @@
 (function () {
   // DOM refs
   const form = document.getElementById('budget-form');
+  const periodSel = document.getElementById('period');
+  const totalBudgetInput = document.getElementById('total-budget');
   const numChannelsSel = document.getElementById('num-channels');
+  const targetMetricSel = document.getElementById('target-metric');
+  const sampleDataButton = document.getElementById('use-sample-data');
   const channelRows = document.getElementById('channel-rows');
   const resultsNote = document.getElementById('results-note');
   const totalConversions = document.getElementById('total-conversions');
@@ -17,6 +21,11 @@
   const allocationTableWrap = document.getElementById('allocation-table-wrap');
   const allocationTbody = document.getElementById('allocation-tbody');
   const nextSteps = document.getElementById('next-steps');
+  const EXTRAS = window.MangroveToolExtras || {};
+  const recommendationExplanation = document.getElementById('recommendation-explanation');
+  const explanationConfidence = document.getElementById('explanation-confidence');
+  const explanationDriver = document.getElementById('explanation-driver');
+  const explanationCaveat = document.getElementById('explanation-caveat');
 
   // Channel name presets
   const CHANNEL_PRESETS = [
@@ -82,12 +91,17 @@
       const conversions = parseFloat(row.querySelector('.ch-conversions').value) || 0;
       const months = parseInt(row.querySelector('.ch-months').value, 10) || 6;
       const minSpend = parseFloat(row.querySelector('.ch-min').value) || 0;
+      const sampleDataPoints = row.dataset.sampleDataPoints
+        ? JSON.parse(row.dataset.sampleDataPoints)
+        : null;
 
       // Synthesize monthly data points from aggregate
       // This is a simplification: we use the monthly spend/conversions as one data point
       // and create synthetic variation for the power-law fit
       const dataPoints = [];
-      if (months >= 1 && spend > 0 && conversions > 0) {
+      if (sampleDataPoints) {
+        dataPoints.push(...sampleDataPoints);
+      } else if (months >= 1 && spend > 0 && conversions > 0) {
         // Use the single aggregate as the representative point
         dataPoints.push({ spend, conversions });
         // Add a scaled-down synthetic point (20% spend) for curve fitting
@@ -115,6 +129,35 @@
     return '$' + Math.round(v).toLocaleString();
   }
 
+  function confidenceLabel(channels) {
+    const avgR2 = channels.reduce((sum, ch) => sum + (ch.curve?.r2 || 0), 0) / channels.length;
+    const minPoints = Math.min(...channels.map(ch => ch.dataPoints?.length || 0));
+    if (channels.length >= 4 && minPoints >= 6 && avgR2 >= 0.8) return 'High';
+    if (channels.length >= 3 && minPoints >= 3 && avgR2 >= 0.55) return 'Medium';
+    return 'Directional';
+  }
+
+  function renderExplanation(channels, result) {
+    if (!recommendationExplanation || result.length === 0) return;
+
+    const strongestIncrease = result
+      .map(r => ({ ...r, change: r.recommendedSpend - r.currentSpend }))
+      .sort((a, b) => b.change - a.change)[0];
+    const bestMarginal = [...result].sort((a, b) => a.marginalCPA - b.marginalCPA)[0];
+    const confidence = confidenceLabel(channels);
+
+    explanationConfidence.textContent = `${confidence} — based on ${channels.length} modeled channels and the fitted response curves.`;
+    explanationDriver.textContent = strongestIncrease && strongestIncrease.change > 1
+      ? `${strongestIncrease.channel} receives the largest increase because its modeled marginal CPA is strongest at the recommended allocation.`
+      : `${bestMarginal.channel} has the lowest modeled marginal CPA, so the allocation stays close to the current mix.`;
+    explanationCaveat.textContent = 'Treat this as a planning signal; sparse history, tracking changes, or campaign mix shifts can change the real next-dollar return.';
+    recommendationExplanation.hidden = false;
+  }
+
+  function hideExplanation() {
+    if (recommendationExplanation) recommendationExplanation.hidden = true;
+  }
+
   /** Render results */
   function renderResults(channels, result, validation) {
     if (!validation.ok) {
@@ -125,6 +168,7 @@
       totalConversions.textContent = '—';
       resultsNote.textContent = 'Not enough data to run the model.';
       nextSteps.hidden = true;
+      hideExplanation();
       return;
     }
 
@@ -136,6 +180,7 @@
       : (totalConv / 1000).toFixed(1) + 'k expected conversions';
 
     resultsNote.textContent = 'Based on your historical data and total budget.';
+    renderExplanation(channels, result);
 
     // Chart
     chartWrap.hidden = false;
@@ -173,13 +218,54 @@
     nextSteps.hidden = false;
   }
 
+  /** Populate and run the built-in small-business example */
+  function useSampleData() {
+    const sample = window.MangroveBudgetSampleData;
+    if (!sample) return;
+    trackEvent('sample_data_used', 'sample');
+    trackEvent('tool_started', 'sample');
+
+    periodSel.value = sample.period;
+    targetMetricSel.value = sample.targetMetric;
+    totalBudgetInput.value = String(sample.totalBudget);
+    numChannelsSel.value = String(sample.channels.length);
+    buildChannelRows(sample.channels.length);
+
+    const rows = channelRows.querySelectorAll('.channel-row');
+    sample.channels.forEach((channel, i) => {
+      const row = rows[i];
+      row.querySelector('.ch-name').value = channel.channel;
+      row.querySelector('.ch-spend').value = String(channel.spend);
+      row.querySelector('.ch-conversions').value = String(channel.conversions);
+      row.querySelector('.ch-months').value = String(channel.months);
+      row.querySelector('.ch-min').value = String(channel.minSpend);
+      row.dataset.sampleDataPoints = JSON.stringify(channel.dataPoints);
+    });
+
+    form._hasRunOnce = true;
+    handleSubmit(new Event('submit'), 'sample');
+    resultsNote.textContent = 'Sample small-business marketing data. Adjust any value to make it yours.';
+  }
+
+  function trackEvent(eventName, action) {
+    if (!EXTRAS.trackProductEvent) return;
+    EXTRAS.trackProductEvent(eventName, {
+      route: '/analytics/budget/',
+      tool: 'Budget Advisor',
+      action: action
+    });
+  }
+
   /** Handle form submit */
-  function handleSubmit(e) {
+  function handleSubmit(e, action) {
     e.preventDefault();
+    const eventAction = action || 'submit';
+    if (eventAction === 'submit') trackEvent('tool_started', eventAction);
 
     const totalBudget = parseFloat(document.getElementById('total-budget').value) || 0;
     if (totalBudget <= 0) {
       resultsNote.textContent = 'Enter a total budget greater than zero.';
+      hideExplanation();
       return;
     }
 
@@ -200,16 +286,16 @@
 
     const result = MangroveResponseCurve.optimizeBudget(fittedChannels, totalBudget);
     renderResults(fittedChannels, result, { ok: true, reason: '', supported: ['budget'] });
+    trackEvent('calculation_completed', eventAction);
   }
 
   /** Budget slider sync */
   function setupBudgetSlider() {
-    const budgetInput = document.getElementById('total-budget');
-    budgetInput.addEventListener('input', () => {
+    totalBudgetInput.addEventListener('input', () => {
       // Re-run on slider change with debounce
-      clearTimeout(budgetInput._debounce);
-      budgetInput._debounce = setTimeout(() => {
-        if (form._hasRunOnce) handleSubmit(new Event('submit'));
+      clearTimeout(totalBudgetInput._debounce);
+      totalBudgetInput._debounce = setTimeout(() => {
+        if (form._hasRunOnce) handleSubmit(new Event('submit'), 'adjust');
       }, 400);
     });
   }
@@ -224,8 +310,10 @@
 
     form.addEventListener('submit', (e) => {
       form._hasRunOnce = true;
-      handleSubmit(e);
+      handleSubmit(e, 'submit');
     });
+
+    sampleDataButton.addEventListener('click', useSampleData);
 
     setupBudgetSlider();
   }

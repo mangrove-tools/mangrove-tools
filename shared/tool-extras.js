@@ -115,9 +115,110 @@
     }
   }
 
+  var PRODUCT_EVENT_ALLOWED_PAYLOAD_KEYS = {
+    route: true,
+    tool: true,
+    action: true,
+    destination: true,
+    link: true,
+  };
+
+  var ROUTE_TO_TOOL = {
+    "/analytics/budget/": "Budget Advisor",
+    "/analytics/forecast/": "Revenue Forecaster",
+    "/letterroi/": "LetterROI",
+    "/sponsorquote/": "SponsorQuote",
+    "/subtarget/": "SubTarget",
+    "/mediakit/": "Media Kit Generator",
+    "/inventory/": "Inventory Planner",
+  };
+
+  function currentRoute() {
+    var path = root.location && root.location.pathname ? root.location.pathname : "/";
+    return path.endsWith("/") ? path : path + "/";
+  }
+
+  function currentToolName(route) {
+    return ROUTE_TO_TOOL[route] || "Mangrove Tools";
+  }
+
+  function safeValue(value) {
+    if (typeof value === "string") return value.slice(0, 80);
+    if (typeof value === "number" && isFinite(value)) return value;
+    if (typeof value === "boolean") return value ? "true" : "false";
+    return undefined;
+  }
+
+  function safePayload(payload) {
+    var route = currentRoute();
+    var clean = {
+      route: route,
+      tool: currentToolName(route),
+    };
+    Object.keys(payload || {}).forEach(function (key) {
+      if (!PRODUCT_EVENT_ALLOWED_PAYLOAD_KEYS[key]) return;
+      var value = safeValue(payload[key]);
+      if (value !== undefined) clean[key] = value;
+    });
+    return clean;
+  }
+
+  function trackProductEvent(eventName, payload) {
+    try {
+      if (typeof root.gtag !== "function") return;
+      root.gtag("event", eventName, safePayload(payload));
+    } catch (err) {
+      return;
+    }
+  }
+
+  function analyticsDestination(anchor) {
+    try {
+      var url = new URL(anchor.getAttribute("href"), root.location.href);
+      var path = url.pathname.endsWith("/") ? url.pathname : url.pathname + "/";
+      if (path === "/analytics/budget/" || path === "/analytics/forecast/") {
+        return path;
+      }
+    } catch (err) {
+      return "";
+    }
+    return "";
+  }
+
+  function wireProductLinkTracking() {
+    if (!root.document || root.document._mangroveProductLinkTracking) return;
+    root.document._mangroveProductLinkTracking = true;
+    root.document.addEventListener("click", function (event) {
+      var anchor = event.target && event.target.closest
+        ? event.target.closest("a")
+        : null;
+      if (!anchor) return;
+
+      var destination = analyticsDestination(anchor);
+      if (destination) {
+        trackProductEvent("analytics_cta_clicked", {
+          action: "click",
+          destination: destination,
+          link: "analytics_cta",
+        });
+      }
+
+      if (anchor.matches('a[rel~="sponsored"]')) {
+        trackProductEvent("affiliate_clicked", {
+          action: "click",
+          destination: "affiliate_partner",
+          link: "affiliate",
+        });
+      }
+    });
+  }
+
+  wireProductLinkTracking();
+
   root.MangroveToolExtras = {
     renderRangeBand: renderRangeBand,
     hideRangeBand: hideRangeBand,
     wireCopyButton: wireCopyButton,
+    trackProductEvent: trackProductEvent,
   };
 })(window);

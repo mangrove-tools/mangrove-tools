@@ -46,6 +46,55 @@ PROTECTED_VALUES = {
 }
 PROTECTED_VALUE_SUFFIXES = {".css", ".html", ".js", ".json", ".mjs", ".yaml", ".yml"}
 PROTECTED_VALUE_IGNORED_TOP_LEVEL = {".github", ".superpowers", "docs", "scripts", "tests"}
+PRODUCT_EVENT_NAMES = {
+    "tool_started",
+    "sample_data_used",
+    "calculation_completed",
+    "analytics_cta_clicked",
+    "affiliate_clicked",
+}
+PRODUCT_EVENT_ALLOWED_PAYLOAD_KEYS = {
+    "route",
+    "tool",
+    "action",
+    "destination",
+    "link",
+}
+PRODUCT_EVENT_FORBIDDEN_PAYLOAD_KEYS = {
+    "annualPrice",
+    "annualShare",
+    "bookedRevenue",
+    "capacityMonth",
+    "contact",
+    "conversions",
+    "cpm",
+    "email",
+    "fill",
+    "growthTarget",
+    "horizon",
+    "list",
+    "listSize",
+    "monthlyPrice",
+    "name",
+    "openRate",
+    "primaryRate",
+    "revenue",
+    "sends",
+    "slots",
+    "spend",
+    "subscribers",
+    "targetRevenue",
+    "value",
+}
+INTERACTIVE_TOOL_PAGES = {
+    Path("analytics/budget/index.html"),
+    Path("analytics/forecast/index.html"),
+    Path("letterroi/index.html"),
+    Path("sponsorquote/index.html"),
+    Path("subtarget/index.html"),
+    Path("mediakit/index.html"),
+    Path("inventory/index.html"),
+}
 
 
 class ValidatorArgumentParser(argparse.ArgumentParser):
@@ -249,6 +298,17 @@ def blob_at_ref(root: Path, ref: str, path: Path) -> bytes | None:
     return blob_bytes(root, blob_id)
 
 
+def product_event_allowlist_keys(helper_text: str) -> set[str]:
+    match = re.search(
+        r"PRODUCT_EVENT_ALLOWED_PAYLOAD_KEYS\s*=\s*\{(?P<body>.*?)\}",
+        helper_text,
+        re.DOTALL,
+    )
+    if not match:
+        return set()
+    return set(re.findall(r"\b([A-Za-z][A-Za-z0-9_]*)\s*:", match.group("body")))
+
+
 def detect_protected_changes(
     root: Path,
     base_ref: str,
@@ -273,6 +333,48 @@ def detect_protected_changes(
                 errors.append(
                     f"protected {label} change requires owner approval label: {path}"
                 )
+    return errors
+
+
+def check_product_event_instrumentation(root: Path, files: Iterable[Path]) -> list[str]:
+    errors: list[str] = []
+    tracked = set(files)
+    present_tool_pages = INTERACTIVE_TOOL_PAGES & tracked
+    if not present_tool_pages:
+        return []
+
+    script_text = "\n".join(
+        (root / path).read_text(encoding="utf-8", errors="replace")
+        for path in tracked
+        if path.suffix.lower() in {".js", ".html"} and (root / path).is_file()
+    )
+    helper = root / "shared/tool-extras.js"
+    if not helper.is_file():
+        return ["shared/tool-extras.js: missing shared product event helper"]
+    helper_text = helper.read_text(encoding="utf-8", errors="replace")
+
+    for event_name in sorted(PRODUCT_EVENT_NAMES):
+        if event_name not in script_text:
+            errors.append(f"missing product event: {event_name}")
+
+    for page in sorted(INTERACTIVE_TOOL_PAGES):
+        if page not in tracked:
+            errors.append(f"interactive tool page missing from tracked files: {page}")
+            continue
+        page_text = (root / page).read_text(encoding="utf-8", errors="replace")
+        if "/shared/tool-extras.js" not in page_text:
+            errors.append(f"{page}: missing shared tool extras script")
+
+    allowed_literal = "PRODUCT_EVENT_ALLOWED_PAYLOAD_KEYS"
+    if allowed_literal not in helper_text:
+        errors.append("shared/tool-extras.js: missing product event payload allowlist")
+    helper_allowlist_keys = product_event_allowlist_keys(helper_text)
+    for key in sorted(PRODUCT_EVENT_ALLOWED_PAYLOAD_KEYS):
+        if key not in helper_allowlist_keys:
+            errors.append(f"shared/tool-extras.js: payload allowlist missing {key}")
+    for key in sorted(PRODUCT_EVENT_FORBIDDEN_PAYLOAD_KEYS):
+        if key in helper_allowlist_keys:
+            errors.append(f"shared/tool-extras.js: payload allowlist includes sensitive key {key}")
     return errors
 
 
@@ -311,6 +413,7 @@ def main() -> int:
             ("JavaScript syntax", check_javascript_files(ROOT, files)),
             ("secret file paths", check_secret_paths(files)),
             ("secret content", check_secret_content(ROOT, files)),
+            ("product event instrumentation", check_product_event_instrumentation(ROOT, files)),
         ]
         if args.base_ref:
             changed = changed_files(ROOT, args.base_ref)

@@ -11,6 +11,7 @@ from pathlib import Path
 from validate_site import (
     check_javascript_files,
     check_json_files,
+    check_product_event_instrumentation,
     check_secret_content,
     check_secret_paths,
     detect_protected_changes,
@@ -46,6 +47,57 @@ def install_validator(root: Path) -> None:
 
 
 class ValidateSiteTests(unittest.TestCase):
+    def test_product_event_instrumentation_is_present_and_value_safe(self) -> None:
+        errors = check_product_event_instrumentation(ROOT, tracked_files(ROOT))
+
+        self.assertEqual([], errors)
+
+    def test_product_event_instrumentation_rejects_sensitive_payload_keys(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            (root / "shared").mkdir()
+            (root / "analytics" / "budget").mkdir(parents=True)
+            (root / "analytics" / "forecast").mkdir(parents=True)
+            for page in [
+                Path("analytics/budget/index.html"),
+                Path("analytics/forecast/index.html"),
+                Path("letterroi/index.html"),
+                Path("sponsorquote/index.html"),
+                Path("subtarget/index.html"),
+                Path("mediakit/index.html"),
+                Path("inventory/index.html"),
+            ]:
+                (root / page).parent.mkdir(parents=True, exist_ok=True)
+                (root / page).write_text(
+                    '<script src="/shared/tool-extras.js"></script>',
+                    encoding="utf-8",
+                )
+            (root / "shared/tool-extras.js").write_text(
+                "var PRODUCT_EVENT_ALLOWED_PAYLOAD_KEYS = { route: true, tool: true, action: true, destination: true, link: true, subscribers: true };\n"
+                "trackProductEvent('tool_started');\n"
+                "trackProductEvent('sample_data_used');\n"
+                "trackProductEvent('calculation_completed');\n"
+                "trackProductEvent('analytics_cta_clicked');\n"
+                "trackProductEvent('affiliate_clicked');\n",
+                encoding="utf-8",
+            )
+            files = [
+                Path("shared/tool-extras.js"),
+                Path("analytics/budget/index.html"),
+                Path("analytics/forecast/index.html"),
+                Path("letterroi/index.html"),
+                Path("sponsorquote/index.html"),
+                Path("subtarget/index.html"),
+                Path("mediakit/index.html"),
+                Path("inventory/index.html"),
+            ]
+
+            errors = check_product_event_instrumentation(root, files)
+
+            self.assertTrue(
+                any("payload allowlist includes sensitive key subscribers" in error for error in errors)
+            )
+
     def test_invalid_json_reports_relative_path(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

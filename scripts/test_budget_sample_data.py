@@ -104,6 +104,10 @@ class BudgetSampleDataTest(unittest.TestCase):
         self.assertNotIn("spend * 0.6", app_source)
         self.assertNotIn("Math.pow(0.65", app_source)
         self.assertIn("delete row.dataset.sampleDataPoints", app_source)
+        self.assertIn(
+            "event.target.matches('.ch-spend, .ch-conversions')",
+            app_source,
+        )
 
     def test_budget_layout_contains_narrow_results(self):
         tool_css = (REPO_ROOT / "tool-shell.css").read_text()

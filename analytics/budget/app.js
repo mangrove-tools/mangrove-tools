@@ -302,6 +302,7 @@
     });
 
     channelRows.addEventListener('input', (event) => {
+      if (!event.target.matches('.ch-spend, .ch-conversions')) return;
       const row = event.target.closest('.channel-row');
       if (row) delete row.dataset.sampleDataPoints;
     });

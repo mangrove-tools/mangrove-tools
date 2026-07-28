@@ -261,22 +261,6 @@
     }
   }
 
-  function useSampleData() {
-    document.getElementById('metric-type').value = 'revenue';
-    document.getElementById('horizon').value = '6';
-    document.getElementById('growth-target').value = '42000';
-    document.getElementById('seasonality-toggle').value = 'true';
-    dataMethodSel.value = 'paste';
-    pasteArea.hidden = false;
-    manualArea.hidden = true;
-    document.getElementById('csv-input').value = SAMPLE_REVENUE_CSV;
-    if (typeof form.requestSubmit === 'function') {
-      form.requestSubmit();
-    } else {
-      handleSubmit({ preventDefault() {} });
-    }
-  }
-
   function init() {
     buildManualRows(manualRowCount);
 

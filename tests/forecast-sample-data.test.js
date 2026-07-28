@@ -25,6 +25,7 @@ function createElement(tagName) {
     value: '',
     textContent: '',
     innerHTML: '',
+    dataset: {},
     attributes: {},
     style: {},
     appendChild(child) {
@@ -62,6 +63,7 @@ function createElement(tagName) {
 
 function loadForecastApp() {
   const elements = new Map();
+  const productEvents = [];
   const document = {
     createElement,
     getElementById(id) {
@@ -138,6 +140,11 @@ function loadForecastApp() {
         drawForecastChart(canvas, timeSeries, forecast, prefix) {
           canvas.drawn = { timeSeries, forecast, prefix };
         }
+      },
+      MangroveToolExtras: {
+        trackProductEvent(eventName, payload) {
+          productEvents.push({ eventName, payload });
+        }
       }
     }
   };
@@ -146,10 +153,10 @@ function loadForecastApp() {
   vm.createContext(context);
   vm.runInContext(appSource, context);
 
-  return { document };
+  return { document, productEvents };
 }
 
-const { document } = loadForecastApp();
+const { document, productEvents } = loadForecastApp();
 document.getElementById('use-sample-data').dispatchEvent({ type: 'click' });
 
 assert.strictEqual(document.getElementById('metric-type').value, 'revenue');
@@ -163,3 +170,29 @@ assert.strictEqual(document.getElementById('chart-wrap').hidden, false);
 assert.strictEqual(document.getElementById('forecast-table-wrap').hidden, false);
 assert.strictEqual(document.getElementById('next-steps').hidden, false);
 assert.strictEqual(document.getElementById('guardrail').hidden, true);
+assert.deepStrictEqual(JSON.parse(JSON.stringify(productEvents)), [
+  {
+    eventName: 'sample_data_used',
+    payload: {
+      route: '/analytics/forecast/',
+      tool: 'Revenue Forecaster',
+      action: 'sample'
+    }
+  },
+  {
+    eventName: 'tool_started',
+    payload: {
+      route: '/analytics/forecast/',
+      tool: 'Revenue Forecaster',
+      action: 'sample'
+    }
+  },
+  {
+    eventName: 'calculation_completed',
+    payload: {
+      route: '/analytics/forecast/',
+      tool: 'Revenue Forecaster',
+      action: 'sample'
+    }
+  }
+]);

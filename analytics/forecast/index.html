@@ -162,6 +162,24 @@
           <p class="total" id="forecast-summary" aria-live="polite">—</p>
           <p class="results-note" id="results-note">Add historical data and generate your forecast.</p>
 
+          <section id="recommendation-explanation" class="explanation-panel" role="note" aria-labelledby="explanation-title" hidden>
+            <h2 id="explanation-title">Why this recommendation?</h2>
+            <dl>
+              <div>
+                <dt>Evidence quality</dt>
+                <dd id="explanation-confidence"></dd>
+              </div>
+              <div>
+                <dt>Main driver</dt>
+                <dd id="explanation-driver"></dd>
+              </div>
+              <div>
+                <dt>Caveat</dt>
+                <dd id="explanation-caveat"></dd>
+              </div>
+            </dl>
+          </section>
+
           <div id="guardrail" class="guardrail" hidden>
             <p id="guardrail-text"></p>
           </div>
@@ -295,6 +313,7 @@
 
     <script src="/shared/forecast-engine.js"></script>
     <script src="/shared/charts.js"></script>
+    <script src="/shared/tool-extras.js"></script>
     <script src="/analytics/forecast/app.js"></script>
   </body>
 </html>

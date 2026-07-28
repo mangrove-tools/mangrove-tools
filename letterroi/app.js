@@ -296,6 +296,15 @@
     if (faqBeehiivLink) faqBeehiivLink.href = url;
   }
 
+  function trackEvent(eventName, action) {
+    if (!EXTRAS.trackProductEvent) return;
+    EXTRAS.trackProductEvent(eventName, {
+      route: "/letterroi/",
+      tool: "LetterROI",
+      action: action,
+    });
+  }
+
   function runCalculation(options) {
     const showErrors = Boolean(options && options.showErrors);
     const animate = Boolean(options && options.animate);
@@ -324,7 +333,10 @@
 
   function onSubmit(event) {
     event.preventDefault();
-    runCalculation({ showErrors: true, animate: true });
+    trackEvent("tool_started", "submit");
+    if (runCalculation({ showErrors: true, animate: true })) {
+      trackEvent("calculation_completed", "submit");
+    }
   }
 
   function onInput() {

@@ -235,14 +235,54 @@ test('response curve preserves observed-only channels without a fitted line', ()
       ],
       curve: null
     },
-    { currentSpendRate: 400, recommendedSpendRate: 650 },
+    {},
     responseOptions
   );
 
   assert.ok(view.fills.includes(cssValues['--signal']), 'preserved channels still show observations');
   assert.ok(!view.strokes.some(({ style }) => style === cssValues['--accent']));
+  assert.ok(
+    !view.strokes.some(({ style }) => style === cssValues['--ink-soft']),
+    'missing positions do not invent marker lines'
+  );
+  assert.strictEqual(
+    view.arcs.filter(({ style }) => style === cssValues['--signal']).length,
+    3,
+    'only observed points are drawn'
+  );
+  assert.ok(!view.labels.some(({ text }) => text === 'CURRENT'));
+  assert.ok(!view.labels.some(({ text }) => text === 'RECOMMENDED'));
   assert.ok(view.labels.some(({ text }) => text === 'OBSERVED ONLY'));
   assert.ok(view.fonts.every((font) => font.includes('IBM Plex Mono')));
+});
+
+test('response curve treats an explicit zero as a valid marker position', () => {
+  const charts = loadCharts();
+  const view = makeCanvas();
+
+  charts.drawResponseCurve(
+    view.canvas,
+    {
+      channel: 'Paid search',
+      status: 'modelable',
+      observations: [
+        { spend: 0, outcome: 0 },
+        { spend: 400, outcome: 18 },
+        { spend: 650, outcome: 24 }
+      ],
+      curve: { a: 0.8, b: 0.54 }
+    },
+    { currentSpendRate: 0, recommendedSpendRate: 650 },
+    responseOptions
+  );
+
+  assert.ok(view.labels.some(({ text }) => text === 'CURRENT'));
+  assert.ok(view.labels.some(({ text }) => text === 'RECOMMENDED'));
+  assert.strictEqual(
+    view.strokes.filter(({ style }) => style === cssValues['--ink-soft']).length,
+    2,
+    'both explicit marker positions draw'
+  );
 });
 
 test('response curve excludes zero for a tightly clustered high-baseline series', () => {

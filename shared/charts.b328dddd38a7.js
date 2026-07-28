@@ -344,7 +344,7 @@ function clamp(value, minimum, maximum) {
  * Draw observed spend/outcome evidence and an admitted fitted response curve.
  * @param {HTMLCanvasElement} canvas
  * @param {{status: string, observations: Array<{spend: number, outcome: number}>, curve?: {a: number, b: number}}} channel
- * @param {{currentSpendRate: number, recommendedSpendRate: number}} positions
+ * @param {{currentSpendRate?: number, recommendedSpendRate?: number}} positions
  * @param {{spendLabel: string, outcomeLabel: string, formatSpend: Function, formatOutcome: Function}} options
  */
 function drawResponseCurve(canvas, channel, positions, options) {
@@ -357,8 +357,13 @@ function drawResponseCurve(canvas, channel, positions, options) {
   const observed = Array.isArray(channel?.observations)
     ? channel.observations.filter(point => finiteNonNegative(point.spend) && finiteNonNegative(point.outcome))
     : [];
-  const currentSpendRate = finiteNonNegative(positions?.currentSpendRate) ? positions.currentSpendRate : 0;
-  const recommendedSpendRate = finiteNonNegative(positions?.recommendedSpendRate) ? positions.recommendedSpendRate : 0;
+  const currentSpendRate = finiteNonNegative(positions?.currentSpendRate)
+    ? positions.currentSpendRate
+    : null;
+  const recommendedSpendRate = finiteNonNegative(positions?.recommendedSpendRate)
+    ? positions.recommendedSpendRate
+    : null;
+  const positionValues = [currentSpendRate, recommendedSpendRate].filter(finiteNonNegative);
   const modelable = channel?.status === 'modelable'
     && Number.isFinite(channel?.curve?.a)
     && Number.isFinite(channel?.curve?.b);
@@ -367,9 +372,9 @@ function drawResponseCurve(canvas, channel, positions, options) {
     : 0;
   const outcomeValues = observed.map(point => point.outcome);
   if (modelable) {
-    outcomeValues.push(predictedOutcome(currentSpendRate), predictedOutcome(recommendedSpendRate));
+    positionValues.forEach(spend => outcomeValues.push(predictedOutcome(spend)));
   }
-  const xBounds = chartBounds([...observed.map(point => point.spend), currentSpendRate, recommendedSpendRate]);
+  const xBounds = chartBounds([...observed.map(point => point.spend), ...positionValues]);
   const yBounds = chartBounds(outcomeValues);
   const pad = { top: 28, right: 16, bottom: 42, left: 58 };
   const chartW = Math.max(1, W - pad.left - pad.right);
@@ -449,8 +454,8 @@ function drawResponseCurve(canvas, channel, positions, options) {
     ctx.fillText(label, clamp(x + (x > W - 92 ? -4 : 4), 4, W - 4), pad.top + offset);
   };
 
-  drawPosition(currentSpendRate, 'CURRENT', 2);
-  drawPosition(recommendedSpendRate, 'RECOMMENDED', 14);
+  if (currentSpendRate != null) drawPosition(currentSpendRate, 'CURRENT', 2);
+  if (recommendedSpendRate != null) drawPosition(recommendedSpendRate, 'RECOMMENDED', 14);
 
   if (!modelable) {
     ctx.fillStyle = colors.muted;

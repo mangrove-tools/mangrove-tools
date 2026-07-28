@@ -99,6 +99,16 @@ class MotionIntegrationTests(unittest.TestCase):
 
         self.assertIn('.decision-instrument[data-motion="ready"]', site_css)
         self.assertIn('.decision-instrument[data-motion="active"]', site_css)
+        for state in ("observation", "bound", "recheck"):
+            self.assertIn(
+                f'.decision-instrument[data-focus-state="{state}"]',
+                site_css,
+            )
+        self.assertIn(
+            '.decision-instrument[data-motion="reduced"] '
+            ".instrument-readout > div",
+            site_css,
+        )
         self.assertIn('.decision-story[data-motion="ready"]', site_css)
         self.assertIn('.decision-story[data-motion="active"]', site_css)
         self.assertIn('.results[data-result-state="updating"]', tool_css)

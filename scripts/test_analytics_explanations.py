@@ -44,7 +44,10 @@ class AnalyticsExplanationTests(unittest.TestCase):
         self.assertIn("explanationConfidence", script)
         self.assertIn("explanationDriver", script)
         self.assertIn("explanationCaveat", script)
-        self.assertIn("Assumption-driven", script)
+        self.assertIn("observational", script.lower())
+        self.assertIn("modeled marginal", script.lower())
+        self.assertIn("preserved", script.lower())
+        self.assertNotIn("Assumption-driven", script)
         self.assertNotIn("Medium —", script)
 
     def test_forecast_results_include_explanation_panel(self):

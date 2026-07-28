@@ -13,7 +13,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Budget Advisor | Mangrove Tools</title>
-    <meta name="description" content="Free marketing budget optimizer. Estimate marginal ROI per channel and get recommended budget allocation." />
+    <meta name="description" content="Import dated channel history, check which marginal response curves are supported, and prepare a preserved, evidence-aware marketing budget plan." />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="theme-color" content="#0c0c0c" />
     <link rel="canonical" href="https://mangrovetools.com/analytics/budget/" />
@@ -24,7 +24,7 @@
     <meta property="og:site_name" content="Mangrove Tools" />
     <meta property="og:locale" content="en_US" />
     <meta property="og:title" content="Budget Advisor | Mangrove Tools" />
-    <meta property="og:description" content="Free marketing budget optimizer. Estimate marginal ROI per channel and get recommended budget allocation." />
+    <meta property="og:description" content="Import dated channel history, check which marginal response curves are supported, and prepare a preserved, evidence-aware marketing budget plan." />
     <meta property="og:url" content="https://mangrovetools.com/analytics/budget/" />
     <meta property="og:image" content="https://mangrovetools.com/og-analytics.webp" />
     <meta property="og:image:width" content="1200" />
@@ -33,11 +33,12 @@
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Budget Advisor | Mangrove Tools" />
-    <meta name="twitter:description" content="Free marketing budget optimizer. Estimate marginal ROI per channel and get recommended budget allocation." />
+    <meta name="twitter:description" content="Import dated channel history, check which marginal response curves are supported, and prepare a preserved, evidence-aware marketing budget plan." />
     <meta name="twitter:image" content="https://mangrovetools.com/og-analytics.webp" />
     <link rel="stylesheet" href="/fonts.435be0cb58b8.css" />
     <link rel="stylesheet" href="/site.b95b63c49092.css" />
     <link rel="stylesheet" href="/tool-shell.c7c942da0589.css" />
+    <link rel="stylesheet" href="/analytics/budget/styles.css" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -53,7 +54,7 @@
           "price": "0",
           "priceCurrency": "USD"
         },
-        "description": "Free marketing budget optimizer with marginal ROI and recommended allocation across channels.",
+        "description": "Browser-based marketing budget advisor for importing dated channel history, assessing marginal-response evidence, and preserving unsupported channels.",
         "isPartOf": {
           "@type": "WebSite",
           "name": "Mangrove Tools",
@@ -94,127 +95,205 @@
       <section class="hero" aria-labelledby="hero-title">
         <h1 id="hero-title">Budget Advisor</h1>
         <p class="lede">
-          Find out where each marketing dollar is working hardest, where additional spend delivers the best return, and how to split a fixed budget across channels.
+          Turn dated channel history into an evidence-aware budget decision. The advisor models only stable marginal patterns and preserves the rest at recent spend.
         </p>
       </section>
 
-      <section class="workspace" aria-label="Budget optimization">
-        <form id="budget-form" class="inputs" novalidate>
-          <div class="field">
-            <label for="period">Planning period</label>
-            <select id="period" name="period">
-              <option value="monthly">Monthly</option>
-              <option value="quarterly">Quarterly</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label for="total-budget">Total budget ($)</label>
-            <input id="total-budget" name="totalBudget" type="number" inputmode="numeric" min="100" step="100" value="10000" required />
-          </div>
-
-          <div class="field">
-            <label for="num-channels">Number of channels</label>
-            <select id="num-channels" name="numChannels">
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4" selected>4</option>
-              <option value="5">5</option>
-              <option value="6">6</option>
-              <option value="7">7</option>
-              <option value="8">8</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label for="target-metric">Target metric</label>
-            <select id="target-metric" name="targetMetric">
-              <option value="conversions">Conversions</option>
-              <option value="revenue">Revenue ($)</option>
-            </select>
-          </div>
-
-          <div id="channel-rows" class="field-wide"></div>
-
-          <div class="form-actions">
-            <button type="button" class="secondary-action" id="use-sample-data" aria-describedby="small-business-sample-description">
+      <div class="budget-workspace">
+        <section
+          class="budget-decision-canvas"
+          id="decision-canvas"
+          data-phase="empty"
+          aria-labelledby="decision-canvas-title"
+        >
+          <header class="decision-canvas-header">
+            <p class="results-kicker">Decision canvas</p>
+            <h2 id="decision-canvas-title">Bring dated channel history</h2>
+            <p>
+              Use weekly or monthly spend with conversions or revenue. Your rows stay
+              in this browser session.
+            </p>
+          </header>
+          <div class="import-actions">
+            <label class="primary import-file-action" for="history-file">
+              Upload CSV
+            </label>
+            <input
+              id="history-file"
+              type="file"
+              accept=".csv,.tsv,text/csv,text/tab-separated-values"
+            />
+            <button
+              class="secondary-action"
+              id="paste-history-toggle"
+              type="button"
+              aria-expanded="false"
+              aria-controls="paste-history-panel"
+            >
+              Paste a table
+            </button>
+            <button
+              class="secondary-action"
+              id="use-sample-data"
+              type="button"
+              aria-describedby="sample-description"
+            >
               Use sample data
             </button>
-            <button type="submit" class="primary">Optimize allocation</button>
           </div>
-          <p class="field-hint sample-note" id="small-business-sample-description">
-            Fills a monthly marketing budget example for a small local services business.
+          <p class="sample-description" id="sample-description">
+            Loads a local 16-week example with three modeled channels and one preserved channel.
           </p>
-        </form>
+        </section>
 
-        <div class="results" id="results">
-          <p class="results-kicker">Recommended allocation</p>
-          <p class="total" id="total-conversions" aria-live="polite">—</p>
-          <p class="results-note" id="results-note">Add channel data above and optimize.</p>
+        <p id="import-status" class="import-status" role="status" aria-live="polite">
+          No history loaded.
+        </p>
 
-          <section id="recommendation-explanation" class="explanation-panel" role="note" aria-labelledby="explanation-title" hidden>
-            <h2 id="explanation-title">Why this recommendation?</h2>
-            <dl>
-              <div>
-                <dt>Evidence quality</dt>
-                <dd id="explanation-confidence"></dd>
-              </div>
-              <div>
-                <dt>Main driver</dt>
-                <dd id="explanation-driver"></dd>
-              </div>
-              <div>
-                <dt>Caveat</dt>
-                <dd id="explanation-caveat"></dd>
-              </div>
-            </dl>
-          </section>
+        <section id="paste-history-panel" class="workspace-panel paste-panel" aria-labelledby="paste-history-title" hidden>
+          <h2 id="paste-history-title">Paste channel history</h2>
+          <label for="history-paste">CSV or tab-separated rows</label>
+          <textarea id="history-paste" rows="8" spellcheck="false"></textarea>
+          <button class="primary" id="parse-pasted-history" type="button">Check pasted history</button>
+        </section>
 
-          <div id="guardrail" class="guardrail" hidden>
-            <p id="guardrail-text"></p>
+        <section id="replacement-warning" class="workspace-panel replacement-warning" aria-labelledby="replacement-title" hidden>
+          <p class="results-kicker">History already loaded</p>
+          <h2 id="replacement-title">Replace the current decision canvas?</h2>
+          <p>Replacing history clears the current model, constraints, results, and local downloads.</p>
+          <div class="panel-actions">
+            <button class="primary" id="confirm-replacement" type="button">Replace history</button>
+            <button class="secondary-action" id="cancel-replacement" type="button">Keep current history</button>
           </div>
+        </section>
 
-          <div id="chart-wrap" class="chart-wrap" hidden>
-            <canvas id="allocation-chart" height="200" aria-label="Bar chart showing recommended budget allocation by channel"></canvas>
+        <section id="correction-panel" class="workspace-panel correction-panel" aria-labelledby="correction-title" hidden>
+          <p class="results-kicker">Needs correction</p>
+          <h2 id="correction-title">Resolve the import findings</h2>
+          <p>Only row number, semantic field, and controlled guidance are shown here.</p>
+          <ul id="correction-findings" class="finding-list"></ul>
+          <div id="column-mapping" class="mapping-grid" aria-label="Column mapping"></div>
+          <fieldset id="financial-treatment" class="financial-treatment" hidden>
+            <legend>Does the financial outcome include marketing spend?</legend>
+            <label for="financial-before">
+              <input id="financial-before" type="radio" name="financial-treatment" value="before_marketing" />
+              Before marketing spend
+            </label>
+            <label for="financial-after">
+              <input id="financial-after" type="radio" name="financial-treatment" value="after_marketing" />
+              After marketing spend
+            </label>
+          </fieldset>
+          <div class="panel-actions">
+            <button class="primary" id="apply-corrections" type="button" hidden>Apply mapping</button>
+            <button class="secondary-action" id="download-correction-guide" type="button">Download correction guide</button>
           </div>
+        </section>
 
-          <div id="allocation-table-wrap" hidden>
-            <div class="data-table-wrap">
-              <table class="data-table" id="allocation-table">
-                <caption class="sr-only">Recommended budget allocation by channel</caption>
-                <thead>
-                  <tr>
-                    <th>Channel</th>
-                    <th>Current spend</th>
-                    <th>Recommended</th>
-                    <th>Marginal CPA</th>
-                    <th>Share</th>
-                  </tr>
-                </thead>
-                <tbody id="allocation-tbody"></tbody>
-              </table>
+        <section id="readiness-panel" class="workspace-panel readiness-panel" aria-labelledby="readiness-title" hidden>
+          <p class="results-kicker">Readiness</p>
+          <h2 id="readiness-title">What the history can support</h2>
+          <dl id="readiness-summary" class="readiness-summary"></dl>
+          <div class="table-scroll">
+            <table id="readiness-channels" class="data-table">
+              <caption>Channel modeling readiness</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Channel</th>
+                  <th scope="col">Treatment</th>
+                  <th scope="col">Evidence gates</th>
+                </tr>
+              </thead>
+              <tbody id="readiness-channel-rows"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <div class="plan-result-layout">
+          <form id="plan-form" class="workspace-panel plan-form" novalidate hidden>
+            <p class="results-kicker">Plan</p>
+            <h2>Set the decision horizon</h2>
+            <div class="plan-fields">
+              <div class="field">
+                <label for="total-budget">Total budget ($)</label>
+                <input id="total-budget" name="totalBudget" type="number" min="0.01" step="0.01" inputmode="decimal" required />
+              </div>
+              <div class="field">
+                <label for="plan-days">Plan length (days)</label>
+                <input id="plan-days" name="planDays" type="number" min="1" step="1" inputmode="numeric" value="30" required />
+              </div>
+              <div class="field field-wide">
+                <label for="objective">Objective</label>
+                <select id="objective" name="objective"></select>
+              </div>
             </div>
-          </div>
+            <details id="advanced-constraints" class="advanced-constraints">
+              <summary>Advanced constraints</summary>
+              <div id="constraints-list">
+                <p>Optional channel minimums, maximums, and exclusions appear with the allocation step.</p>
+              </div>
+            </details>
+            <button class="primary" id="build-allocation" type="submit">Build allocation</button>
+          </form>
 
-          <div class="next-steps" id="next-steps" hidden>
-            <p class="next-steps-label">Next steps</p>
-            <a href="/analytics/forecast/">Forecast revenue impact →</a>
-          </div>
+          <section id="results" class="workspace-panel results" role="status" aria-live="polite" aria-labelledby="results-title" hidden>
+            <p class="results-kicker">Allocation</p>
+            <h2 id="results-title">Budget plan</h2>
+            <p id="results-note">Choose a budget and horizon to build the plan.</p>
+            <section
+              id="recommendation-explanation"
+              class="explanation-panel"
+              role="note"
+              aria-labelledby="explanation-title"
+              hidden
+            >
+              <h2 id="explanation-title">What supports this recommendation?</h2>
+              <dl>
+                <div>
+                  <dt>Evidence quality</dt>
+                  <dd id="explanation-confidence"></dd>
+                </div>
+                <div>
+                  <dt>Main driver</dt>
+                  <dd id="explanation-driver"></dd>
+                </div>
+                <div>
+                  <dt>Caveat</dt>
+                  <dd id="explanation-caveat"></dd>
+                </div>
+              </dl>
+            </section>
+            <button class="secondary-action" id="download-allocation" type="button" disabled>Download allocation</button>
+          </section>
         </div>
-      </section>
+
+        <details id="model-inspector" class="workspace-panel model-inspector" hidden>
+          <summary>Inspect cleaned history</summary>
+          <p>Review the normalized periods used by the model. Rejected cell values are not reproduced.</p>
+          <div class="table-scroll">
+            <table id="cleaned-history-table" class="data-table">
+              <caption>Normalized channel history used for readiness analysis</caption>
+              <thead id="cleaned-history-head"></thead>
+              <tbody id="cleaned-history-rows"></tbody>
+            </table>
+          </div>
+          <button class="secondary-action" id="download-cleaned-data" type="button">Download cleaned data</button>
+        </details>
+      </div>
 
       <section class="content-block" aria-labelledby="how-title">
         <h2 id="how-title">How the budget model works</h2>
         <p>
-          Budget Advisor combines marginality analysis with budget optimization to tell you where to put your next dollar.
+          Budget Advisor uses observational channel history to compare modeled marginal response while keeping unsupported channels in the plan.
         </p>
         <ul class="plain-list">
-          <li><strong>Response curves</strong> — For each channel, a power-law curve is fitted to your historical spend and conversions. This captures diminishing returns: the first dollar in often has the highest return.</li>
-          <li><strong>Marginal CPA</strong> — The cost of the next conversion at the current spend level. A low marginal CPA means a channel is efficient at the margin. A high marginal CPA means the next dollar would be better spent elsewhere.</li>
-          <li><strong>Budget optimization</strong> — Given a total budget and per-channel min/max constraints, the model iteratively moves spend from low-marginal-ROI channels to high-marginal-ROI channels until equilibrium.</li>
+          <li><strong>Evidence gates</strong> — A channel needs at least 12 complete periods, positive spend and outcome coverage, four distinct spend levels, and at least 20% robust spend variation before a curve is admitted.</li>
+          <li><strong>Modeled marginal response</strong> — Admitted channels use their observed diminishing-return relationship to compare the expected outcome from the next budget increment.</li>
+          <li><strong>Preserved channels</strong> — Channels that fail a gate are held at their median recent-four-period spend rate. They do not receive optimized incremental budget.</li>
+          <li><strong>Financial mapping</strong> — Contribution or profit columns require an explicit choice about whether marketing spend is already deducted.</li>
         </ul>
         <p>
-          This is a simplified model — not a full marketing mix model. It works best when you have at least 3 months of historical spend and conversion data per channel, and at least 3-4 channels to compare.
+          This is observational decision support, not causal incrementality or a marketing mix model. Tracking changes, creative, audience, pricing, seasonality, and external conditions can break a historical relationship.
         </p>
       </section>
 
@@ -224,35 +303,35 @@
         <details class="faq-item" open>
           <summary>What data do I need?</summary>
           <p>
-            You need historical spend and conversions (or revenue) for each marketing channel, broken down by time period. At least 3 months per channel is needed for the model to fit a reliable response curve.
+            Bring weekly or monthly rows with period, channel, spend, and at least one outcome: conversions, revenue, or a financial contribution measure. A response curve needs at least 12 complete periods and meaningful spend variation; more rows alone do not guarantee admission.
           </p>
         </details>
 
         <details class="faq-item">
-          <summary>What counts as a conversion?</summary>
+          <summary>What happens when a channel cannot be modeled?</summary>
           <p>
-            A conversion is whatever matters to your business — a purchase, a lead form fill, a sign-up, a trial start. Enter the number that aligns with your business goal. The tool works the same way whether you track revenue or raw conversion volume.
+            The channel is preserved at its median recent-four-period spend rate. Its observed rows remain inspectable, but it cannot receive the optimized remainder until its evidence clears every gate.
+          </p>
+        </details>
+
+        <details class="faq-item">
+          <summary>How are revenue and profit handled?</summary>
+          <p>
+            Revenue is modeled separately from conversions. If you import contribution, gross profit, or profit, you must explicitly state whether marketing spend has already been deducted so the plan does not subtract cost twice.
           </p>
         </details>
 
         <details class="faq-item">
           <summary>How accurate are the recommendations?</summary>
           <p>
-            The model uses statistical curve fitting, so accuracy depends on data quality and volume. With 6+ months of clean historical data across 4+ channels, results are directionally reliable. With sparse or noisy data, treat the output as a starting point rather than a precise answer.
+            The output describes patterns in the supplied history. It does not prove that spend caused the outcome, forecast a calibrated range, or make six months of data inherently reliable. Treat the plan as a testable allocation decision and monitor live performance.
           </p>
         </details>
 
         <details class="faq-item">
-          <summary>Why does it use power-law curves?</summary>
+          <summary>Why use a diminishing-return curve?</summary>
           <p>
-            Power-law (also called Cobb-Douglas in economics) is a standard approach for modeling diminishing returns in marketing spend. It captures the empirically observed pattern that doubling spend rarely doubles output — there is almost always a saturation point.
-          </p>
-        </details>
-
-        <details class="faq-item">
-          <summary>What if I only have 1-2 channels?</summary>
-          <p>
-            The model needs at least 2 channels with positive spend and conversions to fit response curves. If you only have one channel, there is no optimization to do — all budget goes there by definition.
+            A diminishing-return curve is fitted only when the observed channel history passes the stability gates. The advisor does not force a generic power law onto every channel; unsupported histories stay preserved instead.
           </p>
         </details>
       </section>
@@ -299,8 +378,10 @@
       </div>
     </footer>
 
-    <script src="/shared/response-curve.js"></script>
-    <script src="/shared/charts.7eed3f5a7021.js"></script>
+    <script src="/shared/history-data.js"></script>
+    <script src="/shared/marginality-engine.js"></script>
+    <script src="/shared/budget-allocator.js"></script>
+    <script src="/shared/charts.45ff83cdd849.js"></script>
     <script src="/shared/tool-extras.js"></script>
     <script src="/shared/budget-sample-data.js"></script>
     <script src="/shared/motion.8560e9468584.js"></script>

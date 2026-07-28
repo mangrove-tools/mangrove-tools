@@ -8,6 +8,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 NODE_TESTS = (
     "tests/response-curve.test.js",
+    "tests/history-data.test.js",
+    "tests/marginality-engine.test.js",
+    "tests/budget-allocator.test.js",
+    "tests/budget-app.test.js",
+    "tests/charts.test.js",
     "tests/product-events.test.js",
     "tests/motion.test.js",
 )
@@ -18,7 +23,7 @@ class ProductJavascriptTests(unittest.TestCase):
         for relative_path in NODE_TESTS:
             with self.subTest(relative_path=relative_path):
                 result = subprocess.run(
-                    ["node", relative_path],
+                    ["node", "--test", relative_path],
                     cwd=ROOT,
                     capture_output=True,
                     text=True,

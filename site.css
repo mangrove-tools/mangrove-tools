@@ -4,24 +4,31 @@
   a subset until shell unification (P1-14).
 */
 :root {
-  /* Color roles — dark editorial */
+  /* Color roles — calibrated dark instrument */
   --ink: #f5f3ef;
-  --ink-soft: #9e9a93;
+  --ink-soft: #a8aaa5;
   --paper: #0c0c0c;
-  --surface: #161614;
-  --surface-2: #1e1e1b;
-  --line: rgba(245, 243, 239, 0.09);
-  --line-strong: rgba(245, 243, 239, 0.18);
-  --accent: #308e7b;
-  --accent-text: #308e7b;
-  --pine: #308e7b;
-  --pine-dark: #256860;
-  --ok-text: #5a9e72;
-  --danger-text: #a85a52;
+  --surface: #141715;
+  --surface-2: #1b201d;
+  --surface-raised: #202622;
+  --line: rgba(232, 238, 233, 0.1);
+  --line-strong: rgba(232, 238, 233, 0.21);
+  --grid-line: rgba(232, 238, 233, 0.035);
+  --accent: #42a28e;
+  --accent-text: #67b9a7;
+  --pine: #42a28e;
+  --pine-dark: #2f7d6d;
+  --signal: #d4a85c;
+  --signal-text: #e1bd7c;
+  --signal-soft: rgba(212, 168, 92, 0.11);
+  --signal-line: rgba(212, 168, 92, 0.42);
+  --ok-text: #72b98a;
+  --danger-text: #d0786d;
 
   /* Type */
-  --font-display: "Source Serif 4", Georgia, serif;
+  --font-display: "IBM Plex Sans", "Segoe UI", sans-serif;
   --font-body: "IBM Plex Sans", "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", "SFMono-Regular", monospace;
 
   /* Layout */
   --shell: 1040px;

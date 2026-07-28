@@ -4,14 +4,13 @@
 'use strict';
 
 (function attachBudgetAllocator(root) {
-  const TOLERANCE = 0.001;
   const BALANCE_ITERATIONS = 200;
-  const PROJECTION_RESIDUAL_TOLERANCE_CENTS = TOLERANCE * 100;
+  const LOG_MAX_VALUE = Math.log(Number.MAX_VALUE);
   // Per channel: two compensated sums (8), cent conversion (2), delta sum (1).
   const PROJECTION_FIXED_BASE_OPERATIONS = 1;
   const PROJECTION_BASE_OPERATIONS_PER_CHANNEL = 11;
-  // Per pass/channel: compensated active/fixed sum (4), shifted candidate (1).
-  const PROJECTION_PASS_OPERATIONS_PER_CHANNEL = 5;
+  // Per pass/channel: centered value (1), compensated sum (4), candidate (1).
+  const PROJECTION_PASS_OPERATIONS_PER_CHANNEL = 6;
   // Per pass: subtract fixed and active totals, then divide by active count.
   const PROJECTION_PASS_FIXED_OPERATIONS = 3;
 
@@ -45,6 +44,25 @@
       sum = next;
     }
     return Number.isFinite(sum) ? sum : null;
+  }
+
+  function relativeLog(value, reference) {
+    const relativeDifference = (value - reference) / reference;
+    if (Number.isFinite(relativeDifference)
+      && relativeDifference > -0.5
+      && relativeDifference < 1) {
+      return Math.log1p(relativeDifference);
+    }
+    return Math.log(value) - Math.log(reference);
+  }
+
+  function compensatedPair(left, right) {
+    const sum = left + right;
+    const rightApproximation = sum - left;
+    return {
+      value: sum,
+      correction: (left - (sum - rightApproximation)) + (right - rightApproximation)
+    };
   }
 
   function fromCents(value) {
@@ -262,7 +280,7 @@
     if (rawTotal == null) return null;
     const residual = targetCents - rawTotal;
     if (!Number.isFinite(residual)) return null;
-    if (Math.abs(residual) <= PROJECTION_RESIDUAL_TOLERANCE_CENTS) {
+    if (residual === 0) {
       const operations = projectionOperationCount(modelable.length, 0);
       return operations == null ? null : {
         values: rawCents,
@@ -289,20 +307,24 @@
 
       const activeValues = [];
       const fixedValues = [];
+      let activeAnchor = null;
       for (let index = 0; index < modelable.length; index += 1) {
         if (fixed[index]) fixedValues.push(projected[index]);
-        else activeValues.push(rawCents[index]);
+        else {
+          if (activeAnchor === null) activeAnchor = rawCents[index];
+          activeValues.push(rawCents[index] - activeAnchor);
+        }
       }
       const activeTotal = compensatedSum(activeValues);
       const fixedTotal = compensatedSum(fixedValues);
       if (activeTotal == null || fixedTotal == null) return null;
-      const shift = (targetCents - fixedTotal - activeTotal) / activeCount;
-      if (!Number.isFinite(shift)) return null;
+      const level = (targetCents - fixedTotal - activeTotal) / activeCount;
+      if (!Number.isFinite(level)) return null;
 
       let newlyFixed = 0;
       for (let index = 0; index < modelable.length; index += 1) {
         if (fixed[index]) continue;
-        const candidate = rawCents[index] + shift;
+        const candidate = (rawCents[index] - activeAnchor) + level;
         if (!Number.isFinite(candidate)) return null;
         if (candidate < modelable[index].minimumCents) {
           projected[index] = modelable[index].minimumCents;
@@ -331,28 +353,100 @@
     return null;
   }
 
-  function balance(modelable, budgetCents, horizonFactor) {
-    function totalAt(threshold) {
-      return modelable.reduce(function sumSpend(total, item) {
-        return total + spendAtThreshold(item, threshold, horizonFactor);
-      }, 0);
+  function centeredDualBudget(modelable, targetCents, horizonFactor) {
+    if (modelable.length === 0) return targetCents === 0 ? [] : null;
+    const logHorizonCents = Math.log(horizonFactor) + Math.log(100);
+    if (!Number.isFinite(logHorizonCents)) return null;
+    const coefficientLogs = modelable.map(function coefficientLog(item) {
+      const coefficient = item.curve.a * item.curve.b;
+      return coefficient > 0
+        ? Math.log(coefficient)
+        : Math.log(item.curve.a) + Math.log(item.curve.b);
+    });
+    if (coefficientLogs.some(function invalidLog(value) { return !Number.isFinite(value); })) return null;
+    const centerIndex = coefficientLogs.reduce(function largestLogIndex(largest, value, index) {
+      return value > coefficientLogs[largest] ? index : largest;
+    }, 0);
+    const reference = modelable[centerIndex];
+    const descriptors = modelable.map(function descriptor(item, index) {
+      const gap = 1 - item.curve.b;
+      const centeredCoefficient = compensatedPair(
+        relativeLog(item.curve.a, reference.curve.a),
+        relativeLog(item.curve.b, reference.curve.b)
+      );
+      return {
+        centeredCoefficient: centeredCoefficient.value,
+        centeredCoefficientCorrection: centeredCoefficient.correction,
+        gap: gap,
+        minimumCents: item.minimumCents,
+        maximumCents: item.maximumCents,
+        logMinimum: item.minimumCents > 0 ? Math.log(item.minimumCents) : -Infinity,
+        logMaximum: Number.isFinite(item.maximumCents) ? Math.log(item.maximumCents) : Infinity
+      };
+    });
+    const minimumGap = descriptors.reduce(function smallestGap(smallest, item) {
+      return Math.min(smallest, item.gap);
+    }, Infinity);
+    if (!Number.isFinite(minimumGap) || minimumGap <= 0) return null;
+
+    function valuesAt(offset) {
+      const values = descriptors.map(function spendAtOffset(item) {
+        const centeredDifference = (item.centeredCoefficient - offset)
+          + item.centeredCoefficientCorrection;
+        const logCents = (centeredDifference / item.gap)
+          + logHorizonCents;
+        if (logCents <= item.logMinimum) return item.minimumCents;
+        if (logCents >= item.logMaximum) return item.maximumCents;
+        if (logCents > LOG_MAX_VALUE) return Infinity;
+        const cents = Math.exp(logCents);
+        return Math.max(item.minimumCents, Math.min(cents, item.maximumCents));
+      });
+      const total = compensatedSum(values);
+      return {
+        values: values,
+        total: total == null ? Infinity : total
+      };
     }
 
-    let low = Number.MIN_VALUE;
-    let high = 1;
-    while (totalAt(high) > budgetCents && high < Number.MAX_VALUE / 10) high *= 10;
-    if (totalAt(high) > budgetCents + TOLERANCE * 100) return null;
+    const zero = valuesAt(0);
+    if (zero.total === targetCents) return zero.values;
+    let low;
+    let high;
+    if (zero.total > targetCents) {
+      low = 0;
+      high = minimumGap;
+      while (valuesAt(high).total > targetCents) {
+        low = high;
+        if (high >= Number.MAX_VALUE / 2) return null;
+        high *= 2;
+      }
+    } else {
+      high = 0;
+      low = -minimumGap;
+      while (valuesAt(low).total < targetCents) {
+        high = low;
+        if (low <= -Number.MAX_VALUE / 2) return null;
+        low *= 2;
+      }
+    }
 
     for (let iteration = 0; iteration < BALANCE_ITERATIONS; iteration += 1) {
-      const midpoint = geometricMidpoint(low, high);
-      if (totalAt(midpoint) > budgetCents) low = midpoint;
+      const midpoint = low + ((high - low) / 2);
+      if (midpoint === low || midpoint === high) break;
+      if (valuesAt(midpoint).total > targetCents) low = midpoint;
       else high = midpoint;
     }
-    const threshold = geometricMidpoint(low, high);
-    const rawCents = modelable.map(function rawAllocation(item) {
-      return spendAtThreshold(item, threshold, horizonFactor);
-    });
-    const projection = projectToBoundedBudget(modelable, rawCents, budgetCents);
+    const lowResult = valuesAt(low);
+    const highResult = valuesAt(high);
+    return Math.abs(lowResult.total - targetCents) <= Math.abs(highResult.total - targetCents)
+      ? lowResult.values
+      : highResult.values;
+  }
+
+  function balance(modelable, budgetCents, horizonFactor) {
+    const stableCents = centeredDualBudget(modelable, budgetCents, horizonFactor);
+    if (!stableCents) return null;
+    const projection = projectToBoundedBudget(modelable, stableCents, budgetCents);
     if (!projection) return null;
     const allocations = modelable.map(function allocate(item, index) {
       const allocatedCents = safeCents(projection.values[index] / 100);

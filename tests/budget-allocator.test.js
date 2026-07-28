@@ -241,6 +241,72 @@ test('near-one elasticities project to prompt exact symmetric allocations', () =
   });
 });
 
+test('near-one asymmetric curves preserve the cent-precision marginal optimum', () => {
+  [40, 48].forEach(power => {
+    const elasticity = 1 - (2 ** -power);
+    const result = allocate({
+      model: model([
+        channel('Weaker channel', { a: 1, b: elasticity }, {
+          currentSpendRate: 0,
+          preservedSpendRate: 0
+        }),
+        channel('Stronger channel', { a: 2, b: elasticity }, {
+          currentSpendRate: 0,
+          preservedSpendRate: 0
+        })
+      ], { key: 'revenue', label: 'Revenue', costTreatment: null }),
+      totalBudget: 10000.01,
+      planDays: 7
+    });
+
+    assert.equal(result.ok, true);
+    assert.equal(row(result, 'Weaker channel').recommendedSpend, 0);
+    assert.equal(row(result, 'Stronger channel').recommendedSpend, 10000.01);
+    assert.equal(result.totals.allocatedBudget, 10000.01);
+    assert.equal(Number.isFinite(row(result, 'Stronger channel').marginalMetric.value), true);
+  });
+});
+
+test('unequal near-one elasticities retain equal interior marginals', () => {
+  const firstElasticity = 1 - (2 ** -40);
+  const secondElasticity = 1 - (2 ** -48);
+  const firstReferenceSpend = 4000;
+  const secondReferenceSpend = 6000.01;
+  const secondScale = (
+    firstElasticity * Math.pow(firstReferenceSpend, firstElasticity - 1)
+  ) / (
+    secondElasticity * Math.pow(secondReferenceSpend, secondElasticity - 1)
+  );
+  const result = allocate({
+    model: model([
+      channel('First channel', { a: 1, b: firstElasticity }, {
+        currentSpendRate: 0,
+        preservedSpendRate: 0
+      }),
+      channel('Second channel', { a: secondScale, b: secondElasticity }, {
+        currentSpendRate: 0,
+        preservedSpendRate: 0
+      })
+    ], { key: 'revenue', label: 'Revenue', costTreatment: null }),
+    totalBudget: 10000.01,
+    planDays: 7
+  });
+  const first = row(result, 'First channel');
+  const second = row(result, 'Second channel');
+
+  assert.equal(result.ok, true);
+  assert.equal(first.recommendedSpend, 4000.26);
+  assert.equal(second.recommendedSpend, 5999.75);
+  assert.equal(
+    Math.round(first.recommendedSpend * 100) + Math.round(second.recommendedSpend * 100),
+    1000001
+  );
+  assert.ok(
+    Math.abs(first.marginalMetric.value - second.marginalMetric.value)
+      <= Number.EPSILON * 8
+  );
+});
+
 test('near-one projection preserves bounds while reconciling the exact budget', () => {
   const elasticity = 1 - (2 ** -48);
   const result = allocate({
@@ -273,9 +339,9 @@ test('near-one projection preserves bounds while reconciling the exact budget', 
   );
   assert.ok(
     Math.abs(
-      row(result, 'Paid social').recommendedSpend
-      - row(result, 'Paid video').recommendedSpend
-    ) <= 0.01
+      Math.round(row(result, 'Paid social').recommendedSpend * 100)
+      - Math.round(row(result, 'Paid video').recommendedSpend * 100)
+    ) <= 1
   );
 });
 
@@ -292,6 +358,19 @@ test('bounded-simplex projection fixes active caps atomically', () => {
   assert.deepEqual(Array.from(projection.values), [4000, 3000, 3000]);
   assert.deepEqual(rawCents, [5000, 2000, 2000]);
   assert.equal(projection.passes, 2);
+});
+
+test('bounded-simplex projection avoids cancellation with huge raw operands', () => {
+  const { projectToBoundedBudget } = allocatorInternals();
+  const items = [
+    { minimumCents: 0, maximumCents: Infinity },
+    { minimumCents: 0, maximumCents: Infinity }
+  ];
+  const rawCents = [1e18, 1e18];
+  const projection = projectToBoundedBudget(items, rawCents, 1000001);
+
+  assert.deepEqual(Array.from(projection.values), [500000.5, 500000.5]);
+  assert.deepEqual(rawCents, [1e18, 1e18]);
 });
 
 test('extreme accepted curves complete promptly with exact finite allocations', () => {

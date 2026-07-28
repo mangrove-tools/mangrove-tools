@@ -460,7 +460,7 @@
       state.selectedObjective = analysis.recommendedObjective;
       state.allocation = null;
       activeCorrectionText = null;
-      if (state.sourceKind === 'paste') historyPaste.value = '';
+      historyPaste.value = '';
       renderReadiness();
       renderCleanedHistory(inspection);
       if (SAMPLE.totalBudget && state.sourceKind === 'sample') {

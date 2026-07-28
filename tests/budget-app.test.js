@@ -432,6 +432,23 @@ test('successful pasted history is removed from the textarea after normalization
   assert.equal(elements['history-paste'].value, '');
 });
 
+test('successful sample history removes an abandoned malformed paste', () => {
+  const harness = loadDomApp();
+  const { elements } = harness;
+  const malformedPaste = 'unknown,columns\nnot,budget-history';
+  elements['history-paste'].value = malformedPaste;
+
+  elements['parse-pasted-history'].trigger('click');
+
+  assert.equal(elements['decision-canvas'].dataset.phase, 'needs_correction');
+  assert.equal(elements['history-paste'].value, malformedPaste);
+
+  elements['use-sample-data'].trigger('click');
+
+  assert.equal(elements['decision-canvas'].dataset.phase, 'partially_modelable');
+  assert.equal(elements['history-paste'].value, '');
+});
+
 test('cancelling a pending pasted replacement removes its raw textarea copy', () => {
   const harness = loadDomApp();
   const { elements } = harness;

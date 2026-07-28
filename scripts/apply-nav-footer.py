@@ -11,14 +11,17 @@ REPO = Path(__file__).resolve().parents[1]
 # Pages and their nav aria-current state
 # (file_relpath, current_section)
 PAGES = [
+    ("index.html", "home"),
+    ("analytics/index.html", "analytics"),
+    ("analytics/budget/index.html", "analytics"),
+    ("analytics/forecast/index.html", "analytics"),
+    ("calculators/index.html", "calculators"),
     ("letterroi/index.html", "calculators"),
     ("sponsorquote/index.html", "calculators"),
     ("subtarget/index.html", "calculators"),
     ("mediakit/index.html", "calculators"),
     ("inventory/index.html", "calculators"),
-    ("analytics/index.html", "analytics"),
-    ("analytics/budget/index.html", "analytics"),
-    ("analytics/forecast/index.html", "analytics"),
+    ("method/index.html", "method"),
     ("about/index.html", "about"),
     ("faq/index.html", "about"),
     ("privacy/index.html", "about"),
@@ -26,25 +29,25 @@ PAGES = [
     ("404.html", None),  # no aria-current
 ]
 
-# Common nav block (with placeholder for aria-current)
+# Common nav block
 def nav_block(current):
-    if current == "analytics":
-        a = '<a href="/analytics/" aria-current="page">Analytics</a>'
-    else:
-        a = '<a href="/analytics/">Analytics</a>'
-    if current == "calculators":
-        c = '<a href="/" aria-current="page">Calculators</a>'
-    else:
-        c = '<a href="/#calculators">Calculators</a>'
-    if current == "about":
-        ab = '<a href="/about/" aria-current="page">About</a>'
-    else:
-        ab = '<a href="/about/">About</a>'
+    links = [
+        ("/", "Home", "home"),
+        ("/analytics/", "Analytics", "analytics"),
+        ("/calculators/", "Calculators", "calculators"),
+        ("/method/", "Method", "method"),
+        ("/about/", "About", "about"),
+    ]
+    rendered_links = []
+    for href, label, section in links:
+        aria_current = ' aria-current="page"' if current == section else ""
+        rendered_links.append(
+            f'        <a href="{href}"{aria_current}>{label}</a>'
+        )
     return (
         '<nav class="site-nav" aria-label="Primary">\n'
-        f'        {a}\n'
-        f'        {c}\n'
-        f'        {ab}\n'
+        + "\n".join(rendered_links)
+        + "\n"
         '      </nav>'
     )
 
@@ -69,7 +72,7 @@ def footer_block(class_attr='class="foot"'):
         '          </ul>\n'
         '        </div>\n'
         '        <div class="foot-col">\n'
-        '          <h2>Calculators</h2>\n'
+        '          <h2><a href="/calculators/">Calculators</a></h2>\n'
         '          <ul>\n'
         '            <li><a href="/letterroi/">LetterROI</a></li>\n'
         '            <li><a href="/sponsorquote/">SponsorQuote</a></li>\n'
@@ -81,6 +84,7 @@ def footer_block(class_attr='class="foot"'):
         '        <div class="foot-col">\n'
         '          <h2>Site</h2>\n'
         '          <ul>\n'
+        '            <li><a href="/method/">Method</a></li>\n'
         '            <li><a href="/about/">About</a></li>\n'
         '            <li><a href="/faq/">FAQ</a></li>\n'
         '            <li><a href="/privacy/">Privacy</a></li>\n'
@@ -95,9 +99,7 @@ def footer_block(class_attr='class="foot"'):
 # Match the existing nav block. Permissive on current.
 NAV_RE = re.compile(
     r'<nav class="site-nav" aria-label="Primary">\s*'
-    r'<a href="[^"]*"(?: aria-current="page")?>Analytics</a>\s*'
-    r'<a href="[^"]*"(?: aria-current="page")?>Calculators</a>\s*'
-    r'<a href="[^"]*"(?: aria-current="page")?>About</a>\s*'
+    r'(?:<a href="[^"]*"(?: aria-current="page")?>[^<]+</a>\s*)+'
     r'</nav>',
     re.MULTILINE,
 )
@@ -111,6 +113,9 @@ FOOTER_RE = re.compile(
 
 def patch(rel, current):
     p = REPO / rel
+    if not p.is_file():
+        print(f"  ! {rel}: file not found — SKIPPED")
+        return False
     text = p.read_text(encoding="utf-8")
     original = text
     new_nav = nav_block(current)

@@ -234,3 +234,57 @@ test('negative, nonfinite, and unit-inconsistent inputs fail closed', () => {
     assert.equal(result.code, 'invalid_input');
   });
 });
+
+test('derived nonfinite horizons fail closed with finite controlled output', () => {
+  const result = allocate({
+    planDays: Number.MAX_VALUE,
+    model: model([channel('Paid search', { a: 2, b: 0.5 })], null, Number.MIN_VALUE)
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.code, 'invalid_input');
+  assert.equal(result.minimumBudget, null);
+  assert.equal(result.maximumBudget, null);
+});
+
+test('an admitted curve fixed at its maximum returns a maximum-capacity failure', () => {
+  const result = allocate({
+    model: model([channel('Paid search', { a: 2, b: 0.5 })]),
+    totalBudget: 20,
+    planDays: 7,
+    constraints: { 'Paid search': { minimum: 10, maximum: 10, excluded: false } }
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.code, 'maximums_below_budget');
+  assert.equal(result.maximumBudget, 10);
+});
+
+test('totals are derived from cents without floating-point residue', () => {
+  const result = allocate({
+    model: model([
+      channel('Paid search', { a: 2, b: 0.5 }),
+      channel('Paid social', { a: 2, b: 0.5 }),
+      channel('Paid video', { a: 2, b: 0.5 })
+    ]),
+    totalBudget: 0.3,
+    planDays: 7
+  });
+  assert.equal(result.ok, true);
+  assert.equal(result.totals.requestedBudget, 0.3);
+  assert.equal(result.totals.allocatedBudget, 0.3);
+  assert.equal(result.totals.optimizedBudget, 0.3);
+  assert.equal(result.totals.preservedBudget, 0);
+});
+
+test('conversions and revenue reject mismatched cost treatments', () => {
+  [
+    { key: 'conversions', label: 'Conversions', costTreatment: 'before_marketing' },
+    { key: 'revenue', label: 'Revenue', costTreatment: 'after_marketing' }
+  ].forEach(metric => {
+    const result = allocate({ model: model([
+      channel('Paid search', { a: 2, b: 0.5 }),
+      channel('Paid social', { a: 2, b: 0.5 })
+    ], metric) });
+    assert.equal(result.ok, false);
+    assert.equal(result.code, 'invalid_input');
+  });
+});

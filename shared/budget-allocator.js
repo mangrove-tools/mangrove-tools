@@ -14,6 +14,17 @@
     return Math.round(value * 100);
   }
 
+  function safeCents(value) {
+    if (!Number.isFinite(value)) return null;
+    const cents = toCents(value);
+    return Number.isSafeInteger(cents) ? cents : null;
+  }
+
+  function safeSum(values) {
+    const sum = values.reduce(function add(total, value) { return total + value; }, 0);
+    return Number.isSafeInteger(sum) ? sum : null;
+  }
+
   function fromCents(value) {
     return value / 100;
   }
@@ -51,7 +62,7 @@
 
   function validMetric(metric) {
     if (!metric || typeof metric.key !== 'string') return false;
-    if (metric.key === 'conversions' || metric.key === 'revenue') return true;
+    if (metric.key === 'conversions' || metric.key === 'revenue') return metric.costTreatment === null;
     return metric.key === 'financial'
       && (metric.costTreatment === 'before_marketing' || metric.costTreatment === 'after_marketing');
   }
@@ -97,8 +108,9 @@
 
   function deriveConstraint(channel, constraint, horizonFactor) {
     const isModelable = channel.status === 'modelable' && validCurve(channel.curve);
-    const currentSpend = toCents(channel.currentSpendRate * horizonFactor);
-    const preservedSpend = toCents(channel.preservedSpendRate * horizonFactor);
+    const currentSpend = safeCents(channel.currentSpendRate * horizonFactor);
+    const preservedSpend = safeCents(channel.preservedSpendRate * horizonFactor);
+    if (currentSpend == null || preservedSpend == null) return null;
     if (constraint.excluded) {
       return {
         channel: channel.channel,
@@ -111,7 +123,8 @@
       };
     }
     if (!isModelable) {
-      const overridden = constraint.minimum == null ? preservedSpend : toCents(constraint.minimum);
+      const overridden = constraint.minimum == null ? preservedSpend : safeCents(constraint.minimum);
+      if (overridden == null) return null;
       return {
         channel: channel.channel,
         status: 'preserved',
@@ -122,13 +135,16 @@
         constraint: 'preserved'
       };
     }
+    const minimumCents = constraint.minimum == null ? 0 : safeCents(constraint.minimum);
+    const maximumCents = constraint.maximum == null ? Infinity : safeCents(constraint.maximum);
+    if (minimumCents == null || maximumCents == null) return null;
     return {
       channel: channel.channel,
       status: 'modelable',
       curve: channel.curve,
       currentSpend: fromCents(currentSpend),
-      minimumCents: constraint.minimum == null ? 0 : toCents(constraint.minimum),
-      maximumCents: constraint.maximum == null ? Infinity : toCents(constraint.maximum),
+      minimumCents: minimumCents,
+      maximumCents: maximumCents,
       constraint: 'interior'
     };
   }
@@ -159,8 +175,10 @@
     }
     const threshold = Math.sqrt(low * high);
     const allocations = modelable.map(function allocate(item) {
-      return Object.assign({}, item, { allocatedCents: toCents(spendAtThreshold(item, threshold, horizonFactor) / 100) });
+      const allocatedCents = safeCents(spendAtThreshold(item, threshold, horizonFactor) / 100);
+      return allocatedCents == null ? null : Object.assign({}, item, { allocatedCents: allocatedCents });
     });
+    if (allocations.some(function invalidAllocation(item) { return item == null; })) return null;
     return allocations;
   }
 
@@ -227,31 +245,38 @@
     }
 
     const horizonFactor = input.planDays / model.cadenceDays;
-    const items = normalized.map(function buildItem(entry) {
+    const requestedCents = safeCents(input.totalBudget);
+    if (!Number.isFinite(horizonFactor) || horizonFactor <= 0 || requestedCents == null) return invalidInput();
+    const derivedItems = normalized.map(function buildItem(entry) {
       return deriveConstraint(entry.channel, entry.constraint, horizonFactor);
-    }).sort(function byChannel(left, right) { return left.channel.localeCompare(right.channel); });
-    const requestedCents = toCents(input.totalBudget);
-    const minimumCents = items.reduce(function totalMinimum(sum, item) { return sum + item.minimumCents; }, 0);
+    });
+    if (derivedItems.some(function invalidItem(item) { return item == null; })) return invalidInput();
+    const items = derivedItems.sort(function byChannel(left, right) { return left.channel.localeCompare(right.channel); });
+    const minimumCents = safeSum(items.map(function minimumOf(item) { return item.minimumCents; }));
     const finiteMaximum = items.every(function finiteMaximum(item) { return Number.isFinite(item.maximumCents); });
-    const maximumCents = finiteMaximum ? items.reduce(function totalMaximum(sum, item) { return sum + item.maximumCents; }, 0) : null;
+    const maximumCents = finiteMaximum ? safeSum(items.map(function maximumOf(item) { return item.maximumCents; })) : null;
+    if (minimumCents == null || (finiteMaximum && maximumCents == null)) return invalidInput();
     const minimumConflicts = items.filter(function hasMinimum(item) { return item.minimumCents > 0; }).map(function nameOf(item) { return item.channel; });
     const maximumConflicts = items.filter(function hasMaximum(item) { return Number.isFinite(item.maximumCents); }).map(function nameOf(item) { return item.channel; });
     const modelable = items.filter(function modelableItem(item) {
       return item.status === 'modelable' && item.maximumCents > item.minimumCents;
     });
+    const hasAdmittedCurve = items.some(function admittedCurve(item) { return item.status === 'modelable'; });
     if (minimumCents > requestedCents) {
       return failure('minimums_exceed_budget', `The preserved and minimum allocations require ${currency(fromCents(minimumCents))}.`, fromCents(minimumCents), null, minimumConflicts);
+    }
+    if (maximumCents != null && maximumCents < requestedCents && hasAdmittedCurve) {
+      return failure('maximums_below_budget', `The channel maximums allow only ${currency(fromCents(maximumCents))}.`, fromCents(minimumCents), fromCents(maximumCents), maximumConflicts);
     }
     if (requestedCents > minimumCents && modelable.length === 0) {
       return failure('no_defensible_remainder', 'No admitted response curve can receive the remaining budget.', fromCents(minimumCents), maximumCents == null ? null : fromCents(maximumCents), []);
     }
-    if (maximumCents != null && maximumCents < requestedCents) {
-      return failure('maximums_below_budget', `The channel maximums allow only ${currency(fromCents(maximumCents))}.`, fromCents(minimumCents), fromCents(maximumCents), maximumConflicts);
-    }
 
-    const modeledMinimumCents = modelable.reduce(function sumMinimum(sum, item) { return sum + item.minimumCents; }, 0);
+    const modeledMinimumCents = safeSum(modelable.map(function minimumOf(item) { return item.minimumCents; }));
+    if (modeledMinimumCents == null) return invalidInput();
     const fixedCents = minimumCents - modeledMinimumCents;
     const modeledTargetCents = requestedCents - fixedCents;
+    if (!Number.isSafeInteger(fixedCents) || !Number.isSafeInteger(modeledTargetCents)) return invalidInput();
     const balanced = balance(modelable, modeledTargetCents, horizonFactor);
     if (!balanced) return failure('no_defensible_remainder', 'No admitted response curve can receive the remaining budget.', fromCents(minimumCents), maximumCents == null ? null : fromCents(maximumCents), []);
     if (!reconcile(balanced, modeledTargetCents, horizonFactor)) {
@@ -296,9 +321,10 @@
         constraint: allocationConstraint(allocated)
       };
     });
-    const optimizedBudget = allocation.filter(function modeled(item) { return item.status === 'modelable'; })
-      .reduce(function sum(sum, item) { return sum + item.recommendedSpend; }, 0);
-    const preservedBudget = fromCents(requestedCents) - optimizedBudget;
+    const optimizedCents = safeSum(allocation.filter(function modeled(item) { return item.status === 'modelable'; })
+      .map(function allocatedCents(item) { return allocations.get(item.channel).allocatedCents; }));
+    const preservedCents = requestedCents - optimizedCents;
+    if (optimizedCents == null || !Number.isSafeInteger(preservedCents) || preservedCents < 0) return invalidInput();
     return {
       ok: true,
       code: 'allocated',
@@ -308,8 +334,8 @@
       totals: {
         requestedBudget: fromCents(requestedCents),
         allocatedBudget: fromCents(requestedCents),
-        optimizedBudget: optimizedBudget,
-        preservedBudget: preservedBudget,
+        optimizedBudget: fromCents(optimizedCents),
+        preservedBudget: fromCents(preservedCents),
         predictedOutcome: predictedOutcome
       },
       conflicts: []

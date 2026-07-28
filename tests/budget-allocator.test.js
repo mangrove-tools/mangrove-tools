@@ -196,6 +196,48 @@ test('conversions report marginal CPA and revenue reports marginal ROAS', () => 
   assert.ok(Math.abs(row(conversion, 'Paid search').marginalMetric.value - 1 / row(revenue, 'Paid search').marginalMetric.value) < 0.000001);
 });
 
+test('excluded modeled channels report no zero-spend marginal metric for every objective', () => {
+  const cases = [
+    {
+      metric: { key: 'conversions', label: 'Conversions', costTreatment: null },
+      expectedKey: 'marginal_cpa'
+    },
+    {
+      metric: { key: 'revenue', label: 'Revenue', costTreatment: null },
+      expectedKey: 'marginal_roas'
+    },
+    {
+      metric: { key: 'financial', label: 'Contribution', costTreatment: 'before_marketing' },
+      expectedKey: 'marginal_roi'
+    },
+    {
+      metric: { key: 'financial', label: 'Contribution', costTreatment: 'after_marketing' },
+      expectedKey: 'marginal_roi'
+    }
+  ];
+
+  cases.forEach(({ metric, expectedKey }) => {
+    const result = allocate({
+      model: model([
+        channel('Active modeled', { a: 2, b: 0.5 }),
+        channel('Excluded modeled', { a: 2, b: 0.5 })
+      ], metric),
+      constraints: {
+        'Excluded modeled': { minimum: null, maximum: null, excluded: true }
+      }
+    });
+    const excluded = row(result, 'Excluded modeled');
+
+    assert.equal(result.ok, true);
+    assert.equal(excluded.status, 'modelable');
+    assert.equal(excluded.recommendedSpend, 0);
+    assert.equal(excluded.marginalMetric.key, expectedKey);
+    assert.equal(excluded.marginalMetric.value, null);
+    assert.notEqual(excluded.marginalMetric.value, -1);
+    assert.equal(Number.isFinite(excluded.marginalMetric.value), false);
+  });
+});
+
 test('before-marketing financial outcomes report net contribution and raw marginal minus one', () => {
   const result = allocate({ model: model([
     channel('Paid search', { a: 3, b: 0.5 }),
@@ -206,6 +248,9 @@ test('before-marketing financial outcomes report net contribution and raw margin
   const rawMarginal = 3 * 0.5 * Math.pow(item.recommendedSpendRate, -0.5);
   assert.equal(item.predictedOutcome, rawOutcome - item.recommendedSpend);
   assert.equal(item.marginalMetric.value, rawMarginal - 1);
+  assert.ok(item.recommendedSpend > 0);
+  assert.ok(Number.isFinite(item.marginalMetric.value));
+  assert.ok(item.marginalMetric.value < 0);
 });
 
 test('after-marketing financial outcomes do not subtract spend twice', () => {

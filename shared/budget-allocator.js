@@ -94,15 +94,18 @@
   }
 
   function metricFor(metric, rawMarginal) {
+    const marginal = Number.isFinite(rawMarginal) ? rawMarginal : null;
     if (metric.key === 'conversions') {
-      return { key: 'marginal_cpa', value: rawMarginal > 0 ? 1 / rawMarginal : null };
+      return { key: 'marginal_cpa', value: marginal > 0 ? 1 / marginal : null };
     }
     if (metric.key === 'revenue') {
-      return { key: 'marginal_roas', value: rawMarginal };
+      return { key: 'marginal_roas', value: marginal };
     }
     return {
       key: 'marginal_roi',
-      value: metric.costTreatment === 'before_marketing' ? rawMarginal - 1 : rawMarginal
+      value: marginal == null
+        ? null
+        : metric.costTreatment === 'before_marketing' ? marginal - 1 : marginal
     };
   }
 

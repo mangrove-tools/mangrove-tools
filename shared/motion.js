@@ -15,6 +15,73 @@
     );
   }
 
+  function initInstrumentFocus(instrument) {
+    if (
+      !instrument ||
+      !instrument.dataset ||
+      typeof instrument.querySelectorAll !== "function" ||
+      instrument.dataset.focusController === "ready"
+    ) {
+      return;
+    }
+
+    var targets;
+    try {
+      targets = instrument.querySelectorAll("[data-instrument-focus]");
+    } catch (_error) {
+      return;
+    }
+    if (!targets || !targets.length) return;
+
+    var selectedState = "";
+
+    function showState(state) {
+      if (state) {
+        instrument.dataset.focusState = state;
+      } else {
+        delete instrument.dataset.focusState;
+      }
+    }
+
+    function stateFor(target) {
+      return target && target.dataset
+        ? target.dataset.instrumentFocus || ""
+        : "";
+    }
+
+    for (var index = 0; index < targets.length; index += 1) {
+      var target = targets[index];
+      if (!target || typeof target.addEventListener !== "function") continue;
+
+      target.addEventListener("pointerenter", function (event) {
+        showState(stateFor(event.currentTarget));
+      });
+      target.addEventListener("pointerleave", function () {
+        showState(selectedState);
+      });
+      target.addEventListener("focus", function (event) {
+        showState(stateFor(event.currentTarget));
+      });
+      target.addEventListener("blur", function () {
+        showState(selectedState);
+      });
+      target.addEventListener("click", function (event) {
+        selectedState = stateFor(event.currentTarget);
+        showState(selectedState);
+      });
+    }
+
+    if (typeof instrument.addEventListener === "function") {
+      instrument.addEventListener("keydown", function (event) {
+        if (event.key !== "Escape") return;
+        selectedState = "";
+        showState("");
+      });
+    }
+
+    instrument.dataset.focusController = "ready";
+  }
+
   function initDecisionInstrument(instrument) {
     instrument =
       instrument ||
@@ -22,6 +89,8 @@
         ? document.querySelector("[data-decision-instrument]")
         : null);
     if (!instrument) return;
+
+    initInstrumentFocus(instrument);
 
     if (prefersReducedMotion()) {
       instrument.dataset.motion = "reduced";

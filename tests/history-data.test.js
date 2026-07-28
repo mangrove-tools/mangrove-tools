@@ -418,14 +418,92 @@ test('future weekly and monthly periods are controlled exclusions, never complet
 
   [weekly, monthly].forEach(result => {
     assert.equal(result.ok, false);
+    assert.ok(result.cadence === 'weekly' || result.cadence === 'monthly');
     assert.equal(result.rows.length, 1);
     assert.equal(result.summary.completePeriods, 1);
-    assert.ok(result.exclusions.some(item => item.code === 'incomplete_period'));
-    assert.ok(result.exclusions.some(item => item.code === 'future_period'));
+    assert.equal(result.summary.acceptedRows, 1);
+    assert.equal(result.summary.excludedRows, 2);
+    assert.deepEqual(
+      result.exclusions.map(item => item.code),
+      ['incomplete_period', 'future_period']
+    );
     assert.doesNotMatch(JSON.stringify(result.exclusions), /private-future/);
   });
   assert.equal(weekly.rows[0].periodKey, '2026-W30');
   assert.equal(monthly.rows[0].periodKey, '2026-06');
+});
+
+test('current and future weeks cannot make past monthly history mixed-cadence', () => {
+  const result = inspect([
+    'period,channel,spend,conversions',
+    '2026-05,Search,100,2',
+    '2026-06,Search,110,3',
+    '2026-W31,private-current-week,120,4',
+    '2027-W02,private-future-week,130,5'
+  ].join('\n'));
+
+  assert.equal(result.ok, false);
+  assert.equal(result.cadence, 'monthly');
+  assert.deepEqual(result.rows.map(row => row.periodKey), ['2026-05', '2026-06']);
+  assert.deepEqual(
+    result.exclusions.map(item => item.code),
+    ['incomplete_period', 'future_period']
+  );
+  assert.equal(result.summary.inputRows, 4);
+  assert.equal(result.summary.acceptedRows, 2);
+  assert.equal(result.summary.excludedRows, 2);
+  assert.doesNotMatch(JSON.stringify(result.exclusions), /private-/);
+});
+
+test('current and future months cannot make past weekly history mixed-cadence', () => {
+  const result = inspect([
+    'period,channel,spend,conversions',
+    '2026-W29,Search,100,2',
+    '2026-W30,Search,110,3',
+    '2026-07,private-current-month,120,4',
+    '2027-01,private-future-month,130,5'
+  ].join('\n'));
+
+  assert.equal(result.ok, false);
+  assert.equal(result.cadence, 'weekly');
+  assert.deepEqual(result.rows.map(row => row.periodKey), ['2026-W29', '2026-W30']);
+  assert.deepEqual(
+    result.exclusions.map(item => item.code),
+    ['incomplete_period', 'future_period']
+  );
+  assert.equal(result.summary.inputRows, 4);
+  assert.equal(result.summary.acceptedRows, 2);
+  assert.equal(result.summary.excludedRows, 2);
+  assert.doesNotMatch(JSON.stringify(result.exclusions), /private-/);
+});
+
+test('explicit period admission is UTC-stable across the ISO week-year boundary', () => {
+  const sourceText = [
+    'period,channel,spend,conversions',
+    '2026-11,Search,100,2',
+    '2026-12,Search,110,3',
+    '2026-W53,private-current-week-year,120,4',
+    '2027-W01,private-future-week-year,130,5'
+  ].join('\n');
+  const instants = [
+    '2027-01-01T00:30:00Z',
+    '2026-12-31T19:30:00-05:00'
+  ];
+
+  instants.forEach(now => {
+    const result = history.inspectHistory(sourceText, { now: new Date(now) });
+
+    assert.equal(result.ok, false);
+    assert.equal(result.cadence, 'monthly');
+    assert.deepEqual(result.rows.map(row => row.periodKey), ['2026-11', '2026-12']);
+    assert.deepEqual(
+      result.exclusions.map(item => item.code),
+      ['incomplete_period', 'future_period']
+    );
+    assert.equal(result.summary.acceptedRows, 2);
+    assert.equal(result.summary.excludedRows, 2);
+    assert.doesNotMatch(JSON.stringify(result.exclusions), /private-/);
+  });
 });
 
 test('daily dates that aggregate into a future ISO week are never admitted', () => {

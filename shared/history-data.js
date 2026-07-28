@@ -402,13 +402,32 @@
         inspection.summary.excludedRows += 1;
         return;
       }
-      if (period.sourceCadence === 'date' && period.date.getTime() > currentDateStart.getTime()) {
-        inspection.exclusions.push(finding(record.rowNumber, 'period', 'future_period', 'Future periods cannot be modeled.'));
-        inspection.summary.excludedRows += 1;
-        return;
+      let periodExclusion = null;
+      if (period.sourceCadence === 'date') {
+        if (period.date.getTime() > currentDateStart.getTime()) {
+          periodExclusion = finding(record.rowNumber, 'period', 'future_period', 'Future periods cannot be modeled.');
+        } else if (period.date.getTime() >= currentWeekStart.getTime()) {
+          periodExclusion = finding(record.rowNumber, 'period', 'incomplete_period', 'The current ISO week is not complete.');
+        }
+      } else {
+        const currentPeriodStart = period.sourceCadence === 'monthly'
+          ? currentMonthStart
+          : currentWeekStart;
+        if (period.date.getTime() > currentPeriodStart.getTime()) {
+          periodExclusion = finding(record.rowNumber, 'period', 'future_period', 'Future periods cannot be modeled.');
+        } else if (period.date.getTime() === currentPeriodStart.getTime()) {
+          periodExclusion = finding(
+            record.rowNumber,
+            'period',
+            'incomplete_period',
+            period.sourceCadence === 'monthly'
+              ? 'The current month is not complete.'
+              : 'The current ISO week is not complete.'
+          );
+        }
       }
-      if (period.sourceCadence === 'date' && period.date.getTime() >= currentWeekStart.getTime()) {
-        inspection.exclusions.push(finding(record.rowNumber, 'period', 'incomplete_period', 'The current ISO week is not complete.'));
+      if (periodExclusion) {
+        inspection.exclusions.push(periodExclusion);
         inspection.summary.excludedRows += 1;
         return;
       }
@@ -467,29 +486,9 @@
       if (inspection.cadence === 'monthly') {
         periodKey = record.date.getUTCFullYear() + '-' + String(record.date.getUTCMonth() + 1).padStart(2, '0');
         periodStart = new Date(Date.UTC(record.date.getUTCFullYear(), record.date.getUTCMonth(), 1));
-        if (periodStart.getTime() === currentMonthStart.getTime()) {
-          inspection.exclusions.push(finding(record.rowNumber, 'period', 'incomplete_period', 'The current month is not complete.'));
-          inspection.summary.excludedRows += 1;
-          return;
-        }
-        if (periodStart.getTime() > currentMonthStart.getTime()) {
-          inspection.exclusions.push(finding(record.rowNumber, 'period', 'future_period', 'Future periods cannot be modeled.'));
-          inspection.summary.excludedRows += 1;
-          return;
-        }
       } else {
         periodStart = isoWeekStart(record.date);
         periodKey = isoWeekKey(periodStart);
-        if (periodStart.getTime() === currentWeekStart.getTime()) {
-          inspection.exclusions.push(finding(record.rowNumber, 'period', 'incomplete_period', 'The current ISO week is not complete.'));
-          inspection.summary.excludedRows += 1;
-          return;
-        }
-        if (periodStart.getTime() > currentWeekStart.getTime()) {
-          inspection.exclusions.push(finding(record.rowNumber, 'period', 'future_period', 'Future periods cannot be modeled.'));
-          inspection.summary.excludedRows += 1;
-          return;
-        }
       }
       const groupKey = periodKey + '\u0000' + record.channel;
       if (!grouped.has(groupKey)) {

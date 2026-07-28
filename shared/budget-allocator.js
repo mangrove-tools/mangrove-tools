@@ -1,0 +1,320 @@
+/**
+ * Browser-only constrained budget allocation for evidence-admitted curves.
+ */
+'use strict';
+
+(function attachBudgetAllocator(root) {
+  const TOLERANCE = 0.001;
+
+  function finiteNonNegative(value) {
+    return Number.isFinite(value) && value >= 0;
+  }
+
+  function toCents(value) {
+    return Math.round(value * 100);
+  }
+
+  function fromCents(value) {
+    return value / 100;
+  }
+
+  function currency(value) {
+    return `$${fromCents(toCents(value)).toLocaleString('en-US', {
+      minimumFractionDigits: toCents(value) % 100 === 0 ? 0 : 2,
+      maximumFractionDigits: 2
+    })}`;
+  }
+
+  function failure(code, message, minimumBudget, maximumBudget, conflicts) {
+    return {
+      ok: false,
+      code: code,
+      message: message,
+      minimumBudget: minimumBudget == null ? null : minimumBudget,
+      maximumBudget: maximumBudget == null ? null : maximumBudget,
+      conflicts: conflicts || []
+    };
+  }
+
+  function invalidInput(message) {
+    return failure('invalid_input', message || 'The allocation inputs are not valid.', null, null, []);
+  }
+
+  function validCurve(curve) {
+    return Boolean(curve)
+      && Number.isFinite(curve.a)
+      && Number.isFinite(curve.b)
+      && curve.a > 0
+      && curve.b > 0
+      && curve.b < 1;
+  }
+
+  function validMetric(metric) {
+    if (!metric || typeof metric.key !== 'string') return false;
+    if (metric.key === 'conversions' || metric.key === 'revenue') return true;
+    return metric.key === 'financial'
+      && (metric.costTreatment === 'before_marketing' || metric.costTreatment === 'after_marketing');
+  }
+
+  function normalizedConstraint(raw) {
+    const value = raw || {};
+    if (typeof value !== 'object' || Array.isArray(value)) return null;
+    const minimum = value.minimum == null ? null : value.minimum;
+    const maximum = value.maximum == null ? null : value.maximum;
+    if ((minimum != null && !finiteNonNegative(minimum))
+      || (maximum != null && !finiteNonNegative(maximum))
+      || (minimum != null && maximum != null && maximum < minimum)
+      || (value.excluded != null && typeof value.excluded !== 'boolean')) {
+      return null;
+    }
+    return { minimum: minimum, maximum: maximum, excluded: value.excluded === true };
+  }
+
+  function predict(curve, rate) {
+    if (!validCurve(curve) || !Number.isFinite(rate) || rate <= 0) return 0;
+    const value = curve.a * Math.pow(rate, curve.b);
+    return Number.isFinite(value) && value >= 0 ? value : 0;
+  }
+
+  function marginalOutcome(curve, rate) {
+    if (!validCurve(curve) || !Number.isFinite(rate) || rate <= 0) return null;
+    const value = curve.a * curve.b * Math.pow(rate, curve.b - 1);
+    return Number.isFinite(value) && value >= 0 ? value : null;
+  }
+
+  function metricFor(metric, rawMarginal) {
+    if (metric.key === 'conversions') {
+      return { key: 'marginal_cpa', value: rawMarginal > 0 ? 1 / rawMarginal : null };
+    }
+    if (metric.key === 'revenue') {
+      return { key: 'marginal_roas', value: rawMarginal };
+    }
+    return {
+      key: 'marginal_roi',
+      value: metric.costTreatment === 'before_marketing' ? rawMarginal - 1 : rawMarginal
+    };
+  }
+
+  function deriveConstraint(channel, constraint, horizonFactor) {
+    const isModelable = channel.status === 'modelable' && validCurve(channel.curve);
+    const currentSpend = toCents(channel.currentSpendRate * horizonFactor);
+    const preservedSpend = toCents(channel.preservedSpendRate * horizonFactor);
+    if (constraint.excluded) {
+      return {
+        channel: channel.channel,
+        status: isModelable ? 'modelable' : 'preserved',
+        curve: isModelable ? channel.curve : null,
+        currentSpend: fromCents(currentSpend),
+        minimumCents: 0,
+        maximumCents: 0,
+        constraint: 'excluded'
+      };
+    }
+    if (!isModelable) {
+      const overridden = constraint.minimum == null ? preservedSpend : toCents(constraint.minimum);
+      return {
+        channel: channel.channel,
+        status: 'preserved',
+        curve: null,
+        currentSpend: fromCents(currentSpend),
+        minimumCents: overridden,
+        maximumCents: overridden,
+        constraint: 'preserved'
+      };
+    }
+    return {
+      channel: channel.channel,
+      status: 'modelable',
+      curve: channel.curve,
+      currentSpend: fromCents(currentSpend),
+      minimumCents: constraint.minimum == null ? 0 : toCents(constraint.minimum),
+      maximumCents: constraint.maximum == null ? Infinity : toCents(constraint.maximum),
+      constraint: 'interior'
+    };
+  }
+
+  function spendAtThreshold(item, threshold, horizonFactor) {
+    const ratio = (item.curve.a * item.curve.b) / threshold;
+    const rate = Math.pow(ratio, 1 / (1 - item.curve.b));
+    const cents = Number.isFinite(rate) ? rate * horizonFactor * 100 : Infinity;
+    return Math.max(item.minimumCents, Math.min(cents, item.maximumCents));
+  }
+
+  function balance(modelable, budgetCents, horizonFactor) {
+    function totalAt(threshold) {
+      return modelable.reduce(function sumSpend(total, item) {
+        return total + spendAtThreshold(item, threshold, horizonFactor);
+      }, 0);
+    }
+
+    let low = Number.MIN_VALUE;
+    let high = 1;
+    while (totalAt(high) > budgetCents && high < Number.MAX_VALUE / 10) high *= 10;
+    if (totalAt(high) > budgetCents + TOLERANCE * 100) return null;
+
+    for (let iteration = 0; iteration < 200; iteration += 1) {
+      const midpoint = Math.sqrt(low * high);
+      if (totalAt(midpoint) > budgetCents) low = midpoint;
+      else high = midpoint;
+    }
+    const threshold = Math.sqrt(low * high);
+    const allocations = modelable.map(function allocate(item) {
+      return Object.assign({}, item, { allocatedCents: toCents(spendAtThreshold(item, threshold, horizonFactor) / 100) });
+    });
+    return allocations;
+  }
+
+  function marginalAtCents(item, cents, horizonFactor) {
+    return marginalOutcome(item.curve, fromCents(cents) / horizonFactor);
+  }
+
+  function reconcile(modelable, targetCents, horizonFactor) {
+    let delta = targetCents - modelable.reduce(function total(sum, item) { return sum + item.allocatedCents; }, 0);
+    while (delta !== 0) {
+      const candidates = modelable.filter(function hasCapacity(item) {
+        return delta > 0 ? item.allocatedCents < item.maximumCents : item.allocatedCents > item.minimumCents;
+      }).sort(function byMarginalThenName(left, right) {
+        const leftMarginal = marginalAtCents(left, left.allocatedCents, horizonFactor);
+        const rightMarginal = marginalAtCents(right, right.allocatedCents, horizonFactor);
+        const leftValue = leftMarginal == null ? -Infinity : leftMarginal;
+        const rightValue = rightMarginal == null ? -Infinity : rightMarginal;
+        const comparison = delta > 0 ? rightValue - leftValue : leftValue - rightValue;
+        return comparison || left.channel.localeCompare(right.channel);
+      });
+      if (candidates.length === 0) return false;
+      candidates[0].allocatedCents += delta > 0 ? 1 : -1;
+      delta += delta > 0 ? -1 : 1;
+    }
+    return true;
+  }
+
+  function allocationConstraint(item) {
+    if (item.constraint !== 'interior') return item.constraint;
+    if (item.allocatedCents === item.minimumCents) return 'minimum';
+    if (item.allocatedCents === item.maximumCents) return 'maximum';
+    return 'interior';
+  }
+
+  function allocatePlan(input) {
+    if (!input || typeof input !== 'object' || !finiteNonNegative(input.totalBudget) || input.totalBudget <= 0
+      || !Number.isFinite(input.planDays) || input.planDays <= 0) {
+      return invalidInput();
+    }
+    const model = input.model;
+    if (!model || !Number.isFinite(model.cadenceDays) || model.cadenceDays <= 0
+      || !validMetric(model.metric) || !Array.isArray(model.channels) || model.channels.length === 0
+      || typeof input.constraints !== 'object' || input.constraints == null || Array.isArray(input.constraints)) {
+      return invalidInput();
+    }
+    const expectedObjective = model.metric.key === 'financial' ? 'contribution' : model.metric.key;
+    if (model.objective !== expectedObjective) return invalidInput();
+    const names = new Set();
+    const constraints = input.constraints;
+    const knownNames = new Set(model.channels.map(function nameOf(channel) { return channel && channel.channel; }));
+    if (Object.keys(constraints).some(function unknownChannel(name) { return !knownNames.has(name); })) return invalidInput();
+
+    const normalized = [];
+    for (let index = 0; index < model.channels.length; index += 1) {
+      const channel = model.channels[index];
+      if (!channel || typeof channel.channel !== 'string' || channel.channel.length === 0 || names.has(channel.channel)
+        || !finiteNonNegative(channel.currentSpendRate) || !finiteNonNegative(channel.preservedSpendRate)) {
+        return invalidInput();
+      }
+      names.add(channel.channel);
+      const constraint = normalizedConstraint(constraints[channel.channel]);
+      if (!constraint) return invalidInput();
+      normalized.push({ channel: channel, constraint: constraint });
+    }
+
+    const horizonFactor = input.planDays / model.cadenceDays;
+    const items = normalized.map(function buildItem(entry) {
+      return deriveConstraint(entry.channel, entry.constraint, horizonFactor);
+    }).sort(function byChannel(left, right) { return left.channel.localeCompare(right.channel); });
+    const requestedCents = toCents(input.totalBudget);
+    const minimumCents = items.reduce(function totalMinimum(sum, item) { return sum + item.minimumCents; }, 0);
+    const finiteMaximum = items.every(function finiteMaximum(item) { return Number.isFinite(item.maximumCents); });
+    const maximumCents = finiteMaximum ? items.reduce(function totalMaximum(sum, item) { return sum + item.maximumCents; }, 0) : null;
+    const minimumConflicts = items.filter(function hasMinimum(item) { return item.minimumCents > 0; }).map(function nameOf(item) { return item.channel; });
+    const maximumConflicts = items.filter(function hasMaximum(item) { return Number.isFinite(item.maximumCents); }).map(function nameOf(item) { return item.channel; });
+    const modelable = items.filter(function modelableItem(item) {
+      return item.status === 'modelable' && item.maximumCents > item.minimumCents;
+    });
+    if (minimumCents > requestedCents) {
+      return failure('minimums_exceed_budget', `The preserved and minimum allocations require ${currency(fromCents(minimumCents))}.`, fromCents(minimumCents), null, minimumConflicts);
+    }
+    if (requestedCents > minimumCents && modelable.length === 0) {
+      return failure('no_defensible_remainder', 'No admitted response curve can receive the remaining budget.', fromCents(minimumCents), maximumCents == null ? null : fromCents(maximumCents), []);
+    }
+    if (maximumCents != null && maximumCents < requestedCents) {
+      return failure('maximums_below_budget', `The channel maximums allow only ${currency(fromCents(maximumCents))}.`, fromCents(minimumCents), fromCents(maximumCents), maximumConflicts);
+    }
+
+    const modeledMinimumCents = modelable.reduce(function sumMinimum(sum, item) { return sum + item.minimumCents; }, 0);
+    const fixedCents = minimumCents - modeledMinimumCents;
+    const modeledTargetCents = requestedCents - fixedCents;
+    const balanced = balance(modelable, modeledTargetCents, horizonFactor);
+    if (!balanced) return failure('no_defensible_remainder', 'No admitted response curve can receive the remaining budget.', fromCents(minimumCents), maximumCents == null ? null : fromCents(maximumCents), []);
+    if (!reconcile(balanced, modeledTargetCents, horizonFactor)) {
+      return failure('currency_reconciliation_failed', 'The allocation could not be reconciled to whole cents.', fromCents(minimumCents), maximumCents == null ? null : fromCents(maximumCents), []);
+    }
+    const allocations = new Map(balanced.map(function byName(item) { return [item.channel, item]; }));
+    items.forEach(function retainFixed(item) {
+      if (!allocations.has(item.channel)) allocations.set(item.channel, Object.assign({}, item, { allocatedCents: item.minimumCents }));
+    });
+
+    let predictedOutcome = 0;
+    const allocation = items.map(function resultRow(item) {
+      const allocated = allocations.get(item.channel);
+      const recommendedSpend = fromCents(allocated.allocatedCents);
+      const recommendedSpendRate = recommendedSpend / horizonFactor;
+      if (allocated.status !== 'modelable') {
+        return {
+          channel: allocated.channel,
+          status: allocated.status,
+          currentSpend: allocated.currentSpend,
+          recommendedSpend: recommendedSpend,
+          recommendedSpendRate: recommendedSpendRate,
+          predictedOutcome: null,
+          marginalMetric: null,
+          constraint: allocationConstraint(allocated)
+        };
+      }
+      const rawOutcome = predict(allocated.curve, recommendedSpendRate) * horizonFactor;
+      const rawMarginal = marginalOutcome(allocated.curve, recommendedSpendRate);
+      const outcome = model.metric.key === 'financial' && model.metric.costTreatment === 'before_marketing'
+        ? rawOutcome - recommendedSpend
+        : rawOutcome;
+      predictedOutcome += outcome;
+      return {
+        channel: allocated.channel,
+        status: 'modelable',
+        currentSpend: allocated.currentSpend,
+        recommendedSpend: recommendedSpend,
+        recommendedSpendRate: recommendedSpendRate,
+        predictedOutcome: outcome,
+        marginalMetric: metricFor(model.metric, rawMarginal),
+        constraint: allocationConstraint(allocated)
+      };
+    });
+    const optimizedBudget = allocation.filter(function modeled(item) { return item.status === 'modelable'; })
+      .reduce(function sum(sum, item) { return sum + item.recommendedSpend; }, 0);
+    const preservedBudget = fromCents(requestedCents) - optimizedBudget;
+    return {
+      ok: true,
+      code: 'allocated',
+      horizonFactor: horizonFactor,
+      objective: model.objective,
+      allocation: allocation,
+      totals: {
+        requestedBudget: fromCents(requestedCents),
+        allocatedBudget: fromCents(requestedCents),
+        optimizedBudget: optimizedBudget,
+        preservedBudget: preservedBudget,
+        predictedOutcome: predictedOutcome
+      },
+      conflicts: []
+    };
+  }
+
+  root.MangroveBudgetAllocator = { allocatePlan: allocatePlan };
+}(window));

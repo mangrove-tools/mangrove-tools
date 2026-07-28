@@ -51,6 +51,16 @@
     return failure('invalid_input', message || 'The allocation inputs are not valid.', null, null, []);
   }
 
+  function predictionOverflow() {
+    return failure(
+      'prediction_overflow',
+      'The modeled outcome exceeds the safe calculation range.',
+      null,
+      null,
+      []
+    );
+  }
+
   function validCurve(curve) {
     return Boolean(curve)
       && Number.isFinite(curve.a)
@@ -82,9 +92,10 @@
   }
 
   function predict(curve, rate) {
-    if (!validCurve(curve) || !Number.isFinite(rate) || rate <= 0) return 0;
+    if (!validCurve(curve) || !Number.isFinite(rate) || rate < 0) return null;
+    if (rate === 0) return 0;
     const value = curve.a * Math.pow(rate, curve.b);
-    return Number.isFinite(value) && value >= 0 ? value : 0;
+    return Number.isFinite(value) && value >= 0 ? value : null;
   }
 
   function marginalOutcome(curve, rate) {
@@ -291,6 +302,7 @@
     });
 
     let predictedOutcome = 0;
+    let predictionFailed = false;
     const allocation = items.map(function resultRow(item) {
       const allocated = allocations.get(item.channel);
       const recommendedSpend = fromCents(allocated.allocatedCents);
@@ -307,12 +319,23 @@
           constraint: allocationConstraint(allocated)
         };
       }
-      const rawOutcome = predict(allocated.curve, recommendedSpendRate) * horizonFactor;
+      const predictedRateOutcome = predict(allocated.curve, recommendedSpendRate);
+      const rawOutcome = predictedRateOutcome == null
+        ? null
+        : predictedRateOutcome * horizonFactor;
       const rawMarginal = marginalOutcome(allocated.curve, recommendedSpendRate);
-      const outcome = model.metric.key === 'financial' && model.metric.costTreatment === 'before_marketing'
-        ? rawOutcome - recommendedSpend
-        : rawOutcome;
-      predictedOutcome += outcome;
+      const outcome = rawOutcome == null
+        ? null
+        : model.metric.key === 'financial' && model.metric.costTreatment === 'before_marketing'
+          ? rawOutcome - recommendedSpend
+          : rawOutcome;
+      const nextPredictedOutcome = outcome == null ? null : predictedOutcome + outcome;
+      if (!Number.isFinite(rawOutcome) || !Number.isFinite(outcome)
+        || !Number.isFinite(nextPredictedOutcome)) {
+        predictionFailed = true;
+        return null;
+      }
+      predictedOutcome = nextPredictedOutcome;
       return {
         channel: allocated.channel,
         status: 'modelable',
@@ -324,6 +347,7 @@
         constraint: allocationConstraint(allocated)
       };
     });
+    if (predictionFailed) return predictionOverflow();
     const optimizedCents = safeSum(allocation.filter(function modeled(item) { return item.status === 'modelable'; })
       .map(function allocatedCents(item) { return allocations.get(item.channel).allocatedCents; }));
     const preservedCents = requestedCents - optimizedCents;

@@ -655,6 +655,10 @@ test('allocator failures map to exact controlled next actions', () => {
     [
       'currency_reconciliation_failed',
       'The plan cannot be reconciled to currency cents under the current constraints.'
+    ],
+    [
+      'prediction_overflow',
+      'The modeled outcome is too large to calculate safely. Review the imported values or choose a shorter planning window.'
     ]
   ];
 

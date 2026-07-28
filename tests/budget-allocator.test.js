@@ -265,6 +265,68 @@ test('after-marketing financial outcomes do not subtract spend twice', () => {
   assert.equal(item.marginalMetric.value, rawMarginal);
 });
 
+test('finite channel predictions that overflow their aggregate fail closed', () => {
+  const result = allocate({
+    model: model([
+      channel('Paid search', { a: 1.3482698511467367e308, b: 0.5 }),
+      channel('Paid social', { a: 1.3482698511467367e308, b: 0.5 })
+    ], { key: 'revenue', label: 'Revenue', costTreatment: null }),
+    totalBudget: 2,
+    planDays: 7,
+    constraints: {
+      'Paid search': { minimum: 1, maximum: 1, excluded: false },
+      'Paid social': { minimum: 1, maximum: 1, excluded: false }
+    }
+  });
+
+  assert.deepEqual(result, {
+    ok: false,
+    code: 'prediction_overflow',
+    message: 'The modeled outcome exceeds the safe calculation range.',
+    minimumBudget: null,
+    maximumBudget: null,
+    conflicts: []
+  });
+  assert.equal(Object.hasOwn(result, 'allocation'), false);
+  assert.equal(Object.hasOwn(result, 'totals'), false);
+});
+
+test('a horizon-scaled channel prediction that overflows fails closed', () => {
+  const result = allocate({
+    model: model([
+      channel('Paid search', { a: 1.3482698511467367e308, b: 0.5 })
+    ], { key: 'revenue', label: 'Revenue', costTreatment: null }),
+    totalBudget: 2,
+    planDays: 14,
+    constraints: {
+      'Paid search': { minimum: 2, maximum: 2, excluded: false }
+    }
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.code, 'prediction_overflow');
+  assert.equal(Object.hasOwn(result, 'allocation'), false);
+  assert.equal(Object.hasOwn(result, 'totals'), false);
+});
+
+test('a direct channel prediction overflow fails closed instead of becoming zero', () => {
+  const result = allocate({
+    model: model([
+      channel('Paid search', { a: 1.3482698511467367e308, b: 0.5 })
+    ], { key: 'revenue', label: 'Revenue', costTreatment: null }),
+    totalBudget: 2,
+    planDays: 7,
+    constraints: {
+      'Paid search': { minimum: 2, maximum: 2, excluded: false }
+    }
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.code, 'prediction_overflow');
+  assert.equal(Object.hasOwn(result, 'allocation'), false);
+  assert.equal(Object.hasOwn(result, 'totals'), false);
+});
+
 test('negative, nonfinite, and unit-inconsistent inputs fail closed', () => {
   [
     { totalBudget: -1 },

@@ -33,6 +33,8 @@
       'Channel maximums leave part of this budget unassigned. Raise a maximum or lower the total budget.',
     no_defensible_remainder:
       'No modeled channel can accept the remaining budget. Add spend variation or change an explicit constraint.',
+    prediction_overflow:
+      'The modeled outcome is too large to calculate safely. Review the imported values or choose a shorter planning window.',
     invalid_plan:
       'Enter a positive budget and planning window.',
     rounding_infeasible:

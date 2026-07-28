@@ -61,6 +61,44 @@
     );
   }
 
+  function finiteOrNull(value) {
+    return value === null || Number.isFinite(value);
+  }
+
+  function validPublishedMetric(metric) {
+    return metric === null
+      || (metric
+        && typeof metric === 'object'
+        && typeof metric.key === 'string'
+        && finiteOrNull(metric.value));
+  }
+
+  function validPublishedAllocation(result) {
+    if (!result || !Number.isFinite(result.horizonFactor) || result.horizonFactor <= 0
+      || !Array.isArray(result.allocation) || !result.totals) {
+      return false;
+    }
+    const rowsValid = result.allocation.every(function validPublishedRow(row) {
+      if (!row || (row.status !== 'modelable' && row.status !== 'preserved')
+        || !Number.isFinite(row.currentSpend)
+        || !Number.isFinite(row.recommendedSpend)
+        || !Number.isFinite(row.recommendedSpendRate)) {
+        return false;
+      }
+      if (row.status === 'preserved') {
+        return row.predictedOutcome === null && row.marginalMetric === null;
+      }
+      return Number.isFinite(row.predictedOutcome)
+        && validPublishedMetric(row.marginalMetric);
+    });
+    return rowsValid
+      && Number.isFinite(result.totals.requestedBudget)
+      && Number.isFinite(result.totals.allocatedBudget)
+      && Number.isFinite(result.totals.optimizedBudget)
+      && Number.isFinite(result.totals.preservedBudget)
+      && Number.isFinite(result.totals.predictedOutcome);
+  }
+
   function validCurve(curve) {
     return Boolean(curve)
       && Number.isFinite(curve.a)
@@ -261,6 +299,7 @@
     const horizonFactor = input.planDays / model.cadenceDays;
     const requestedCents = safeCents(input.totalBudget);
     if (!Number.isFinite(horizonFactor) || horizonFactor <= 0 || requestedCents == null) return invalidInput();
+    if (!Number.isFinite(fromCents(requestedCents) / horizonFactor)) return predictionOverflow();
     const derivedItems = normalized.map(function buildItem(entry) {
       return deriveConstraint(entry.channel, entry.constraint, horizonFactor);
     });
@@ -352,7 +391,7 @@
       .map(function allocatedCents(item) { return allocations.get(item.channel).allocatedCents; }));
     const preservedCents = requestedCents - optimizedCents;
     if (optimizedCents == null || !Number.isSafeInteger(preservedCents) || preservedCents < 0) return invalidInput();
-    return {
+    const result = {
       ok: true,
       code: 'allocated',
       horizonFactor: horizonFactor,
@@ -367,6 +406,7 @@
       },
       conflicts: []
     };
+    return validPublishedAllocation(result) ? result : predictionOverflow();
   }
 
   root.MangroveBudgetAllocator = { allocatePlan: allocatePlan };

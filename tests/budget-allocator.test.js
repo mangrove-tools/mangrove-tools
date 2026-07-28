@@ -327,6 +327,45 @@ test('a direct channel prediction overflow fails closed instead of becoming zero
   assert.equal(Object.hasOwn(result, 'totals'), false);
 });
 
+test('a subnormal horizon cannot publish an infinite preserved spend rate', () => {
+  const result = allocate({
+    model: model([
+      channel('Local partnerships', null, {
+        currentSpendRate: 0,
+        preservedSpendRate: 0
+      })
+    ], { key: 'revenue', label: 'Revenue', costTreatment: null }, 1),
+    totalBudget: 1,
+    planDays: Number.MIN_VALUE,
+    constraints: {
+      'Local partnerships': { minimum: 1, maximum: null, excluded: false }
+    }
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.code, 'prediction_overflow');
+  assert.equal(Object.hasOwn(result, 'allocation'), false);
+  assert.equal(Object.hasOwn(result, 'totals'), false);
+});
+
+test('a marginal CPA reciprocal overflow fails closed', () => {
+  const result = allocate({
+    model: model([
+      channel('Paid search', { a: 1e-307, b: 0.5 })
+    ]),
+    totalBudget: 100,
+    planDays: 7,
+    constraints: {
+      'Paid search': { minimum: 100, maximum: 100, excluded: false }
+    }
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.code, 'prediction_overflow');
+  assert.equal(Object.hasOwn(result, 'allocation'), false);
+  assert.equal(Object.hasOwn(result, 'totals'), false);
+});
+
 test('negative, nonfinite, and unit-inconsistent inputs fail closed', () => {
   [
     { totalBudget: -1 },

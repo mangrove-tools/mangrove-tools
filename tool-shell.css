@@ -65,6 +65,7 @@ body.tool-page {
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--space-xl);
+  min-width: 0;
   animation: rise 0.8s var(--ease) 0.08s both;
 }
 
@@ -78,6 +79,7 @@ body.tool-page {
 
 .inputs,
 .results {
+  min-width: 0;
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -297,7 +299,7 @@ body.tool-page {
 .chart-wrap canvas {
   display: block;
   width: 100%;
-  max-width: 500px;
+  max-width: min(500px, 100%);
   height: auto;
 }
 
@@ -357,6 +359,52 @@ body.tool-page {
   color: var(--ink-soft);
   font-size: 0.95rem;
   line-height: 1.6;
+}
+
+.explanation-panel {
+  margin: 0 0 var(--space-lg);
+  padding: var(--space-sm) 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.explanation-panel h2 {
+  margin: 0 0 var(--space-xs);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.explanation-panel dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-sm);
+  margin: 0;
+}
+
+.explanation-panel div {
+  min-width: 0;
+}
+
+.explanation-panel dt {
+  margin: 0 0 0.2rem;
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  line-height: 1.25;
+  text-transform: uppercase;
+}
+
+.explanation-panel dd {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.88rem;
+  line-height: 1.45;
 }
 
 .streams {
@@ -581,6 +629,11 @@ body.tool-page {
 
   .results {
     padding: var(--space-md);
+  }
+
+  .explanation-panel dl {
+    grid-template-columns: 1fr;
+    gap: var(--space-xs);
   }
 }
 

@@ -17,6 +17,10 @@
   const allocationTableWrap = document.getElementById('allocation-table-wrap');
   const allocationTbody = document.getElementById('allocation-tbody');
   const nextSteps = document.getElementById('next-steps');
+  const recommendationExplanation = document.getElementById('recommendation-explanation');
+  const explanationConfidence = document.getElementById('explanation-confidence');
+  const explanationDriver = document.getElementById('explanation-driver');
+  const explanationCaveat = document.getElementById('explanation-caveat');
 
   // Channel name presets
   const CHANNEL_PRESETS = [
@@ -94,7 +98,10 @@
         if (spend > 50) {
           const scaledSpend = spend * 0.2;
           const scaledConversions = conversions * 0.2;
+          const scaledMidSpend = spend * 0.6;
+          const scaledMidConversions = conversions * 0.6;
           dataPoints.push({ spend: scaledSpend, conversions: scaledConversions });
+          dataPoints.push({ spend: scaledMidSpend, conversions: scaledMidConversions });
         }
       }
 
@@ -115,6 +122,35 @@
     return '$' + Math.round(v).toLocaleString();
   }
 
+  function confidenceLabel(channels) {
+    const avgR2 = channels.reduce((sum, ch) => sum + (ch.curve?.r2 || 0), 0) / channels.length;
+    const minPoints = Math.min(...channels.map(ch => ch.dataPoints?.length || 0));
+    if (channels.length >= 4 && minPoints >= 6 && avgR2 >= 0.8) return 'High';
+    if (channels.length >= 3 && minPoints >= 3 && avgR2 >= 0.55) return 'Medium';
+    return 'Directional';
+  }
+
+  function renderExplanation(channels, result) {
+    if (!recommendationExplanation || result.length === 0) return;
+
+    const strongestIncrease = result
+      .map(r => ({ ...r, change: r.recommendedSpend - r.currentSpend }))
+      .sort((a, b) => b.change - a.change)[0];
+    const bestMarginal = [...result].sort((a, b) => a.marginalCPA - b.marginalCPA)[0];
+    const confidence = confidenceLabel(channels);
+
+    explanationConfidence.textContent = `${confidence} - based on ${channels.length} modeled channels and the fitted response curves.`;
+    explanationDriver.textContent = strongestIncrease && strongestIncrease.change > 1
+      ? `${strongestIncrease.channel} receives the largest increase because its modeled marginal CPA is strongest at the recommended allocation.`
+      : `${bestMarginal.channel} has the lowest modeled marginal CPA, so the allocation stays close to the current mix.`;
+    explanationCaveat.textContent = 'Treat this as a planning signal; sparse history, tracking changes, or campaign mix shifts can change the real next-dollar return.';
+    recommendationExplanation.hidden = false;
+  }
+
+  function hideExplanation() {
+    if (recommendationExplanation) recommendationExplanation.hidden = true;
+  }
+
   /** Render results */
   function renderResults(channels, result, validation) {
     if (!validation.ok) {
@@ -125,6 +161,7 @@
       totalConversions.textContent = '—';
       resultsNote.textContent = 'Not enough data to run the model.';
       nextSteps.hidden = true;
+      hideExplanation();
       return;
     }
 
@@ -136,6 +173,7 @@
       : (totalConv / 1000).toFixed(1) + 'k expected conversions';
 
     resultsNote.textContent = 'Based on your historical data and total budget.';
+    renderExplanation(channels, result);
 
     // Chart
     chartWrap.hidden = false;
@@ -180,6 +218,7 @@
     const totalBudget = parseFloat(document.getElementById('total-budget').value) || 0;
     if (totalBudget <= 0) {
       resultsNote.textContent = 'Enter a total budget greater than zero.';
+      hideExplanation();
       return;
     }
 

@@ -23,6 +23,9 @@ PUBLIC_ROUTES = {
     "https://mangrovetools.com/privacy/",
     "https://mangrovetools.com/contact/",
 }
+GENERIC_SOCIAL_IMAGE_ALT = (
+    "Mangrove Tools — free calculators from Naples, Florida"
+)
 
 
 class HeadAndHeadingParser(HTMLParser):
@@ -72,13 +75,17 @@ class PublicMetadataTests(unittest.TestCase):
                 )
                 self.assertEqual("1200", parser.meta.get("og:image:width"))
                 self.assertEqual("630", parser.meta.get("og:image:height"))
-                self.assertIn("Mangrove Tools", parser.meta.get("og:image:alt", ""))
+                self.assertEqual(
+                    GENERIC_SOCIAL_IMAGE_ALT,
+                    parser.meta.get("og:image:alt"),
+                )
                 self.assertEqual(
                     "https://mangrovetools.com/og.webp",
                     parser.meta.get("twitter:image"),
                 )
-                self.assertIn(
-                    "Mangrove Tools", parser.meta.get("twitter:image:alt", "")
+                self.assertEqual(
+                    GENERIC_SOCIAL_IMAGE_ALT,
+                    parser.meta.get("twitter:image:alt"),
                 )
 
     def test_analytics_h1_accessible_text_preserves_word_spacing(self) -> None:

@@ -8,6 +8,7 @@ const vm = require('node:vm');
 
 const root = path.resolve(__dirname, '..');
 const source = fs.readFileSync(path.join(root, 'analytics/budget/app.js'), 'utf8');
+const styles = fs.readFileSync(path.join(root, 'analytics/budget/styles.css'), 'utf8');
 const context = { window: {} };
 vm.createContext(context);
 vm.runInContext(source, context);
@@ -138,6 +139,7 @@ class FakeElement {
     this.disabled = false;
     this.checked = false;
     this.selected = false;
+    this.open = false;
     this.value = '';
     this.className = '';
     this.dataset = {};
@@ -413,6 +415,12 @@ function elementByClass(element, className) {
   ));
 }
 
+function elementsByClass(element, className) {
+  return element.descendants().filter(child => (
+    String(child.className).split(/\s+/).includes(className)
+  ));
+}
+
 test('creates the exact empty decision state', () => {
   assert.deepEqual(plain(app.createState()), {
     phase: 'empty',
@@ -476,7 +484,7 @@ test('derives readiness phases from modeled and preserved channels', () => {
       importResult: { ok: true },
       analysis: analysisWith(['preserved', 'preserved'])
     }),
-    'blocked'
+    'partially_modelable'
   );
 });
 
@@ -603,8 +611,27 @@ test('allocator failures map to exact controlled next actions', () => {
     })), {
       state: 'blocked',
       message,
-      conflicts: ['Paid search <em>unsafe</em>']
+      conflicts: ['Paid search <em>unsafe</em>'],
+      minimumBudget: null,
+      maximumBudget: null
     });
+  });
+});
+
+test('allocator failures retain structured feasible-budget boundaries', () => {
+  assert.deepEqual(plain(app.resultView(planningModel(), {
+    ok: false,
+    code: 'maximums_below_budget',
+    message: 'Uncontrolled allocator detail',
+    conflicts: ['Paid search <em>unsafe</em>'],
+    minimumBudget: 100,
+    maximumBudget: 40000
+  })), {
+    state: 'blocked',
+    message: 'Channel maximums leave part of this budget unassigned. Raise a maximum or lower the total budget.',
+    conflicts: ['Paid search <em>unsafe</em>'],
+    minimumBudget: 100,
+    maximumBudget: 40000
   });
 });
 
@@ -617,6 +644,8 @@ test('result view uses observational modeled-marginal copy without confidence cl
   const preserved = view.rows.find(row => row.status === 'Preserved');
 
   assert.equal(view.state, 'result');
+  assert.equal(view.summary[3].label, 'Predicted modeled-channel Revenue');
+  assert.match(view.outcomeScope, /whole-plan predicted Revenue is unavailable/i);
   assert.equal(view.marginalMetricLabel, 'Marginal ROAS');
   assert.match(text, /observational/i);
   assert.match(text, /modeled marginal/i);
@@ -686,6 +715,18 @@ test('negative allocation changes place the sign before the currency symbol', ()
   assert.equal(view.rows[0].change, '-$100');
 });
 
+test('driver copy never describes a decrease as an increase', () => {
+  const allocation = successfulAllocation('revenue');
+  allocation.allocation[0].currentSpend = 500;
+  allocation.allocation[0].recommendedSpend = 400;
+  const view = plain(app.resultView(planningModel(), allocation));
+
+  assert.equal(
+    view.mainDriver,
+    'No modeled channel receives a positive increase under the current constraints.'
+  );
+});
+
 test('plan submission requires finite positive budget and days', () => {
   const { elements } = loadDomApp();
   elements['use-sample-data'].trigger('click');
@@ -725,6 +766,32 @@ test('advanced constraints need no user values beyond budget and days', () => {
   assert.equal(
     elements['results-note'].textContent,
     'Allocation calculated for a 42-day decision horizon.'
+  );
+});
+
+test('preserved-only histories expose a fixed plan and keep an infeasible remainder controlled', () => {
+  const { elements } = loadDomApp();
+  const lines = ['period,channel,spend,conversions'];
+  for (let week = 1; week <= 12; week += 1) {
+    lines.push(`2024-W${String(week).padStart(2, '0')},Local partnerships,100,10`);
+  }
+  elements['history-paste'].value = lines.join('\n');
+
+  elements['parse-pasted-history'].trigger('click');
+
+  assert.equal(elements['decision-canvas'].dataset.phase, 'partially_modelable');
+  assert.equal(elements['plan-form'].hidden, false);
+  elements['total-budget'].value = '428.57';
+  elements['plan-form'].trigger('submit');
+  assert.equal(elements['decision-canvas'].dataset.phase, 'result');
+  assert.equal(elements.results.hidden, false);
+
+  elements['total-budget'].value = '500';
+  elements['plan-form'].trigger('submit');
+  assert.equal(elements['decision-canvas'].dataset.phase, 'blocked');
+  assert.match(
+    elements.results.textContent,
+    /No modeled channel can accept the remaining budget\. Add spend variation or change an explicit constraint\./
   );
 });
 
@@ -801,6 +868,7 @@ test('successful result DOM is complete before reveal and charts inspect every c
   const harness = loadDomApp();
   const { elements, motion, chartCalls, events } = harness;
   elements['use-sample-data'].trigger('click');
+  elements['model-inspector'].open = true;
   elements['plan-form'].trigger('submit');
 
   const allocationTable = elementByClass(elements.results, 'allocation-table');
@@ -808,7 +876,8 @@ test('successful result DOM is complete before reveal and charts inspect every c
   assert.match(resultSummary.textContent, /Requested budget/);
   assert.match(resultSummary.textContent, /Optimized budget/);
   assert.match(resultSummary.textContent, /Preserved budget/);
-  assert.match(resultSummary.textContent, /Predicted Revenue/);
+  assert.match(resultSummary.textContent, /Predicted modeled-channel Revenue/);
+  assert.match(resultSummary.textContent, /whole-plan predicted Revenue is unavailable/i);
   assert.deepEqual(
     elementsByTag(allocationTable, 'th').map(header => header.textContent),
     [
@@ -840,10 +909,118 @@ test('successful result DOM is complete before reveal and charts inspect every c
   });
 });
 
+test('closed model inspector waits to paint until opened and repaints on each reopen', () => {
+  const { elements, chartCalls } = loadDomApp();
+  elements['use-sample-data'].trigger('click');
+  elements['plan-form'].trigger('submit');
+
+  assert.equal(elements['model-inspector'].open, false);
+  assert.equal(chartCalls.response.length, 0);
+  assert.equal(chartCalls.marginal.length, 0);
+
+  elements['model-inspector'].open = true;
+  elements['model-inspector'].trigger('toggle');
+  assert.equal(chartCalls.response.length, 4);
+  assert.equal(chartCalls.marginal.length, 1);
+
+  elements['model-inspector'].open = false;
+  elements['model-inspector'].trigger('toggle');
+  elements['model-inspector'].open = true;
+  elements['model-inspector'].trigger('toggle');
+  assert.equal(chartCalls.response.length, 8);
+  assert.equal(chartCalls.marginal.length, 2);
+});
+
+test('model inspector exposes fitted treatment, marker positions, and in-sample fit as text', () => {
+  const { elements } = loadDomApp();
+  elements['use-sample-data'].trigger('click');
+  elements['model-inspector'].open = true;
+  elements['plan-form'].trigger('submit');
+
+  const modelableInspector = elementsByClass(
+    elements['model-inspector'],
+    'channel-inspector'
+  )[0];
+  assert.match(modelableInspector.textContent, /Fitted treatment.*diminishing-return curve/i);
+  assert.match(modelableInspector.textContent, /Current spend rate.*\$1,550.*weekly period/i);
+  assert.match(modelableInspector.textContent, /Recommended spend rate.*\$[\d,.]+.*weekly period/i);
+  assert.match(modelableInspector.textContent, /In-sample log-space fit \(R²\)/i);
+  assert.doesNotMatch(modelableInspector.textContent, /confidence|certainty|accuracy/i);
+});
+
+test('narrow inspector marker text stacks without an intrinsic two-column minimum', () => {
+  assert.match(
+    styles,
+    /@media \(max-width: 600px\)[\s\S]*?\.channel-inspector-positions div\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0,\s*1fr\)/
+  );
+});
+
+test('conversion efficiency chart uses an increasing-is-better metric instead of raw CPA', () => {
+  const { elements, chartCalls } = loadDomApp();
+  elements['use-sample-data'].trigger('click');
+  elements.objective.value = 'conversions';
+  elements.objective.trigger('change');
+  elements['model-inspector'].open = true;
+  elements['plan-form'].trigger('submit');
+
+  const [canvas, rows, options] = chartCalls.marginal[0];
+  assert.equal(canvas.tagName, 'CANVAS');
+  assert.equal(options.marginalLabel, 'Marginal conversions per dollar (higher is better)');
+  assert.ok(rows.every(row => (
+    row.marginalMetric.key === 'marginal_conversions_per_dollar'
+    && row.marginalMetric.value > 0
+  )));
+});
+
+test('editing budget or constraints clears a stale result before rebuilding', () => {
+  const { elements } = loadDomApp();
+  elements['use-sample-data'].trigger('click');
+  elements['plan-form'].trigger('submit');
+  assert.equal(elements.results.hidden, false);
+
+  elements['total-budget'].value = '20000';
+  elements['total-budget'].trigger('input');
+  assert.equal(elements.results.hidden, true);
+  assert.match(elements['import-status'].textContent, /Budget changed.*rebuild/i);
+
+  elements['plan-form'].trigger('submit');
+  assert.equal(elements.results.hidden, false);
+  const minimum = elementsByTag(elements['constraints-list'], 'input')
+    .find(input => input.id === 'constraint-minimum-2');
+  minimum.value = '1000';
+  minimum.trigger('input');
+  assert.equal(elements.results.hidden, true);
+  assert.match(elements['import-status'].textContent, /Constraint changed.*rebuild/i);
+});
+
+test('blocked result renders the allocator feasible-budget boundaries', () => {
+  const { elements, window } = loadDomApp();
+  elements['use-sample-data'].trigger('click');
+  window.MangroveBudgetAllocator.allocatePlan = () => ({
+    ok: false,
+    code: 'maximums_below_budget',
+    message: 'Uncontrolled allocator detail',
+    conflicts: ['Paid search'],
+    minimumBudget: 100,
+    maximumBudget: 40000
+  });
+
+  elements['plan-form'].trigger('submit');
+
+  assert.match(elements.results.textContent, /Minimum feasible budget\$100/);
+  assert.match(elements.results.textContent, /Maximum feasible budget\$40,000/);
+  assert.match(
+    elements.results.textContent,
+    /Channel maximums leave part of this budget unassigned/
+  );
+  assert.doesNotMatch(elements.results.textContent, /Uncontrolled allocator detail/);
+});
+
 test('response charts debounce resize by 150ms and replacement cancels the pending repaint', () => {
   const harness = loadDomApp();
   const { elements, window, chartCalls, timers } = harness;
   elements['use-sample-data'].trigger('click');
+  elements['model-inspector'].open = true;
   elements['plan-form'].trigger('submit');
   const initialResponses = chartCalls.response.length;
 

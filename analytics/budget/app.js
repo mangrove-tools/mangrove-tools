@@ -88,6 +88,7 @@
       return channel && channel.status === 'preserved';
     }).length;
 
+    if (modelable === 0 && preserved > 0) return 'partially_modelable';
     if (modelable === 0) return 'blocked';
     if (preserved > 0) return 'partially_modelable';
     return 'ready';
@@ -219,7 +220,9 @@
         message: FAILURE_COPY[normalizedCode] || FAILURE_COPY.invalid_plan,
         conflicts: Array.isArray(result.conflicts)
           ? result.conflicts.filter(function stringConflict(value) { return typeof value === 'string'; })
-          : []
+          : [],
+        minimumBudget: finiteValue(result.minimumBudget),
+        maximumBudget: finiteValue(result.maximumBudget)
       };
     }
 
@@ -259,7 +262,7 @@
     const preservedRows = rows.filter(function preserved(row) { return row.status === 'Preserved'; });
     const rawRows = Array.isArray(result.allocation) ? result.allocation : [];
     let driverIndex = -1;
-    let driverIncrease = -Infinity;
+    let driverIncrease = 0;
     rawRows.forEach(function findDriver(row, index) {
       if (!row || row.status !== 'modelable') return;
       const increase = finiteValue(row.recommendedSpend) - finiteValue(row.currentSpend);
@@ -268,7 +271,7 @@
         driverIndex = index;
       }
     });
-    const driver = driverIndex >= 0 ? rows[driverIndex] : null;
+    const driver = driverIndex >= 0 && driverIncrease > 0 ? rows[driverIndex] : null;
     const failedGateCopy = preservedRows.flatMap(function channelFailures(row) {
       return row.failedGates.map(function gateCopy(gate) { return row.channel + ' — ' + gate; });
     });
@@ -302,15 +305,19 @@
         { label: 'Requested budget', value: money(totals.requestedBudget) },
         { label: 'Optimized budget', value: money(totals.optimizedBudget) },
         { label: 'Preserved budget', value: money(totals.preservedBudget) },
-        { label: 'Predicted ' + metricLabel, value: outcomeValue }
+        { label: 'Predicted modeled-channel ' + metricLabel, value: outcomeValue }
       ],
+      outcomeScope: preservedRows.length > 0
+        ? 'Whole-plan predicted ' + metricLabel
+          + ' is unavailable because preserved channels have no fitted response.'
+        : 'All planned channels are included in the predicted ' + metricLabel + '.',
       rows: rows,
       evidenceQuality: modeledRows.length + ' modelable channel' + (modeledRows.length === 1 ? '' : 's')
         + ' and ' + preservedRows.length + ' preserved channel' + (preservedRows.length === 1 ? '' : 's')
         + (failedGateCopy.length ? '. Failed gates: ' + failedGateCopy.join('; ') + '.' : '.'),
       mainDriver: driver
         ? driver.channel + ' receives the largest modeled increase at ' + driver.marginalMetric + '.'
-        : 'No modeled channel receives an increase under the current constraints.',
+        : 'No modeled channel receives a positive increase under the current constraints.',
       caveat: caveat,
       timingCaveat: timingCaveat,
       financialTreatment: financialTreatment
@@ -428,8 +435,8 @@
       const phase = derivePhase(state);
       const selectedModel = modelFor(state.analysis, state.selectedObjective);
       const canPlan = selectedModel && Array.isArray(selectedModel.channels)
-        && selectedModel.channels.some(function modeledChannel(channel) {
-          return channel && channel.status === 'modelable';
+        && selectedModel.channels.some(function plannableChannel(channel) {
+          return channel && (channel.status === 'modelable' || channel.status === 'preserved');
         });
       state.phase = phase;
       if (decisionCanvas) decisionCanvas.dataset.phase = phase;
@@ -468,6 +475,12 @@
       if (recommendationExplanation) recommendationExplanation.hidden = true;
       if (MOTION.resetResult) MOTION.resetResult(resultsPanel);
       syncPhase();
+    }
+
+    function invalidateAllocation(message) {
+      if (!state.allocation) return;
+      clearAllocationResult();
+      setImportStatus(message);
     }
 
     function revokeDownloads() {
@@ -672,6 +685,7 @@
           const minimum = constraintInput(row.minimum, 'Minimum plan amount', 'number');
           minimum.input.addEventListener('input', function updateMinimum() {
             state.constraints[row.channel].minimum = optionalNumber(minimum.input.value);
+            invalidateAllocation('Constraint changed. Rebuild the plan to update the recommendation.');
           });
           fields.appendChild(minimum.field);
         }
@@ -679,6 +693,7 @@
           const maximum = constraintInput(row.maximum, 'Maximum plan amount', 'number');
           maximum.input.addEventListener('input', function updateMaximum() {
             state.constraints[row.channel].maximum = optionalNumber(maximum.input.value);
+            invalidateAllocation('Constraint changed. Rebuild the plan to update the recommendation.');
           });
           fields.appendChild(maximum.field);
         }
@@ -686,12 +701,14 @@
           const preserved = constraintInput(row.preserved, 'Preserved amount', 'number');
           preserved.input.addEventListener('input', function updatePreserved() {
             state.constraints[row.channel].minimum = optionalNumber(preserved.input.value);
+            invalidateAllocation('Constraint changed. Rebuild the plan to update the recommendation.');
           });
           fields.appendChild(preserved.field);
         }
         const excluded = constraintInput(row.excluded, 'Exclude channel', 'checkbox');
         excluded.input.addEventListener('change', function updateExclusion() {
           state.constraints[row.channel].excluded = excluded.input.checked === true;
+          invalidateAllocation('Constraint changed. Rebuild the plan to update the recommendation.');
         });
         fields.appendChild(excluded.field);
         card.append(heading, status, fields);
@@ -828,6 +845,24 @@
           ? view.message
           : FAILURE_COPY.invalid_plan;
         blocked.appendChild(message);
+        if (view && (view.minimumBudget != null || view.maximumBudget != null)) {
+          const boundaries = document.createElement('dl');
+          boundaries.className = 'blocked-boundaries';
+          [
+            ['Minimum feasible budget', view.minimumBudget],
+            ['Maximum feasible budget', view.maximumBudget]
+          ].forEach(function addBoundary(boundary) {
+            if (boundary[1] == null) return;
+            const wrapper = document.createElement('div');
+            const term = document.createElement('dt');
+            const description = document.createElement('dd');
+            term.textContent = boundary[0];
+            description.textContent = money(boundary[1]);
+            wrapper.append(term, description);
+            boundaries.appendChild(wrapper);
+          });
+          blocked.appendChild(boundaries);
+        }
         if (view && Array.isArray(view.conflicts) && view.conflicts.length > 0) {
           const label = document.createElement('p');
           const list = document.createElement('ul');
@@ -865,6 +900,16 @@
         wrapper.append(term, description);
         summary.appendChild(wrapper);
       });
+      if (view.outcomeScope) {
+        const wrapper = document.createElement('div');
+        const term = document.createElement('dt');
+        const description = document.createElement('dd');
+        wrapper.className = 'result-outcome-scope';
+        term.textContent = 'Outcome scope';
+        description.textContent = view.outcomeScope;
+        wrapper.append(term, description);
+        summary.appendChild(wrapper);
+      }
       tableScroll.className = 'table-scroll';
       table.className = 'data-table allocation-table';
       caption.textContent = 'Recommended allocation by channel';
@@ -959,7 +1004,10 @@
       const crossCanvas = document.createElement('canvas');
       overview.className = 'inspector-overview';
       overviewHeading.textContent = 'Cross-channel modeled marginal efficiency';
-      overviewSummary.textContent = 'Compare the selected marginal metric only across channels with admitted response curves.';
+      overviewSummary.textContent = model.metric.key === 'conversions'
+        ? 'Compare marginal conversions per dollar across admitted response curves; higher is better. '
+          + 'The allocation table reports the equivalent marginal CPA, where lower is better.'
+        : 'Compare the selected marginal metric only across channels with admitted response curves; higher is better.';
       crossCanvas.id = 'marginal-efficiency-chart';
       crossCanvas.width = 720;
       crossCanvas.height = 260;
@@ -974,6 +1022,7 @@
         const section = document.createElement('section');
         const heading = document.createElement('h3');
         const status = document.createElement('p');
+        const positions = document.createElement('dl');
         const canvas = document.createElement('canvas');
         const tableScroll = document.createElement('div');
         const table = document.createElement('table');
@@ -993,6 +1042,42 @@
         status.textContent = channel.status === 'modelable'
           ? 'Modeled response admitted; markers show current and recommended spend rates.'
           : 'Preserved observations only; no fitted line is shown.';
+        positions.className = 'channel-inspector-positions';
+        if (channel.status === 'modelable') {
+          const currentSpendRate = allocationRow && Number.isFinite(allocation.horizonFactor)
+            && allocation.horizonFactor > 0
+            ? allocationRow.currentSpend / allocation.horizonFactor
+            : finiteValue(channel.currentSpendRate);
+          const recommendedSpendRate = allocationRow
+            ? finiteValue(allocationRow.recommendedSpendRate)
+            : null;
+          const positionItems = [
+            ['Fitted treatment', 'In-sample diminishing-return curve'],
+            [
+              'Current spend rate',
+              money(currentSpendRate) + ' per ' + (model.cadence || 'historical') + ' period'
+            ],
+            [
+              'Recommended spend rate',
+              money(recommendedSpendRate) + ' per ' + (model.cadence || 'historical') + ' period'
+            ],
+            [
+              'In-sample log-space fit (R²)',
+              channel.curve && Number.isFinite(channel.curve.r2)
+                ? channel.curve.r2.toLocaleString('en-US', { maximumFractionDigits: 4 })
+                : '—'
+            ]
+          ];
+          positionItems.forEach(function addPosition(item) {
+            const wrapper = document.createElement('div');
+            const term = document.createElement('dt');
+            const description = document.createElement('dd');
+            term.textContent = item[0];
+            description.textContent = item[1];
+            wrapper.append(term, description);
+            positions.appendChild(wrapper);
+          });
+        }
         canvas.id = 'response-curve-' + index;
         canvas.width = 720;
         canvas.height = 320;
@@ -1047,7 +1132,9 @@
         });
         gateTable.append(gateCaption, gateHead, gateBody);
         gateScroll.appendChild(gateTable);
-        section.append(heading, status, canvas, tableScroll, gateScroll);
+        section.append(heading, status);
+        if (channel.status === 'modelable') section.appendChild(positions);
+        section.append(canvas, tableScroll, gateScroll);
         inspectorCharts.appendChild(section);
         chartJobs.push({
           canvas: canvas,
@@ -1064,15 +1151,31 @@
       const modelableRows = allocationRows.filter(function modelableAllocation(row) {
         return row && row.status === 'modelable';
       });
+      const chartRows = model.metric.key === 'conversions'
+        ? modelableRows.map(function conversionEfficiency(row) {
+          const cpa = finiteValue(row && row.marginalMetric && row.marginalMetric.value);
+          return Object.assign({}, row, {
+            marginalMetric: {
+              key: 'marginal_conversions_per_dollar',
+              value: cpa != null && cpa > 0 ? 1 / cpa : null
+            }
+          });
+        }).filter(function finiteEfficiency(row) {
+          return Number.isFinite(row.marginalMetric.value);
+        })
+        : modelableRows;
       repaintCharts = function paintInspectorCharts() {
         if (typeof CHARTS.drawMarginalEfficiencyChart === 'function') {
-          CHARTS.drawMarginalEfficiencyChart(crossCanvas, modelableRows, {
-            marginalLabel: marginalLabel(model.metric),
+          CHARTS.drawMarginalEfficiencyChart(crossCanvas, chartRows, {
+            marginalLabel: model.metric.key === 'conversions'
+              ? 'Marginal conversions per dollar (higher is better)'
+              : marginalLabel(model.metric) + ' (higher is better)',
             formatMarginal: function formatMarginalValue(value) {
+              if (model.metric.key === 'conversions') {
+                return numberText(value) + ' marginal conversions per dollar';
+              }
               return formatMarginal({
-                key: model.metric.key === 'conversions'
-                  ? 'marginal_cpa'
-                  : model.metric.key === 'revenue'
+                key: model.metric.key === 'revenue'
                     ? 'marginal_roas'
                     : 'marginal_roi',
                 value: value
@@ -1091,7 +1194,7 @@
           });
         }
       };
-      repaintCharts();
+      if (modelInspector && modelInspector.open) repaintCharts();
     }
 
     function finishInspection(inspection) {
@@ -1287,6 +1390,23 @@
       setImportStatus('Planning window changed. Review preserved amounts before rebuilding the plan.');
     });
 
+    totalBudgetInput.addEventListener('input', function updateBudget() {
+      invalidateAllocation('Budget changed. Rebuild the plan to update the recommendation.');
+    });
+
+    if (modelInspector) {
+      modelInspector.addEventListener('toggle', function repaintOpenedInspector() {
+        if (!modelInspector.open) {
+          if (chartTimer != null && typeof root.clearTimeout === 'function') {
+            root.clearTimeout(chartTimer);
+          }
+          chartTimer = null;
+          return;
+        }
+        if (repaintCharts) repaintCharts();
+      });
+    }
+
     downloadCleanedData.addEventListener('click', function downloadCleanHistory() {
       if (!state.importResult || state.importResult.ok !== true
         || typeof HISTORY.toCleanCsv !== 'function') return;
@@ -1334,7 +1454,8 @@
 
     if (typeof root.addEventListener === 'function') {
       root.addEventListener('resize', function repaintAfterResize() {
-        if (!repaintCharts || typeof root.setTimeout !== 'function') return;
+        if (!repaintCharts || (modelInspector && !modelInspector.open)
+          || typeof root.setTimeout !== 'function') return;
         if (chartTimer != null && typeof root.clearTimeout === 'function') {
           root.clearTimeout(chartTimer);
         }

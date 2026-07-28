@@ -79,6 +79,33 @@ test('parses escaped quotes and trailing empty fields without shifting columns',
   assert.deepEqual(result.rows[0].dimensions.campaign, []);
 });
 
+test('matches aliases independently of the browser locale', () => {
+  function inspectInTurkishLikeLocale(moduleSource) {
+    const localeContext = { window: {} };
+    vm.createContext(localeContext);
+    vm.runInContext(`
+      String.prototype.toLocaleLowerCase = function toLocaleLowerCase() {
+        return String(this).replace(/I/g, 'ı').replace(/İ/g, 'i').toLowerCase();
+      };
+    `, localeContext);
+    vm.runInContext(moduleSource, localeContext);
+    return localeContext.window.MangroveHistoryData.inspectHistory(
+      'period,channel,MEDIA_SPEND,conversions\n2026-W02,Search,1200,28',
+      { now: new Date('2026-07-28T12:00:00Z') }
+    );
+  }
+
+  const legacyResult = inspectInTurkishLikeLocale(
+    source.replace('.toLowerCase()', '.toLocaleLowerCase()')
+  );
+  assert.equal(legacyResult.ok, false);
+
+  const result = inspectInTurkishLikeLocale(source);
+
+  assert.equal(result.ok, true);
+  assert.equal(result.rows[0].spend, 1200);
+});
+
 test('rejects duplicate semantic columns unless a valid explicit mapping resolves them', () => {
   const sourceText = [
     'period,channel,spend,cost,conversions',

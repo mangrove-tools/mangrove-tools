@@ -120,7 +120,7 @@
   }
 
   function headerKey(header) {
-    return header.replace(/^\uFEFF/, '').trim().toLocaleLowerCase();
+    return header.replace(/^\uFEFF/, '').trim().toLowerCase();
   }
 
   function sourceHeader(headers, requested) {

@@ -40,6 +40,7 @@ function makeCanvas(width = 500, height = 260) {
   const fills = [];
   const strokes = [];
   const fonts = [];
+  const labels = [];
   const context = {
     fillStyle: '',
     strokeStyle: '',
@@ -62,8 +63,9 @@ function makeCanvas(width = 500, height = 260) {
     stroke() {
       strokes.push(this.strokeStyle);
     },
-    fillText() {
+    fillText(text, x, y) {
       fonts.push(this.font);
+      labels.push({ text, x, y });
     }
   };
 
@@ -81,7 +83,8 @@ function makeCanvas(width = 500, height = 260) {
     fillRects,
     fills,
     strokes,
-    fonts
+    fonts,
+    labels
   };
 }
 
@@ -124,4 +127,11 @@ test('forecast chart maps confidence to signal and forecast to pine', () => {
   assert.ok(view.fills.includes(cssValues['--signal-soft']));
   assert.ok(view.strokes.includes(cssValues['--accent']));
   assert.ok(view.fonts.every((font) => font.includes('IBM Plex Mono')));
+
+  const forecastLabel = view.labels.find(({ text }) => /forecast/i.test(text));
+  assert.ok(forecastLabel, 'forecast region should be labeled');
+  assert.ok(
+    forecastLabel.y < 60,
+    'forecast region label should remain inside the plot, above the x-axis labels'
+  );
 });

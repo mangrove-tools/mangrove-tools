@@ -261,12 +261,13 @@ function drawForecastChart(canvas, historical, forecast, unit) {
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // "Forecast" label
-    ctx.fillStyle = colors.text;
-    ctx.font = '500 10px IBM Plex Mono, monospace';
-    ctx.textAlign = 'center';
+    // Keep the forecast region marker inside the plot so it cannot collide
+    // with the x-axis month labels.
+    ctx.fillStyle = colors.line;
+    ctx.font = '600 9px IBM Plex Mono, monospace';
+    ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
-    ctx.fillText('Forecast', scaleX(historical.length + forecast.length / 2), H - pad.bottom + 4);
+    ctx.fillText('FORECAST', sepX + 8, pad.top + 6);
   }
 
   // X-axis labels

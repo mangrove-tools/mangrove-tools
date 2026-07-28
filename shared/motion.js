@@ -15,6 +15,32 @@
     );
   }
 
+  function initDecisionInstrument(instrument) {
+    instrument =
+      instrument ||
+      (document && document.querySelector
+        ? document.querySelector("[data-decision-instrument]")
+        : null);
+    if (!instrument) return;
+
+    if (prefersReducedMotion()) {
+      instrument.dataset.motion = "reduced";
+      return;
+    }
+
+    if (typeof root.requestAnimationFrame !== "function") {
+      instrument.dataset.motion = "static";
+      return;
+    }
+
+    instrument.dataset.motion = "ready";
+    root.requestAnimationFrame(function () {
+      root.requestAnimationFrame(function () {
+        instrument.dataset.motion = "active";
+      });
+    });
+  }
+
   function initDecisionStory(story) {
     story =
       story ||
@@ -99,6 +125,7 @@
   }
 
   root.MangroveMotion = {
+    initDecisionInstrument: initDecisionInstrument,
     initDecisionStory: initDecisionStory,
     revealResult: revealResult,
     resetResult: resetResult,
@@ -107,9 +134,11 @@
   if (document) {
     if (document.readyState === "loading" && document.addEventListener) {
       document.addEventListener("DOMContentLoaded", function () {
+        initDecisionInstrument();
         initDecisionStory();
       });
     } else {
+      initDecisionInstrument();
       initDecisionStory();
     }
   }

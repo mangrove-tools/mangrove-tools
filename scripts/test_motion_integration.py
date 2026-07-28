@@ -11,6 +11,7 @@ class MotionPageParser(HTMLParser):
     def __init__(self) -> None:
         super().__init__()
         self.scripts: list[str] = []
+        self.has_decision_instrument_hook = False
         self.has_decision_story_hook = False
         self.has_generic_reveal = False
 
@@ -23,6 +24,8 @@ class MotionPageParser(HTMLParser):
             self.scripts.append(attributes["src"] or "")
         if tag == "section" and "data-decision-story" in attributes:
             self.has_decision_story_hook = True
+        if tag == "figure" and "data-decision-instrument" in attributes:
+            self.has_decision_instrument_hook = True
         if "reveal" in classes:
             self.has_generic_reveal = True
 
@@ -34,9 +37,10 @@ def parse_page(relative_path: str) -> MotionPageParser:
 
 
 class MotionIntegrationTests(unittest.TestCase):
-    def test_homepage_loads_motion_for_the_story_hook(self) -> None:
+    def test_homepage_loads_motion_for_instrument_and_story_hooks(self) -> None:
         homepage = parse_page("index.html")
 
+        self.assertTrue(homepage.has_decision_instrument_hook)
         self.assertTrue(homepage.has_decision_story_hook)
         self.assertIn("/shared/motion.js", homepage.scripts)
         self.assertFalse(homepage.has_generic_reveal)
@@ -82,6 +86,8 @@ class MotionIntegrationTests(unittest.TestCase):
         site_css = (ROOT / "site.css").read_text(encoding="utf-8")
         tool_css = (ROOT / "tool-shell.css").read_text(encoding="utf-8")
 
+        self.assertIn('.decision-instrument[data-motion="ready"]', site_css)
+        self.assertIn('.decision-instrument[data-motion="active"]', site_css)
         self.assertIn('.decision-story[data-motion="ready"]', site_css)
         self.assertIn('.decision-story[data-motion="active"]', site_css)
         self.assertIn('.results[data-result-state="updating"]', tool_css)

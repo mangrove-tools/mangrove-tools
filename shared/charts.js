@@ -7,21 +7,17 @@
 'use strict';
 
 function getChartColors() {
-  const isDark = getComputedStyle(document.documentElement)
-    .getPropertyValue('--paper').trim() === '#0c0c0c';
-  if (isDark) {
-    return {
-      current: 'rgba(245, 243, 239, 0.15)',
-      recommended: '#308e7b',
-      text: '#f5f3ef',
-      muted: '#9e9a93'
-    };
-  }
+  const styles = getComputedStyle(document.documentElement);
+  const read = (name, fallback) =>
+    styles.getPropertyValue(name).trim() || fallback;
+
   return {
-    current: 'rgba(20, 36, 28, 0.3)',
-    recommended: '#c87a53',
-    text: '#14241c',
-    muted: '#4a5d4e'
+    current: read('--signal', '#d4a85c'),
+    recommended: read('--accent', '#42a28e'),
+    confidence: read('--signal-soft', 'rgba(212, 168, 92, 0.11)'),
+    text: read('--ink', '#f5f3ef'),
+    muted: read('--ink-soft', '#a8aaa5'),
+    grid: read('--line', 'rgba(232, 238, 233, 0.1)')
   };
 }
 
@@ -60,7 +56,7 @@ function drawAllocationChart(canvas, data, unit) {
 
     // Label
     ctx.fillStyle = colors.text;
-    ctx.font = '500 12px IBM Plex Sans, sans-serif';
+    ctx.font = '500 12px IBM Plex Mono, monospace';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     const label = d.label.length > 14 ? d.label.slice(0, 13) + '...' : d.label;
@@ -81,7 +77,7 @@ function drawAllocationChart(canvas, data, unit) {
 
     // Values
     ctx.fillStyle = colors.muted;
-    ctx.font = '600 11px IBM Plex Sans, sans-serif';
+    ctx.font = '600 11px IBM Plex Mono, monospace';
     ctx.textAlign = 'right';
     const fmt = (v) => unit === '$' ? `$${Math.round(v).toLocaleString()}` : Math.round(v).toLocaleString();
     ctx.fillText(fmt(d.current), barStart + barMaxWidth + 4, y + (rowH - padding * 2) * 0.28);
@@ -96,7 +92,7 @@ function drawAllocationChart(canvas, data, unit) {
   ctx.fillStyle = colors.current;
   ctx.fillRect(legendX, legendY, 12, 8);
   ctx.fillStyle = colors.muted;
-  ctx.font = '500 11px IBM Plex Sans, sans-serif';
+  ctx.font = '500 11px IBM Plex Mono, monospace';
   ctx.textAlign = 'left';
   ctx.fillText('Current', legendX + 16, legendY + 7);
 
@@ -128,9 +124,9 @@ function drawForecastChart(canvas, historical, forecast, unit) {
   const base = getChartColors();
   const colors = {
     line: base.recommended,
-    band: base.recommended === '#308e7b' ? 'rgba(48, 142, 123, 0.15)' : 'rgba(200, 122, 83, 0.15)',
+    band: base.confidence,
     historical: base.text,
-    grid: base.muted === '#9e9a93' ? 'rgba(245, 243, 239, 0.08)' : 'rgba(20, 36, 28, 0.1)',
+    grid: base.grid,
     text: base.muted,
     axis: base.text
   };
@@ -165,7 +161,7 @@ function drawForecastChart(canvas, historical, forecast, unit) {
 
     const val = maxY - (g / 4) * (maxY - minY);
     ctx.fillStyle = colors.text;
-    ctx.font = '500 10px IBM Plex Sans, sans-serif';
+    ctx.font = '500 10px IBM Plex Mono, monospace';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
     const label = unit === '$' ? `$${Math.round(val).toLocaleString()}` : Math.round(val).toLocaleString();
@@ -265,24 +261,41 @@ function drawForecastChart(canvas, historical, forecast, unit) {
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // "Forecast" label
-    ctx.fillStyle = colors.text;
-    ctx.font = '500 10px IBM Plex Sans, sans-serif';
-    ctx.textAlign = 'center';
+    // Keep the forecast region marker inside the plot so it cannot collide
+    // with the x-axis month labels.
+    ctx.fillStyle = colors.line;
+    ctx.font = '600 9px IBM Plex Mono, monospace';
+    ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
-    ctx.fillText('Forecast', scaleX(historical.length + forecast.length / 2), H - pad.bottom + 4);
+    ctx.fillText('FORECAST', sepX + 8, pad.top + 6);
   }
 
   // X-axis labels
   ctx.fillStyle = colors.text;
-  ctx.font = '500 10px IBM Plex Sans, sans-serif';
+  ctx.font = '500 10px IBM Plex Mono, monospace';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
 
-  // Show every N labels to avoid crowding
-  const labelStep = Math.ceil(totalPoints / 6);
-  for (let i = 0; i < totalPoints; i += labelStep) {
+  // Keep a readable minimum interval between complete YYYY-MM labels and
+  // include both endpoints so narrow canvases still show the full time range.
+  const maxLabelsByWidth = Math.max(2, Math.floor(chartW / 64) + 1);
+  const labelCount = Math.max(1, Math.min(totalPoints, 6, maxLabelsByWidth));
+  const labelIndexes = labelCount === 1
+    ? [0]
+    : Array.from(
+        { length: labelCount },
+        (_, index) => Math.round((index * (totalPoints - 1)) / (labelCount - 1))
+      );
+
+  labelIndexes.forEach((i) => {
     const xi = scaleX(i);
+    ctx.textAlign = labelCount === 1
+      ? 'center'
+      : i === 0
+        ? 'left'
+        : i === totalPoints - 1
+          ? 'right'
+          : 'center';
     let label;
     if (i < historical.length) {
       label = historical[i].month || String(i + 1);
@@ -290,7 +303,7 @@ function drawForecastChart(canvas, historical, forecast, unit) {
       label = forecast[i - historical.length]?.month || '';
     }
     ctx.fillText(label, xi, H - pad.bottom + 4);
-  }
+  });
 }
 
 window.MangroveCharts = {

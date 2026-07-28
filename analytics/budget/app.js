@@ -25,6 +25,27 @@
     revenue: 'Revenue',
     financial: 'Financial outcome'
   });
+  const FAILURE_COPY = Object.freeze({
+    minimums_exceed_budget:
+      'Preserved and minimum allocations exceed this budget. Increase the budget or lower the listed constraints.',
+    maximums_below_budget:
+      'Channel maximums leave part of this budget unassigned. Raise a maximum or lower the total budget.',
+    no_defensible_remainder:
+      'No modeled channel can accept the remaining budget. Add spend variation or change an explicit constraint.',
+    invalid_plan:
+      'Enter a positive budget and planning window.',
+    rounding_infeasible:
+      'The plan cannot be reconciled to currency cents under the current constraints.'
+  });
+  const FAILURE_CODES = Object.freeze({
+    invalid_input: 'invalid_plan',
+    currency_reconciliation_failed: 'rounding_infeasible'
+  });
+  const MARGINAL_LABELS = Object.freeze({
+    marginal_cpa: 'Marginal CPA',
+    marginal_roas: 'Marginal ROAS',
+    marginal_roi: 'Marginal ROI'
+  });
 
   function createState() {
     return {
@@ -54,6 +75,7 @@
     }
     if (current.importResult && current.importResult.ok === false) return 'needs_correction';
     if (current.allocation && current.allocation.ok === true) return 'result';
+    if (current.allocation && current.allocation.ok === false) return 'blocked';
     if (!current.analysis) return 'empty';
     if (current.analysis.ok !== true) return 'blocked';
 
@@ -117,10 +139,190 @@
     };
   }
 
+  function finiteValue(value) {
+    return Number.isFinite(value) ? value : null;
+  }
+
+  function money(value) {
+    const amount = finiteValue(value);
+    if (amount == null) return '—';
+    const absolute = Math.abs(amount);
+    return (amount < 0 ? '-$' : '$') + absolute.toLocaleString('en-US', {
+      minimumFractionDigits: Math.round(absolute * 100) % 100 === 0 ? 0 : 2,
+      maximumFractionDigits: 2
+    });
+  }
+
+  function numberText(value) {
+    const amount = finiteValue(value);
+    if (amount == null) return '—';
+    return amount.toLocaleString('en-US', { maximumFractionDigits: 2 });
+  }
+
+  function marginalLabel(metric) {
+    if (!metric || typeof metric.key !== 'string') return 'Selected marginal metric';
+    if (metric.key === 'conversions') return MARGINAL_LABELS.marginal_cpa;
+    if (metric.key === 'revenue') return MARGINAL_LABELS.marginal_roas;
+    if (metric.key === 'financial'
+      && (metric.costTreatment === 'before_marketing' || metric.costTreatment === 'after_marketing')) {
+      return MARGINAL_LABELS.marginal_roi;
+    }
+    return 'Selected marginal metric';
+  }
+
+  function formatMarginal(metric) {
+    if (!metric || !MARGINAL_LABELS[metric.key] || !Number.isFinite(metric.value)) return '—';
+    if (metric.key === 'marginal_cpa') {
+      return money(metric.value) + ' ' + MARGINAL_LABELS[metric.key];
+    }
+    return numberText(metric.value) + '× ' + MARGINAL_LABELS[metric.key];
+  }
+
+  function constraintRows(model, constraints) {
+    const selectedModel = model && typeof model === 'object' ? model : {};
+    const sourceConstraints = constraints && typeof constraints === 'object' ? constraints : {};
+    const channels = Array.isArray(selectedModel.channels) ? selectedModel.channels : [];
+    return channels.map(function constraintRow(channel, index) {
+      const name = channel && typeof channel.channel === 'string' ? channel.channel : 'Unnamed channel';
+      const source = sourceConstraints[name] && typeof sourceConstraints[name] === 'object'
+        ? sourceConstraints[name]
+        : {};
+      const modelable = channel && channel.status === 'modelable';
+      return {
+        channel: name,
+        status: modelable ? 'modelable' : 'preserved',
+        statusLabel: modelable ? 'Modeled' : 'Preserved',
+        minimum: modelable
+          ? { id: 'constraint-minimum-' + index, value: finiteValue(source.minimum) }
+          : null,
+        maximum: modelable
+          ? { id: 'constraint-maximum-' + index, value: finiteValue(source.maximum) }
+          : null,
+        preserved: modelable
+          ? null
+          : { id: 'constraint-preserved-' + index, value: finiteValue(source.minimum) },
+        excluded: {
+          id: 'constraint-excluded-' + index,
+          value: source.excluded === true
+        }
+      };
+    });
+  }
+
+  function resultView(model, allocation) {
+    const selectedModel = model && typeof model === 'object' ? model : {};
+    const result = allocation && typeof allocation === 'object' ? allocation : {};
+    if (result.ok !== true) {
+      const normalizedCode = FAILURE_CODES[result.code] || result.code;
+      return {
+        state: 'blocked',
+        message: FAILURE_COPY[normalizedCode] || FAILURE_COPY.invalid_plan,
+        conflicts: Array.isArray(result.conflicts)
+          ? result.conflicts.filter(function stringConflict(value) { return typeof value === 'string'; })
+          : []
+      };
+    }
+
+    const metric = selectedModel.metric && typeof selectedModel.metric === 'object'
+      ? selectedModel.metric
+      : {};
+    const channels = Array.isArray(selectedModel.channels) ? selectedModel.channels : [];
+    const channelsByName = new Map(channels.map(function indexChannel(channel) {
+      return [channel && channel.channel, channel];
+    }));
+    const rows = (Array.isArray(result.allocation) ? result.allocation : []).map(function allocationRow(row) {
+      const channel = channelsByName.get(row && row.channel) || {};
+      const status = row && row.status === 'modelable' ? 'Modeled' : 'Preserved';
+      const currentSpend = finiteValue(row && row.currentSpend);
+      const recommendedSpend = finiteValue(row && row.recommendedSpend);
+      return {
+        channel: row && typeof row.channel === 'string' ? row.channel : 'Unnamed channel',
+        status: status,
+        evidence: status === 'Modeled' ? 'Modeled marginal response' : 'Preserved',
+        currentPlanSpend: money(currentSpend),
+        recommended: money(recommendedSpend),
+        change: currentSpend == null || recommendedSpend == null
+          ? '—'
+          : money(recommendedSpend - currentSpend),
+        marginalMetric: formatMarginal(row && row.marginalMetric),
+        constraint: row && typeof row.constraint === 'string'
+          ? row.constraint.charAt(0).toUpperCase() + row.constraint.slice(1)
+          : '—',
+        failedGates: status === 'Preserved' && Array.isArray(channel.failedGates)
+          ? channel.failedGates.map(function namedGate(code) {
+            return GATE_LABELS[code] || 'Does not meet a controlled evidence gate';
+          })
+          : []
+      };
+    });
+    const modeledRows = rows.filter(function modeled(row) { return row.status === 'Modeled'; });
+    const preservedRows = rows.filter(function preserved(row) { return row.status === 'Preserved'; });
+    const rawRows = Array.isArray(result.allocation) ? result.allocation : [];
+    let driverIndex = -1;
+    let driverIncrease = -Infinity;
+    rawRows.forEach(function findDriver(row, index) {
+      if (!row || row.status !== 'modelable') return;
+      const increase = finiteValue(row.recommendedSpend) - finiteValue(row.currentSpend);
+      if (Number.isFinite(increase) && increase > driverIncrease) {
+        driverIncrease = increase;
+        driverIndex = index;
+      }
+    });
+    const driver = driverIndex >= 0 ? rows[driverIndex] : null;
+    const failedGateCopy = preservedRows.flatMap(function channelFailures(row) {
+      return row.failedGates.map(function gateCopy(gate) { return row.channel + ' — ' + gate; });
+    });
+    const cadence = typeof selectedModel.cadence === 'string' ? selectedModel.cadence : 'historical';
+    const timingCaveat = Number.isFinite(result.horizonFactor) && result.horizonFactor < 1
+      ? 'Timing caveat: this planning window is shorter than the ' + cadence
+        + ' history cadence, so response may arrive after the plan ends.'
+      : null;
+    const confounders = 'Seasonality, promotions, pricing, targeting, creative, audience, '
+      + 'channel interactions, and measurement changes may confound the historical relationship.';
+    const caveat = 'This is observational evidence, not a causal conclusion. ' + confounders
+      + ' Treat the recommendation as a bounded test to recheck.'
+      + (timingCaveat ? ' ' + timingCaveat : '');
+    const totals = result.totals && typeof result.totals === 'object' ? result.totals : {};
+    const metricLabel = typeof metric.label === 'string' ? metric.label : 'Selected outcome';
+    const outcomeValue = metric.key === 'conversions'
+      ? numberText(totals.predictedOutcome)
+      : money(totals.predictedOutcome);
+    const financialTreatment = metric.key !== 'financial'
+      ? null
+      : metric.costTreatment === 'before_marketing'
+        ? 'The mapped financial outcome was before marketing; marketing spend was subtracted from the modeled result.'
+        : 'The mapped financial outcome was already after marketing spend, so spend was not subtracted again.';
+
+    return {
+      state: 'result',
+      objectiveLabel: metricLabel,
+      marginalMetricLabel: marginalLabel(metric),
+      methodNote: 'This plan compares observational history using modeled marginal response.',
+      summary: [
+        { label: 'Requested budget', value: money(totals.requestedBudget) },
+        { label: 'Optimized budget', value: money(totals.optimizedBudget) },
+        { label: 'Preserved budget', value: money(totals.preservedBudget) },
+        { label: 'Predicted ' + metricLabel, value: outcomeValue }
+      ],
+      rows: rows,
+      evidenceQuality: modeledRows.length + ' modelable channel' + (modeledRows.length === 1 ? '' : 's')
+        + ' and ' + preservedRows.length + ' preserved channel' + (preservedRows.length === 1 ? '' : 's')
+        + (failedGateCopy.length ? '. Failed gates: ' + failedGateCopy.join('; ') + '.' : '.'),
+      mainDriver: driver
+        ? driver.channel + ' receives the largest modeled increase at ' + driver.marginalMetric + '.'
+        : 'No modeled channel receives an increase under the current constraints.',
+      caveat: caveat,
+      timingCaveat: timingCaveat,
+      financialTreatment: financialTreatment
+    };
+  }
+
   root.MangroveBudgetApp = {
     createState: createState,
     derivePhase: derivePhase,
-    readinessView: readinessView
+    readinessView: readinessView,
+    resultView: resultView,
+    constraintRows: constraintRows
   };
 
   function init() {
@@ -133,9 +335,11 @@
     const SAMPLE = root.MangroveBudgetSampleData || {};
     const MOTION = root.MangroveMotion || {};
     const state = createState();
-    const chartTimers = [];
     const downloadUrls = [];
     let activeCorrectionText = null;
+    let chartTimer = null;
+    let repaintCharts = null;
+    let preservedDefaults = {};
 
     const decisionCanvas = document.getElementById('decision-canvas');
     const historyFile = document.getElementById('history-file');
@@ -161,9 +365,11 @@
     const totalBudgetInput = document.getElementById('total-budget');
     const planDaysInput = document.getElementById('plan-days');
     const objectiveSelect = document.getElementById('objective');
+    const constraintsList = document.getElementById('constraints-list');
     const resultsPanel = document.getElementById('results');
     const resultsNote = document.getElementById('results-note');
     const modelInspector = document.getElementById('model-inspector');
+    const cleanedHistoryTable = document.getElementById('cleaned-history-table');
     const cleanedHistoryHead = document.getElementById('cleaned-history-head');
     const cleanedHistoryRows = document.getElementById('cleaned-history-rows');
     const downloadCleanedData = document.getElementById('download-cleaned-data');
@@ -172,6 +378,25 @@
     const explanationConfidence = document.getElementById('explanation-confidence');
     const explanationDriver = document.getElementById('explanation-driver');
     const explanationCaveat = document.getElementById('explanation-caveat');
+    const resultDetails = document.createElement('div');
+    const inspectorCharts = document.createElement('div');
+    resultDetails.className = 'result-details';
+    inspectorCharts.className = 'inspector-charts';
+    if (resultsPanel && recommendationExplanation
+      && recommendationExplanation.parentNode === resultsPanel
+      && typeof resultsPanel.insertBefore === 'function') {
+      resultsPanel.insertBefore(resultDetails, recommendationExplanation);
+    } else if (resultsPanel) {
+      resultsPanel.appendChild(resultDetails);
+    }
+    const cleanedHistoryScroll = cleanedHistoryTable && cleanedHistoryTable.parentNode;
+    if (modelInspector && cleanedHistoryScroll
+      && cleanedHistoryScroll.parentNode === modelInspector
+      && typeof modelInspector.insertBefore === 'function') {
+      modelInspector.insertBefore(inspectorCharts, cleanedHistoryScroll);
+    } else if (modelInspector) {
+      modelInspector.appendChild(inspectorCharts);
+    }
 
     function trackEvent(eventName, action) {
       if (typeof EXTRAS.trackProductEvent !== 'function') return;
@@ -201,6 +426,11 @@
 
     function syncPhase() {
       const phase = derivePhase(state);
+      const selectedModel = modelFor(state.analysis, state.selectedObjective);
+      const canPlan = selectedModel && Array.isArray(selectedModel.channels)
+        && selectedModel.channels.some(function modeledChannel(channel) {
+          return channel && channel.status === 'modelable';
+        });
       state.phase = phase;
       if (decisionCanvas) decisionCanvas.dataset.phase = phase;
       if (correctionPanel) correctionPanel.hidden = phase !== 'needs_correction';
@@ -208,19 +438,34 @@
         readinessPanel.hidden = ['ready', 'partially_modelable', 'blocked', 'result'].indexOf(phase) === -1;
       }
       if (planForm) {
-        planForm.hidden = ['ready', 'partially_modelable', 'result'].indexOf(phase) === -1;
+        planForm.hidden = !canPlan
+          || ['ready', 'partially_modelable', 'blocked', 'result'].indexOf(phase) === -1;
       }
-      if (resultsPanel) resultsPanel.hidden = phase !== 'result';
+      if (resultsPanel) {
+        resultsPanel.hidden = phase !== 'result' && !(phase === 'blocked' && state.allocation);
+      }
       if (modelInspector) {
         modelInspector.hidden = ['ready', 'partially_modelable', 'blocked', 'result'].indexOf(phase) === -1;
       }
       if (!state.pendingImport) setImportStatus(phaseMessage(phase));
     }
 
+    function cancelChartRepaint() {
+      if (chartTimer != null && typeof root.clearTimeout === 'function') {
+        root.clearTimeout(chartTimer);
+      }
+      chartTimer = null;
+      repaintCharts = null;
+    }
+
     function clearAllocationResult() {
       state.allocation = null;
       if (resultsNote) resultsNote.textContent = 'Choose a budget and horizon to build the plan.';
       if (downloadAllocation) downloadAllocation.disabled = true;
+      clearElement(resultDetails);
+      clearElement(inspectorCharts);
+      cancelChartRepaint();
+      if (recommendationExplanation) recommendationExplanation.hidden = true;
       if (MOTION.resetResult) MOTION.resetResult(resultsPanel);
       syncPhase();
     }
@@ -236,10 +481,7 @@
 
     function clearPriorDecision() {
       if (MOTION.resetResult) MOTION.resetResult(resultsPanel);
-      chartTimers.forEach(function clearChartTimer(timer) {
-        root.clearTimeout(timer);
-      });
-      chartTimers.length = 0;
+      cancelChartRepaint();
       revokeDownloads();
       state.phase = 'empty';
       state.importResult = null;
@@ -249,11 +491,15 @@
       state.constraints = {};
       state.sourceKind = null;
       activeCorrectionText = null;
+      preservedDefaults = {};
       clearElement(readinessSummary);
       clearElement(readinessChannelRows);
       clearElement(cleanedHistoryHead);
       clearElement(cleanedHistoryRows);
       clearElement(objectiveSelect);
+      clearElement(constraintsList);
+      clearElement(resultDetails);
+      clearElement(inspectorCharts);
       if (recommendationExplanation) recommendationExplanation.hidden = true;
       if (downloadAllocation) downloadAllocation.disabled = true;
       if (resultsNote) resultsNote.textContent = 'Choose a budget and horizon to build the plan.';
@@ -348,6 +594,111 @@
       return readinessView(selectedAnalysis);
     }
 
+    function optionalNumber(value) {
+      if (value === '' || value == null) return null;
+      const number = Number(value);
+      return Number.isFinite(number) && number >= 0 ? number : NaN;
+    }
+
+    function constraintInput(definition, labelText, type) {
+      const field = document.createElement('div');
+      const label = document.createElement('label');
+      const input = document.createElement('input');
+      field.className = type === 'checkbox' ? 'constraint-toggle' : 'constraint-field';
+      label.htmlFor = definition.id;
+      label.textContent = labelText;
+      input.id = definition.id;
+      input.type = type;
+      if (type === 'number') {
+        input.min = '0';
+        input.step = '0.01';
+        input.inputMode = 'decimal';
+        input.value = definition.value == null ? '' : String(definition.value);
+      } else {
+        input.checked = definition.value === true;
+      }
+      field.append(label, input);
+      return { field: field, input: input };
+    }
+
+    function renderConstraints() {
+      clearElement(constraintsList);
+      const model = modelFor(state.analysis, state.selectedObjective);
+      if (!model || !Array.isArray(model.channels)) return;
+      const planDays = Number(planDaysInput.value);
+      const horizonFactor = Number.isFinite(planDays) && planDays > 0
+        && Number.isFinite(model.cadenceDays) && model.cadenceDays > 0
+        ? planDays / model.cadenceDays
+        : 1;
+      model.channels.forEach(function initializeConstraint(channel) {
+        if (!channel || typeof channel.channel !== 'string') return;
+        const name = channel.channel;
+        const prior = state.constraints[name] && typeof state.constraints[name] === 'object'
+          ? state.constraints[name]
+          : {};
+        if (channel.status === 'modelable') {
+          state.constraints[name] = {
+            minimum: finiteValue(prior.minimum),
+            maximum: finiteValue(prior.maximum),
+            excluded: prior.excluded === true
+          };
+          return;
+        }
+        const projected = Math.round(
+          (Number.isFinite(channel.preservedSpendRate) ? channel.preservedSpendRate : 0)
+          * horizonFactor * 100
+        ) / 100;
+        const useProjected = prior.minimum == null || prior.minimum === preservedDefaults[name];
+        state.constraints[name] = {
+          minimum: useProjected ? projected : finiteValue(prior.minimum),
+          maximum: null,
+          excluded: prior.excluded === true
+        };
+        preservedDefaults[name] = projected;
+      });
+
+      constraintRows(model, state.constraints).forEach(function addConstraint(row) {
+        const card = document.createElement('section');
+        const heading = document.createElement('h3');
+        const status = document.createElement('p');
+        const fields = document.createElement('div');
+        card.className = 'constraint-card';
+        heading.textContent = row.channel;
+        status.className = 'constraint-status';
+        status.textContent = row.statusLabel;
+        fields.className = 'constraint-fields';
+
+        if (row.minimum) {
+          const minimum = constraintInput(row.minimum, 'Minimum plan amount', 'number');
+          minimum.input.addEventListener('input', function updateMinimum() {
+            state.constraints[row.channel].minimum = optionalNumber(minimum.input.value);
+          });
+          fields.appendChild(minimum.field);
+        }
+        if (row.maximum) {
+          const maximum = constraintInput(row.maximum, 'Maximum plan amount', 'number');
+          maximum.input.addEventListener('input', function updateMaximum() {
+            state.constraints[row.channel].maximum = optionalNumber(maximum.input.value);
+          });
+          fields.appendChild(maximum.field);
+        }
+        if (row.preserved) {
+          const preserved = constraintInput(row.preserved, 'Preserved amount', 'number');
+          preserved.input.addEventListener('input', function updatePreserved() {
+            state.constraints[row.channel].minimum = optionalNumber(preserved.input.value);
+          });
+          fields.appendChild(preserved.field);
+        }
+        const excluded = constraintInput(row.excluded, 'Exclude channel', 'checkbox');
+        excluded.input.addEventListener('change', function updateExclusion() {
+          state.constraints[row.channel].excluded = excluded.input.checked === true;
+        });
+        fields.appendChild(excluded.field);
+        card.append(heading, status, fields);
+        constraintsList.appendChild(card);
+      });
+    }
+
     function renderReadiness() {
       const view = viewForSelectedObjective();
       clearElement(readinessSummary);
@@ -382,7 +733,8 @@
         readinessChannelRows.appendChild(row);
       });
       renderObjectives();
-      renderExplanation(view);
+      renderConstraints();
+      if (recommendationExplanation) recommendationExplanation.hidden = true;
     }
 
     function renderObjectives() {
@@ -402,14 +754,9 @@
 
     function renderExplanation(view) {
       if (!recommendationExplanation) return;
-      explanationConfidence.textContent = 'Observational evidence — '
-        + view.modelableCount + ' channel' + (view.modelableCount === 1 ? '' : 's')
-        + ' support modeled marginal response.';
-      explanationDriver.textContent = 'The planner can compare modeled marginal returns only across admitted channels.';
-      explanationCaveat.textContent = view.preservedCount > 0
-        ? view.preservedCount + ' preserved channel' + (view.preservedCount === 1 ? ' stays' : 's stay')
-          + ' at recent spend and cannot receive optimized remainder.'
-        : 'Historical relationships can change and do not establish causal incrementality.';
+      explanationConfidence.textContent = view.evidenceQuality;
+      explanationDriver.textContent = view.mainDriver;
+      explanationCaveat.textContent = view.caveat;
       recommendationExplanation.hidden = false;
     }
 
@@ -424,6 +771,19 @@
       ].concat(metrics.map(function metricColumn(metric) {
         return { key: metric.key, label: metric.label };
       }));
+      ['campaign', 'segment'].forEach(function optionalDimension(key) {
+        const hasDimension = inspection.rows.some(function dimensionPresent(row) {
+          return row && row.dimensions && Array.isArray(row.dimensions[key])
+            && row.dimensions[key].length > 0;
+        });
+        if (hasDimension) {
+          columns.push({
+            key: key,
+            label: key === 'campaign' ? 'Campaign' : 'Segment',
+            dimension: true
+          });
+        }
+      });
       const headerRow = document.createElement('tr');
       columns.forEach(function addHeader(column) {
         const header = document.createElement('th');
@@ -439,11 +799,299 @@
           if (column.key === 'period') cell.textContent = historyRow.periodKey;
           else if (column.key === 'channel') cell.textContent = historyRow.channel;
           else if (column.key === 'spend') cell.textContent = String(historyRow.spend);
+          else if (column.dimension) {
+            const values = historyRow.dimensions && Array.isArray(historyRow.dimensions[column.key])
+              ? historyRow.dimensions[column.key]
+              : [];
+            cell.textContent = values.join(' | ');
+          }
           else cell.textContent = String(historyRow.outcomes[column.key]);
           row.appendChild(cell);
         });
         cleanedHistoryRows.appendChild(row);
       });
+    }
+
+    function resultCell(row, key) {
+      const cell = document.createElement('td');
+      cell.textContent = row[key];
+      return cell;
+    }
+
+    function renderResult(view, planDays) {
+      clearElement(resultDetails);
+      if (!view || view.state !== 'result') {
+        const blocked = document.createElement('div');
+        const message = document.createElement('p');
+        blocked.className = 'blocked-result';
+        message.textContent = view && view.message
+          ? view.message
+          : FAILURE_COPY.invalid_plan;
+        blocked.appendChild(message);
+        if (view && Array.isArray(view.conflicts) && view.conflicts.length > 0) {
+          const label = document.createElement('p');
+          const list = document.createElement('ul');
+          label.textContent = 'Constraints to review:';
+          view.conflicts.forEach(function addConflict(conflict) {
+            const item = document.createElement('li');
+            item.textContent = conflict;
+            list.appendChild(item);
+          });
+          blocked.append(label, list);
+        }
+        resultDetails.appendChild(blocked);
+        resultsNote.textContent = message.textContent;
+        if (recommendationExplanation) recommendationExplanation.hidden = true;
+        return;
+      }
+
+      const method = document.createElement('p');
+      const summary = document.createElement('dl');
+      const tableScroll = document.createElement('div');
+      const table = document.createElement('table');
+      const caption = document.createElement('caption');
+      const head = document.createElement('thead');
+      const headerRow = document.createElement('tr');
+      const body = document.createElement('tbody');
+      method.className = 'result-method';
+      method.textContent = view.methodNote;
+      summary.className = 'result-summary';
+      view.summary.forEach(function addResultSummary(item) {
+        const wrapper = document.createElement('div');
+        const term = document.createElement('dt');
+        const description = document.createElement('dd');
+        term.textContent = item.label;
+        description.textContent = item.value;
+        wrapper.append(term, description);
+        summary.appendChild(wrapper);
+      });
+      tableScroll.className = 'table-scroll';
+      table.className = 'data-table allocation-table';
+      caption.textContent = 'Recommended allocation by channel';
+      [
+        'Channel',
+        'Evidence',
+        'Current plan-rate spend',
+        'Recommended',
+        'Change',
+        'Selected marginal metric',
+        'Constraint'
+      ].forEach(function addAllocationHeader(label) {
+        const header = document.createElement('th');
+        header.scope = 'col';
+        header.textContent = label;
+        headerRow.appendChild(header);
+      });
+      head.appendChild(headerRow);
+      view.rows.forEach(function addAllocationRow(row) {
+        const tableRow = document.createElement('tr');
+        tableRow.append(
+          resultCell(row, 'channel'),
+          resultCell(row, 'evidence'),
+          resultCell(row, 'currentPlanSpend'),
+          resultCell(row, 'recommended'),
+          resultCell(row, 'change'),
+          resultCell(row, 'marginalMetric'),
+          resultCell(row, 'constraint')
+        );
+        body.appendChild(tableRow);
+      });
+      table.append(caption, head, body);
+      tableScroll.appendChild(table);
+      resultDetails.append(method, summary, tableScroll);
+      if (view.financialTreatment) {
+        const treatment = document.createElement('p');
+        treatment.className = 'financial-result-note';
+        treatment.textContent = view.financialTreatment;
+        resultDetails.appendChild(treatment);
+      }
+      resultsNote.textContent = 'Allocation calculated for a ' + String(planDays) + '-day decision horizon.';
+      renderExplanation(view);
+    }
+
+    function diagnosticRows(channel) {
+      const diagnostics = channel && channel.diagnostics && typeof channel.diagnostics === 'object'
+        ? channel.diagnostics
+        : {};
+      const failed = Array.isArray(channel && channel.failedGates) ? channel.failedGates : [];
+      const rows = [
+        ['minimum_complete_periods', 'Complete periods', diagnostics.completePeriods, 'number'],
+        ['positive_coverage', 'Positive spend and outcome coverage', diagnostics.positiveCoverage, 'percent'],
+        ['distinct_spend', 'Distinct positive spend levels', diagnostics.distinctPositiveSpend, 'number'],
+        ['spend_variation', 'Robust spend variation', diagnostics.robustSpendVariation, 'percent'],
+        ['elasticity', 'Diminishing-return elasticity', diagnostics.elasticity, 'decimal'],
+        ['elasticity_stability', 'Leave-one-period-out elasticity IQR', diagnostics.elasticityIqr, 'decimal'],
+        [
+          'current_prediction_stability',
+          'Maximum current-prediction change',
+          diagnostics.maximumCurrentPredictionChange,
+          'percent'
+        ]
+      ];
+      return rows.map(function diagnostic(row) {
+        const value = finiteValue(row[2]);
+        let display = '—';
+        if (value != null) {
+          if (row[3] === 'percent') display = numberText(value * 100) + '%';
+          else display = numberText(value);
+        }
+        return {
+          code: row[0],
+          label: row[1],
+          value: display,
+          result: failed.indexOf(row[0]) === -1 ? 'Passed' : 'Failed'
+        };
+      });
+    }
+
+    function renderModelInspector(model, allocation) {
+      clearElement(inspectorCharts);
+      cancelChartRepaint();
+      if (!model || !allocation || allocation.ok !== true) return;
+      const allocationRows = Array.isArray(allocation.allocation) ? allocation.allocation : [];
+      const rowsByName = new Map(allocationRows.map(function indexAllocation(row) {
+        return [row.channel, row];
+      }));
+      const chartJobs = [];
+      const overview = document.createElement('section');
+      const overviewHeading = document.createElement('h3');
+      const overviewSummary = document.createElement('p');
+      const crossCanvas = document.createElement('canvas');
+      overview.className = 'inspector-overview';
+      overviewHeading.textContent = 'Cross-channel modeled marginal efficiency';
+      overviewSummary.textContent = 'Compare the selected marginal metric only across channels with admitted response curves.';
+      crossCanvas.id = 'marginal-efficiency-chart';
+      crossCanvas.width = 720;
+      crossCanvas.height = 260;
+      crossCanvas.setAttribute('role', 'img');
+      crossCanvas.setAttribute('aria-label', 'Cross-channel modeled marginal efficiency chart');
+      overview.append(overviewHeading, overviewSummary, crossCanvas);
+      inspectorCharts.appendChild(overview);
+
+      const channels = Array.isArray(model.channels) ? model.channels : [];
+      channels.forEach(function addChannelInspector(channel, index) {
+        const allocationRow = rowsByName.get(channel.channel) || null;
+        const section = document.createElement('section');
+        const heading = document.createElement('h3');
+        const status = document.createElement('p');
+        const canvas = document.createElement('canvas');
+        const tableScroll = document.createElement('div');
+        const table = document.createElement('table');
+        const caption = document.createElement('caption');
+        const head = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        const body = document.createElement('tbody');
+        const gateScroll = document.createElement('div');
+        const gateTable = document.createElement('table');
+        const gateCaption = document.createElement('caption');
+        const gateHead = document.createElement('thead');
+        const gateHeaderRow = document.createElement('tr');
+        const gateBody = document.createElement('tbody');
+        section.className = 'channel-inspector';
+        heading.textContent = channel.channel;
+        status.className = 'channel-inspector-summary';
+        status.textContent = channel.status === 'modelable'
+          ? 'Modeled response admitted; markers show current and recommended spend rates.'
+          : 'Preserved observations only; no fitted line is shown.';
+        canvas.id = 'response-curve-' + index;
+        canvas.width = 720;
+        canvas.height = 320;
+        canvas.setAttribute('role', 'img');
+        canvas.setAttribute('aria-label', 'Response-curve evidence chart ' + String(index + 1));
+        tableScroll.className = 'table-scroll';
+        table.className = 'data-table inspector-observations';
+        caption.textContent = 'Observed periods for this channel';
+        ['Period', 'Spend', model.metric.label].forEach(function addObservationHeader(label) {
+          const header = document.createElement('th');
+          header.scope = 'col';
+          header.textContent = label;
+          headerRow.appendChild(header);
+        });
+        head.appendChild(headerRow);
+        (Array.isArray(channel.observations) ? channel.observations : []).forEach(function addObservation(observation) {
+          const row = document.createElement('tr');
+          const period = document.createElement('td');
+          const spend = document.createElement('td');
+          const outcome = document.createElement('td');
+          period.textContent = observation.periodKey;
+          spend.textContent = money(observation.spend);
+          outcome.textContent = model.metric.key === 'conversions'
+            ? numberText(observation.outcome)
+            : money(observation.outcome);
+          row.append(period, spend, outcome);
+          body.appendChild(row);
+        });
+        table.append(caption, head, body);
+        tableScroll.appendChild(table);
+
+        gateScroll.className = 'table-scroll';
+        gateTable.className = 'data-table inspector-gates';
+        gateCaption.textContent = 'Evidence gate values';
+        ['Gate', 'Value', 'Result'].forEach(function addGateHeader(label) {
+          const header = document.createElement('th');
+          header.scope = 'col';
+          header.textContent = label;
+          gateHeaderRow.appendChild(header);
+        });
+        gateHead.appendChild(gateHeaderRow);
+        diagnosticRows(channel).forEach(function addDiagnostic(diagnostic) {
+          const row = document.createElement('tr');
+          const label = document.createElement('td');
+          const value = document.createElement('td');
+          const result = document.createElement('td');
+          label.textContent = diagnostic.label;
+          value.textContent = diagnostic.value;
+          result.textContent = diagnostic.result;
+          row.append(label, value, result);
+          gateBody.appendChild(row);
+        });
+        gateTable.append(gateCaption, gateHead, gateBody);
+        gateScroll.appendChild(gateTable);
+        section.append(heading, status, canvas, tableScroll, gateScroll);
+        inspectorCharts.appendChild(section);
+        chartJobs.push({
+          canvas: canvas,
+          channel: channel,
+          positions: channel.status === 'modelable' && allocationRow
+            ? {
+              currentSpendRate: allocationRow.currentSpend / allocation.horizonFactor,
+              recommendedSpendRate: allocationRow.recommendedSpendRate
+            }
+            : {}
+        });
+      });
+
+      const modelableRows = allocationRows.filter(function modelableAllocation(row) {
+        return row && row.status === 'modelable';
+      });
+      repaintCharts = function paintInspectorCharts() {
+        if (typeof CHARTS.drawMarginalEfficiencyChart === 'function') {
+          CHARTS.drawMarginalEfficiencyChart(crossCanvas, modelableRows, {
+            marginalLabel: marginalLabel(model.metric),
+            formatMarginal: function formatMarginalValue(value) {
+              return formatMarginal({
+                key: model.metric.key === 'conversions'
+                  ? 'marginal_cpa'
+                  : model.metric.key === 'revenue'
+                    ? 'marginal_roas'
+                    : 'marginal_roi',
+                value: value
+              });
+            }
+          });
+        }
+        if (typeof CHARTS.drawResponseCurve === 'function') {
+          chartJobs.forEach(function drawChannel(job) {
+            CHARTS.drawResponseCurve(job.canvas, job.channel, job.positions, {
+              spendLabel: 'Spend per ' + (model.cadence || 'historical period'),
+              outcomeLabel: model.metric.label,
+              formatSpend: money,
+              formatOutcome: model.metric.key === 'conversions' ? numberText : money
+            });
+          });
+        }
+      };
+      repaintCharts();
     }
 
     function finishInspection(inspection) {
@@ -459,16 +1107,18 @@
       state.analysis = analysis;
       state.selectedObjective = analysis.recommendedObjective;
       state.allocation = null;
+      state.constraints = {};
+      preservedDefaults = {};
       activeCorrectionText = null;
       historyPaste.value = '';
-      renderReadiness();
-      renderCleanedHistory(inspection);
       if (SAMPLE.totalBudget && state.sourceKind === 'sample') {
         totalBudgetInput.value = String(SAMPLE.totalBudget);
       }
       if (SAMPLE.planDays && state.sourceKind === 'sample') {
         planDaysInput.value = String(SAMPLE.planDays);
       }
+      renderReadiness();
+      renderCleanedHistory(inspection);
       syncPhase();
     }
 
@@ -618,9 +1268,23 @@
     objectiveSelect.addEventListener('change', function changeObjective() {
       if (!state.analysis || !state.analysis.models[objectiveSelect.value]) return;
       state.selectedObjective = objectiveSelect.value;
-      state.allocation = null;
+      state.constraints = {};
+      preservedDefaults = {};
+      clearAllocationResult();
       renderReadiness();
       syncPhase();
+      const model = modelFor(state.analysis, state.selectedObjective);
+      const label = model && model.metric && typeof model.metric.label === 'string'
+        ? model.metric.label
+        : 'the selected outcome';
+      setImportStatus('Objective changed to ' + label + '. Review constraints before rebuilding the plan.');
+    });
+
+    planDaysInput.addEventListener('change', function updatePlanHorizon() {
+      if (!state.analysis) return;
+      clearAllocationResult();
+      renderConstraints();
+      setImportStatus('Planning window changed. Review preserved amounts before rebuilding the plan.');
     });
 
     downloadCleanedData.addEventListener('click', function downloadCleanHistory() {
@@ -642,7 +1306,7 @@
       if (!model || !Number.isFinite(totalBudget) || totalBudget <= 0
         || !Number.isFinite(planDays) || planDays <= 0
         || typeof ALLOCATOR.allocatePlan !== 'function') {
-        setImportStatus('Enter a positive budget and plan length.');
+        setImportStatus(FAILURE_COPY.invalid_plan);
         return;
       }
       state.allocation = ALLOCATOR.allocatePlan({
@@ -651,16 +1315,35 @@
         planDays: planDays,
         constraints: state.constraints
       });
+      const view = resultView(model, state.allocation);
       if (!state.allocation.ok) {
-        setImportStatus(state.allocation.message || 'The plan is not feasible with these constraints.');
+        renderResult(view);
         if (MOTION.resetResult) MOTION.resetResult(resultsPanel);
+        syncPhase();
+        setImportStatus('Plan blocked. Review the result and constraints.');
         return;
       }
-      resultsNote.textContent = 'Allocation calculated for a ' + planDays + '-day decision horizon.';
-      if (MOTION.revealResult) MOTION.revealResult(resultsPanel);
+      renderResult(view, planDays);
+      renderModelInspector(model, state.allocation);
       syncPhase();
-      trackEvent('calculation_completed', 'submit');
+      if (MOTION.revealResult) MOTION.revealResult(resultsPanel);
+      if (['upload', 'paste', 'sample'].indexOf(state.sourceKind) !== -1) {
+        trackEvent('calculation_completed', state.sourceKind);
+      }
     });
+
+    if (typeof root.addEventListener === 'function') {
+      root.addEventListener('resize', function repaintAfterResize() {
+        if (!repaintCharts || typeof root.setTimeout !== 'function') return;
+        if (chartTimer != null && typeof root.clearTimeout === 'function') {
+          root.clearTimeout(chartTimer);
+        }
+        chartTimer = root.setTimeout(function repaintResultCharts() {
+          chartTimer = null;
+          if (repaintCharts) repaintCharts();
+        }, 150);
+      });
+    }
 
     syncPhase();
   }

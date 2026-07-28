@@ -307,6 +307,65 @@
   font-weight: 600;
 }
 
+.budget-workspace #constraints-list {
+  display: grid;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+.budget-workspace .constraint-card {
+  min-width: 0;
+  padding: var(--space-sm);
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+}
+
+.budget-workspace .constraint-card h3,
+.budget-workspace .channel-inspector h3,
+.budget-workspace .inspector-overview h3 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 1rem;
+}
+
+.budget-workspace .constraint-status,
+.budget-workspace .channel-inspector-summary {
+  margin: var(--space-2xs) 0 var(--space-sm);
+  color: var(--signal-text);
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.budget-workspace .constraint-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-sm);
+}
+
+.budget-workspace .constraint-field {
+  display: grid;
+  gap: var(--space-2xs);
+}
+
+.budget-workspace .constraint-toggle {
+  display: flex;
+  grid-column: 1 / -1;
+  gap: var(--space-xs);
+  align-items: center;
+}
+
+.budget-workspace .constraint-toggle label {
+  order: 2;
+}
+
+.budget-workspace .constraint-toggle input {
+  width: 1.1rem;
+  min-height: 1.1rem;
+  margin: 0;
+}
+
 .budget-workspace .model-inspector > p {
   margin: var(--space-sm) 0;
 }
@@ -317,6 +376,132 @@
 
 .budget-workspace .results {
   position: relative;
+}
+
+.budget-workspace .result-details {
+  display: grid;
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+}
+
+.budget-workspace .result-method,
+.budget-workspace .financial-result-note {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.budget-workspace .result-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0;
+  background: var(--line);
+}
+
+.budget-workspace .result-summary div {
+  min-width: 0;
+  padding: var(--space-sm);
+  background: var(--surface-2);
+}
+
+.budget-workspace .result-summary dt {
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.budget-workspace .result-summary dd {
+  margin: var(--space-2xs) 0 0;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: clamp(1rem, 3vw, 1.25rem);
+  font-weight: 600;
+}
+
+.budget-workspace .allocation-table {
+  min-width: 64rem;
+}
+
+.budget-workspace .blocked-result {
+  padding: var(--space-sm);
+  border-left: 3px solid var(--signal);
+  background: var(--signal-soft);
+}
+
+.budget-workspace .blocked-result p {
+  margin: 0;
+  color: var(--ink);
+}
+
+.budget-workspace .blocked-result ul {
+  margin: var(--space-xs) 0 0;
+  color: var(--ink-soft);
+}
+
+.budget-workspace .explanation-panel {
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--line);
+}
+
+.budget-workspace .explanation-panel dl {
+  display: grid;
+  gap: var(--space-sm);
+  margin: 0;
+}
+
+.budget-workspace .explanation-panel dt {
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.budget-workspace .explanation-panel dd {
+  margin: var(--space-2xs) 0 0;
+  color: var(--ink);
+}
+
+.budget-workspace .inspector-charts {
+  display: grid;
+  gap: var(--space-md);
+  margin-top: var(--space-lg);
+}
+
+.budget-workspace .inspector-overview,
+.budget-workspace .channel-inspector {
+  min-width: 0;
+  padding: var(--space-md);
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+}
+
+.budget-workspace .inspector-overview > p {
+  margin: var(--space-2xs) 0 var(--space-sm);
+  color: var(--ink-soft);
+}
+
+.budget-workspace .inspector-overview canvas,
+.budget-workspace .channel-inspector canvas {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.budget-workspace .channel-inspector .table-scroll {
+  margin-top: var(--space-md);
+}
+
+.budget-workspace .inspector-observations,
+.budget-workspace .inspector-gates {
+  min-width: 36rem;
+  background: var(--surface);
 }
 
 @media (min-width: 900px) {
@@ -351,7 +536,9 @@
   }
 
   .budget-workspace .readiness-summary,
-  .budget-workspace .plan-fields {
+  .budget-workspace .plan-fields,
+  .budget-workspace .constraint-fields,
+  .budget-workspace .result-summary {
     grid-template-columns: 1fr;
   }
 

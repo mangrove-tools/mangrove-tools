@@ -245,13 +245,23 @@
     return 1;
   }
 
+  function financialMetricLabel(source) {
+    const labels = {
+      contribution: 'Contribution',
+      gross_profit: 'Gross profit',
+      profit: 'Profit'
+    };
+    const sourceText = typeof source === 'string' ? source.trim() : '';
+    return labels[headerKey(sourceText)] || sourceText || 'Financial outcome';
+  }
+
   function metricDefinitions(columnMap, financialTreatment) {
     const labels = { conversions: 'Conversions', revenue: 'Revenue', financial: 'Financial outcome' };
     return OUTCOME_FIELDS.filter(function presentMetric(field) { return columnMap[field] !== null; })
       .map(function metric(field) {
         return {
           key: field,
-          label: labels[field],
+          label: field === 'financial' ? financialMetricLabel(columnMap.financial) : labels[field],
           costTreatment: field === 'financial' ? financialTreatment : null
         };
       });
@@ -371,7 +381,9 @@
       inspection.exclusions.push(finding(1, 'period', 'mixed_cadence', 'All channels must use the same cadence.'));
       return inspectionError(inspection);
     }
-    inspection.cadence = resolvedCadences[0];
+    const sourceCadence = resolvedCadences[0];
+    const dailyAggregation = sourceCadence === 'daily';
+    inspection.cadence = dailyAggregation ? 'weekly' : sourceCadence;
     inspection.cadenceDays = cadenceDays(inspection.cadence);
 
     const suppliedNow = settings.now && typeof settings.now.getTime === 'function'
@@ -410,21 +422,73 @@
           channel: record.channel,
           spend: 0,
           outcomes: {},
-          dimensions: { campaign: [], segment: [] }
+          dimensions: { campaign: [], segment: [] },
+          rowNumbers: [],
+          distinctDates: new Set(),
+          aggregateOverflow: false,
+          overflowFields: new Set()
         });
         outcomes.forEach(function initializeOutcome(field) { grouped.get(groupKey).outcomes[field] = 0; });
       }
       const normalized = grouped.get(groupKey);
-      normalized.spend += record.spend;
-      outcomes.forEach(function sumOutcome(field) { normalized.outcomes[field] += record.outcomes[field]; });
+      normalized.rowNumbers.push(record.rowNumber);
+      if (dailyAggregation) normalized.distinctDates.add(dateText(record.date));
+      const spendTotal = normalized.spend + record.spend;
+      if (Number.isFinite(spendTotal)) {
+        normalized.spend = spendTotal;
+      } else {
+        normalized.aggregateOverflow = true;
+        normalized.overflowFields.add('spend');
+      }
+      outcomes.forEach(function sumOutcome(field) {
+        const outcomeTotal = normalized.outcomes[field] + record.outcomes[field];
+        if (Number.isFinite(outcomeTotal)) {
+          normalized.outcomes[field] = outcomeTotal;
+        } else {
+          normalized.aggregateOverflow = true;
+          normalized.overflowFields.add(field);
+        }
+      });
       DIMENSION_FIELDS.forEach(function addDimensions(field) {
         record.dimensions[field].forEach(function addDimension(value) {
           if (normalized.dimensions[field].indexOf(value) === -1) normalized.dimensions[field].push(value);
         });
       });
-      inspection.summary.acceptedRows += 1;
     });
-    inspection.rows = Array.from(grouped.values()).sort(function sortRows(left, right) {
+    inspection.rows = Array.from(grouped.values()).flatMap(function completeGroup(normalized) {
+      if (normalized.aggregateOverflow) {
+        normalized.overflowFields.forEach(function addOverflowFinding(field) {
+          inspection.exclusions.push(finding(
+            normalized.rowNumbers[0],
+            field,
+            'aggregate_overflow',
+            'Aggregated values must remain finite.'
+          ));
+        });
+        inspection.summary.excludedRows += normalized.rowNumbers.length;
+        return [];
+      }
+      if (dailyAggregation && normalized.distinctDates.size !== 7) {
+        inspection.exclusions.push(finding(
+          normalized.rowNumbers[0],
+          'period',
+          'incomplete_period',
+          'A daily channel-week needs seven distinct calendar days.'
+        ));
+        inspection.summary.excludedRows += normalized.rowNumbers.length;
+        return [];
+      }
+      inspection.summary.acceptedRows += normalized.rowNumbers.length;
+      return [{
+        periodKey: normalized.periodKey,
+        periodStart: normalized.periodStart,
+        cadence: normalized.cadence,
+        channel: normalized.channel,
+        spend: normalized.spend,
+        outcomes: normalized.outcomes,
+        dimensions: normalized.dimensions
+      }];
+    }).sort(function sortRows(left, right) {
       return left.periodStart.localeCompare(right.periodStart) || left.channel.localeCompare(right.channel);
     });
     inspection.summary.completePeriods = new Set(inspection.rows.map(function period(row) { return row.periodKey; })).size;
@@ -438,7 +502,10 @@
   }
 
   function escapeCell(value) {
-    const text = String(value);
+    const source = String(value);
+    const text = typeof value === 'string' && /^\s*[=+\-@]/.test(source)
+      ? "'" + source
+      : source;
     return /[",\r\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
   }
 

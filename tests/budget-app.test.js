@@ -299,6 +299,15 @@ function createDocument(clickedAnchors) {
   elements['paste-history-toggle'].setAttribute('aria-expanded', 'false');
   elements['results-note'].textContent = 'Choose a budget and horizon to build the plan.';
   elements['plan-days'].value = '30';
+  [
+    ['financial-before', 'before_marketing'],
+    ['financial-after', 'after_marketing']
+  ].forEach(([id, value]) => {
+    const input = new FakeElement('input', id);
+    input.setAttribute('name', 'financial-treatment');
+    input.value = value;
+    elements['financial-treatment'].appendChild(input);
+  });
 
   return {
     readyState: 'complete',
@@ -740,7 +749,125 @@ test('before-marketing financial result states that marketing spend was subtract
   ));
 
   assert.match(view.financialTreatment, /marketing spend was subtracted/i);
+  assert.match(view.financialTreatment, /Contribution/);
   assert.equal(view.marginalMetricLabel, 'Marginal ROI');
+});
+
+test('missing outcome presents explicit source and semantic mapping without guessing', () => {
+  const { elements } = loadDomApp();
+  const lines = ['period,channel,spend,purchases'];
+  for (let week = 1; week <= 12; week += 1) {
+    const spend = week * 100;
+    lines.push(
+      `2024-W${String(week).padStart(2, '0')},Search,${spend},`
+      + Number((2 * Math.pow(spend, 0.6)).toFixed(6))
+    );
+  }
+  elements['history-paste'].value = lines.join('\n');
+
+  elements['parse-pasted-history'].trigger('click');
+
+  assert.equal(elements['decision-canvas'].dataset.phase, 'needs_correction');
+  const selects = elements['column-mapping'].querySelectorAll('select[data-field]');
+  const sourceSelect = selects.find(select => select.dataset.field === 'outcomeSource');
+  const typeSelect = selects.find(select => select.dataset.field === 'outcomeType');
+  assert.ok(sourceSelect);
+  assert.ok(typeSelect);
+  assert.equal(sourceSelect.value, '');
+  assert.equal(typeSelect.value, '');
+  assert.ok(sourceSelect.options.some(option => option.textContent === 'purchases'));
+  assert.deepEqual(
+    typeSelect.options.slice(1).map(option => option.textContent),
+    ['Conversions', 'Revenue', 'Financial outcome']
+  );
+
+  elements['apply-corrections'].trigger('click');
+  assert.equal(
+    elements['import-status'].textContent,
+    'Choose every required mapping before applying corrections.'
+  );
+
+  sourceSelect.value = 'purchases';
+  typeSelect.value = 'conversions';
+  elements['apply-corrections'].trigger('click');
+
+  assert.equal(elements['decision-canvas'].dataset.phase, 'ready');
+  assert.deepEqual(
+    elements.objective.options.map(option => option.textContent),
+    ['Conversions']
+  );
+  assert.match(elements['cleaned-history-head'].textContent, /Conversions/);
+});
+
+test('explicit financial mapping retains its source identity through treatment and explanation', () => {
+  const { elements, events } = loadDomApp();
+  const sourceHeader = 'gross margin dollars';
+  const lines = [`period,channel,spend,${sourceHeader}`];
+  for (let week = 1; week <= 12; week += 1) {
+    const spend = week * 100;
+    lines.push(
+      `2024-W${String(week).padStart(2, '0')},Search,${spend},`
+      + Number((2 * Math.pow(spend, 0.6)).toFixed(6))
+    );
+  }
+  elements['history-paste'].value = lines.join('\n');
+
+  elements['parse-pasted-history'].trigger('click');
+  let selects = elements['column-mapping'].querySelectorAll('select[data-field]');
+  selects.find(select => select.dataset.field === 'outcomeSource').value = sourceHeader;
+  selects.find(select => select.dataset.field === 'outcomeType').value = 'financial';
+  elements['apply-corrections'].trigger('click');
+
+  assert.equal(elements['decision-canvas'].dataset.phase, 'needs_correction');
+  assert.equal(elements['financial-treatment'].hidden, false);
+  selects = elements['column-mapping'].querySelectorAll('select[data-field]');
+  assert.equal(selects.length, 0);
+  const afterMarketing = elements['financial-treatment'].descendants()
+    .find(input => input.value === 'after_marketing');
+  afterMarketing.checked = true;
+  elements['apply-corrections'].trigger('click');
+
+  assert.equal(elements['decision-canvas'].dataset.phase, 'ready');
+  assert.deepEqual(
+    elements.objective.options.map(option => option.textContent),
+    [sourceHeader]
+  );
+  elements['total-budget'].value = '2000';
+  elements['plan-form'].trigger('submit');
+  assert.match(elements.results.textContent, new RegExp(sourceHeader));
+  assert.match(elements.results.textContent, /already after marketing spend/i);
+  assert.doesNotMatch(JSON.stringify(events), new RegExp(sourceHeader));
+});
+
+test('replacement financial history requires a fresh cost-treatment choice', () => {
+  const { elements } = loadDomApp();
+  const financialSource = [
+    'period,channel,spend,profit',
+    '2024-W01,Search,100,20'
+  ].join('\n');
+  elements['history-paste'].value = financialSource;
+  elements['parse-pasted-history'].trigger('click');
+  const afterMarketing = elements['financial-treatment'].descendants()
+    .find(input => input.value === 'after_marketing');
+  afterMarketing.checked = true;
+  elements['apply-corrections'].trigger('click');
+  assert.equal(elements['decision-canvas'].dataset.phase, 'partially_modelable');
+
+  elements['history-paste'].value = financialSource;
+  elements['parse-pasted-history'].trigger('click');
+  elements['confirm-replacement'].trigger('click');
+
+  assert.equal(elements['decision-canvas'].dataset.phase, 'needs_correction');
+  assert.equal(
+    elements['financial-treatment'].querySelector('input[name="financial-treatment"]:checked'),
+    null
+  );
+  elements['apply-corrections'].trigger('click');
+  assert.equal(elements['decision-canvas'].dataset.phase, 'needs_correction');
+  assert.equal(
+    elements['import-status'].textContent,
+    'Choose every required mapping before applying corrections.'
+  );
 });
 
 test('a sub-cadence horizon adds a timing caveat', () => {

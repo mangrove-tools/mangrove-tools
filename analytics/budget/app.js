@@ -23,7 +23,8 @@
     spend: 'Spend',
     conversions: 'Conversions',
     revenue: 'Revenue',
-    financial: 'Financial outcome'
+    financial: 'Financial outcome',
+    outcome: 'Outcome'
   });
   const FAILURE_COPY = Object.freeze({
     minimums_exceed_budget:
@@ -299,8 +300,8 @@
     const financialTreatment = metric.key !== 'financial'
       ? null
       : metric.costTreatment === 'before_marketing'
-        ? 'The mapped financial outcome was before marketing; marketing spend was subtracted from the modeled result.'
-        : 'The mapped financial outcome was already after marketing spend, so spend was not subtracted again.';
+        ? metricLabel + ' was mapped as a financial outcome before marketing; marketing spend was subtracted from the modeled result.'
+        : metricLabel + ' was mapped as a financial outcome already after marketing spend, so spend was not subtracted again.';
 
     return {
       state: 'result',
@@ -508,6 +509,14 @@
       downloadUrls.clear();
     }
 
+    function resetFinancialTreatmentChoice() {
+      if (!financialTreatment) return;
+      const selected = financialTreatment.querySelector(
+        'input[name="financial-treatment"]:checked'
+      );
+      if (selected) selected.checked = false;
+    }
+
     function clearPriorDecision() {
       if (MOTION.resetResult) MOTION.resetResult(resultsPanel);
       cancelChartRepaint();
@@ -522,6 +531,7 @@
       state.pendingImport = null;
       activeCorrectionText = null;
       preservedDefaults = {};
+      resetFinancialTreatmentChoice();
       clearElement(readinessSummary);
       clearElement(readinessChannelRows);
       clearElement(cleanedHistoryHead);
@@ -707,12 +717,60 @@
         columnMapping.appendChild(wrapper);
       });
 
+      const needsOutcomeMapping = findings.some(function outcomeFinding(item) {
+        return item.code === 'missing_outcome';
+      });
+      if (needsOutcomeMapping) {
+        const wrapper = document.createElement('div');
+        const sourceLabel = document.createElement('label');
+        const sourceSelect = document.createElement('select');
+        const sourcePlaceholder = document.createElement('option');
+        const typeLabel = document.createElement('label');
+        const typeSelect = document.createElement('select');
+        const typePlaceholder = document.createElement('option');
+        wrapper.className = 'mapping-field';
+        sourceLabel.htmlFor = 'map-outcome-source';
+        sourceLabel.textContent = 'Outcome source column';
+        sourceSelect.id = 'map-outcome-source';
+        sourceSelect.dataset.field = 'outcomeSource';
+        sourcePlaceholder.value = '';
+        sourcePlaceholder.textContent = 'Choose a source column';
+        sourceSelect.appendChild(sourcePlaceholder);
+        headers.forEach(function addOutcomeHeader(header) {
+          const option = document.createElement('option');
+          option.value = header;
+          option.textContent = header;
+          sourceSelect.appendChild(option);
+        });
+        typeLabel.htmlFor = 'map-outcome-type';
+        typeLabel.textContent = 'Outcome meaning';
+        typeSelect.id = 'map-outcome-type';
+        typeSelect.dataset.field = 'outcomeType';
+        typePlaceholder.value = '';
+        typePlaceholder.textContent = 'Choose conversions, revenue, or financial';
+        typeSelect.appendChild(typePlaceholder);
+        [
+          ['conversions', 'Conversions'],
+          ['revenue', 'Revenue'],
+          ['financial', 'Financial outcome']
+        ].forEach(function addOutcomeType(optionDefinition) {
+          const option = document.createElement('option');
+          option.value = optionDefinition[0];
+          option.textContent = optionDefinition[1];
+          typeSelect.appendChild(option);
+        });
+        wrapper.append(sourceLabel, sourceSelect, typeLabel, typeSelect);
+        columnMapping.appendChild(wrapper);
+      }
+
       const needsFinancialTreatment = findings.some(function financialFinding(item) {
         return item.code === 'financial_treatment_required';
       });
       if (financialTreatment) financialTreatment.hidden = !needsFinancialTreatment;
       if (applyCorrections) {
-        applyCorrections.hidden = mappingFields.length === 0 && !needsFinancialTreatment;
+        applyCorrections.hidden = mappingFields.length === 0
+          && !needsOutcomeMapping
+          && !needsFinancialTreatment;
       }
     }
 
@@ -1390,6 +1448,7 @@
         setImportStatus('New history is waiting for replacement confirmation.');
         return;
       }
+      resetFinancialTreatmentChoice();
       trackImport(sourceKind);
       processImport(sourceText, sourceKind);
     }
@@ -1397,12 +1456,31 @@
     function retryCorrection() {
       if (typeof activeCorrectionText !== 'string' || !state.importResult) return;
       const columnMap = {};
+      const headers = Array.isArray(state.importResult.headers) ? state.importResult.headers : [];
+      const priorMap = state.importResult.columnMap && typeof state.importResult.columnMap === 'object'
+        ? state.importResult.columnMap
+        : {};
+      Object.keys(priorMap).forEach(function retainResolvedMapping(field) {
+        if (typeof priorMap[field] === 'string' && headers.indexOf(priorMap[field]) !== -1) {
+          columnMap[field] = priorMap[field];
+        }
+      });
       const selects = columnMapping.querySelectorAll('select[data-field]');
       let mappingComplete = true;
+      let outcomeSource = null;
+      let outcomeType = null;
       Array.from(selects).forEach(function readMapping(select) {
-        if (!select.value) mappingComplete = false;
-        else columnMap[select.dataset.field] = select.value;
+        if (!select.value) {
+          mappingComplete = false;
+        } else if (select.dataset.field === 'outcomeSource') {
+          outcomeSource = select.value;
+        } else if (select.dataset.field === 'outcomeType') {
+          outcomeType = select.value;
+        } else {
+          columnMap[select.dataset.field] = select.value;
+        }
       });
+      if (outcomeSource && outcomeType) columnMap[outcomeType] = outcomeSource;
       const treatment = financialTreatment.querySelector('input[name="financial-treatment"]:checked');
       const needsTreatment = !financialTreatment.hidden;
       if (!mappingComplete || (needsTreatment && !treatment)) {

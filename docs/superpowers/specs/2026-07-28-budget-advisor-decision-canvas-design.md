@@ -1,7 +1,7 @@
 # Budget Advisor Decision Canvas Design
 
 **Date:** 2026-07-28
-**Status:** User-approved design; awaiting written-spec review
+**Status:** User-approved for implementation planning
 **Scope:** `/analytics/budget/` and new reusable browser-only history,
 marginality, allocation, and chart modules
 

@@ -276,10 +276,26 @@ function drawForecastChart(canvas, historical, forecast, unit) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
 
-  // Show every N labels to avoid crowding
-  const labelStep = Math.ceil(totalPoints / 6);
-  for (let i = 0; i < totalPoints; i += labelStep) {
+  // Keep a readable minimum interval between complete YYYY-MM labels and
+  // include both endpoints so narrow canvases still show the full time range.
+  const maxLabelsByWidth = Math.max(2, Math.floor(chartW / 64) + 1);
+  const labelCount = Math.max(1, Math.min(totalPoints, 6, maxLabelsByWidth));
+  const labelIndexes = labelCount === 1
+    ? [0]
+    : Array.from(
+        { length: labelCount },
+        (_, index) => Math.round((index * (totalPoints - 1)) / (labelCount - 1))
+      );
+
+  labelIndexes.forEach((i) => {
     const xi = scaleX(i);
+    ctx.textAlign = labelCount === 1
+      ? 'center'
+      : i === 0
+        ? 'left'
+        : i === totalPoints - 1
+          ? 'right'
+          : 'center';
     let label;
     if (i < historical.length) {
       label = historical[i].month || String(i + 1);
@@ -287,7 +303,7 @@ function drawForecastChart(canvas, historical, forecast, unit) {
       label = forecast[i - historical.length]?.month || '';
     }
     ctx.fillText(label, xi, H - pad.bottom + 4);
-  }
+  });
 }
 
 window.MangroveCharts = {

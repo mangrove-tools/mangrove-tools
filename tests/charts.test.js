@@ -65,7 +65,7 @@ function makeCanvas(width = 500, height = 260) {
     },
     fillText(text, x, y) {
       fonts.push(this.font);
-      labels.push({ text, x, y });
+      labels.push({ text, x, y, align: this.textAlign });
     }
   };
 
@@ -134,4 +134,35 @@ test('forecast chart maps confidence to signal and forecast to pine', () => {
     forecastLabel.y < 60,
     'forecast region label should remain inside the plot, above the x-axis labels'
   );
+});
+
+test('forecast chart keeps date ticks separated on a narrow canvas', () => {
+  const charts = loadCharts();
+  const view = makeCanvas(300, 260);
+  const historical = Array.from({ length: 12 }, (_, index) => ({
+    x: index,
+    y: 100 + index,
+    month: `2025-${String(index + 1).padStart(2, '0')}`
+  }));
+  const forecast = Array.from({ length: 6 }, (_, index) => ({
+    month: `2026-${String(index + 1).padStart(2, '0')}`,
+    value: 112 + index,
+    lower: 106 + index,
+    upper: 118 + index
+  }));
+
+  charts.drawForecastChart(view.canvas, historical, forecast, '$');
+
+  const dateTicks = view.labels.filter(({ text }) => /^\d{4}-\d{2}$/.test(text));
+  assert.strictEqual(dateTicks[0].text, '2025-01');
+  assert.strictEqual(dateTicks[0].align, 'left');
+  assert.strictEqual(dateTicks.at(-1).text, '2026-06');
+  assert.strictEqual(dateTicks.at(-1).align, 'right');
+  assert.ok(dateTicks.length <= 4, 'narrow charts should render at most four date ticks');
+  for (let index = 1; index < dateTicks.length; index += 1) {
+    assert.ok(
+      dateTicks[index].x - dateTicks[index - 1].x >= 64,
+      'adjacent narrow-chart date ticks should have at least 64px of space'
+    );
+  }
 });

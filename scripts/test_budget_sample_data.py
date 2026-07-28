@@ -84,10 +84,15 @@ class BudgetSampleDataTest(unittest.TestCase):
 
             process.stdout.write(JSON.stringify({
               historyOk: history.ok,
+              recommendedObjective: analysis.recommendedObjective,
+              eligibleObjectives: analysis.eligibleObjectives,
               completePeriods: history.summary.completePeriods,
               channels: history.summary.channels,
               modelableChannels: modelChannels.filter((channel) => channel.status === 'modelable').length,
               preservedChannels: modelChannels.filter((channel) => channel.status === 'preserved').length,
+              preservedChannelDetails: modelChannels
+                .filter((channel) => channel.status === 'preserved')
+                .map((channel) => ({ channel: channel.channel, failedGates: channel.failedGates })),
               allocatedTotal: plan.ok ? plan.totals.allocatedBudget : null,
               finitePlan,
               hasAssumptionCurve: modelChannels.some((channel) => channel.curve && channel.curve.assumption === true),
@@ -104,10 +109,16 @@ class BudgetSampleDataTest(unittest.TestCase):
         actual = json.loads(completed.stdout)
 
         self.assertTrue(actual["historyOk"])
+        self.assertEqual(actual["recommendedObjective"], "revenue")
+        self.assertIn("conversions", actual["eligibleObjectives"])
         self.assertEqual(actual["completePeriods"], 16)
         self.assertEqual(actual["channels"], 4)
         self.assertEqual(actual["modelableChannels"], 3)
         self.assertEqual(actual["preservedChannels"], 1)
+        self.assertEqual(
+            actual["preservedChannelDetails"],
+            [{"channel": "Local partnerships", "failedGates": ["spend_variation"]}],
+        )
         self.assertEqual(actual["allocatedTotal"], 72000)
         self.assertTrue(actual["finitePlan"])
         self.assertFalse(actual["hasAssumptionCurve"])

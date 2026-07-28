@@ -21,12 +21,14 @@
   const targetProb = document.getElementById('target-prob');
   const targetProbText = document.getElementById('target-prob-text');
   const nextSteps = document.getElementById('next-steps');
+  const resultsPanel = document.getElementById('results');
   const sampleDataBtn = document.getElementById('use-sample-data');
   const recommendationExplanation = document.getElementById('recommendation-explanation');
   const explanationConfidence = document.getElementById('explanation-confidence');
   const explanationDriver = document.getElementById('explanation-driver');
   const explanationCaveat = document.getElementById('explanation-caveat');
   const EXTRAS = window.MangroveToolExtras || {};
+  const MOTION = window.MangroveMotion || {};
 
   const METRIC_LABELS = { revenue: 'Revenue', conversions: 'Conversions' };
   const SAMPLE_REVENUE_CSV = [
@@ -153,6 +155,7 @@
       resultsNote.textContent = 'Fix the data issues above.';
       nextSteps.hidden = true;
       hideExplanation();
+      if (MOTION.resetResult) MOTION.resetResult(resultsPanel);
       return;
     }
 
@@ -204,6 +207,7 @@
     }
 
     nextSteps.hidden = false;
+    if (MOTION.revealResult) MOTION.revealResult(resultsPanel);
   }
 
   function trackEvent(eventName, action) {

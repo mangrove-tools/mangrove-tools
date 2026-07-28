@@ -93,10 +93,89 @@ body.tool-page {
 }
 
 .results {
+  position: relative;
   padding: var(--space-md) var(--space-lg);
   border: 1px solid var(--line);
   background: var(--surface);
   border-radius: var(--radius);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .results[data-result-state="updating"]::before,
+  .results[data-result-state="ready"]::before {
+    content: "";
+    position: absolute;
+    top: -1px;
+    right: -1px;
+    left: -1px;
+    height: 2px;
+    background: var(--accent);
+    pointer-events: none;
+    transform-origin: left center;
+  }
+
+  .results[data-result-state="updating"]::before {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+
+  .results[data-result-state="ready"]::before {
+    animation: result-rule 0.65s var(--ease) both;
+  }
+
+  .results[data-result-state="updating"] .total,
+  .results[data-result-state="updating"] .results-note,
+  .results[data-result-state="updating"] .explanation-panel,
+  .results[data-result-state="updating"] .chart-wrap,
+  .results[data-result-state="updating"] [id$="-table-wrap"],
+  .results[data-result-state="updating"] .target-prob,
+  .results[data-result-state="updating"] .next-steps {
+    opacity: 0.74;
+    transform: translateY(6px);
+  }
+
+  .results[data-result-state="ready"] .total,
+  .results[data-result-state="ready"] .results-note,
+  .results[data-result-state="ready"] .explanation-panel,
+  .results[data-result-state="ready"] .chart-wrap,
+  .results[data-result-state="ready"] [id$="-table-wrap"],
+  .results[data-result-state="ready"] .target-prob,
+  .results[data-result-state="ready"] .next-steps {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity 0.34s var(--ease),
+      transform 0.34s var(--ease);
+  }
+
+  .results[data-result-state="ready"] .explanation-panel {
+    transition-delay: 0.05s;
+  }
+
+  .results[data-result-state="ready"] .chart-wrap,
+  .results[data-result-state="ready"] [id$="-table-wrap"] {
+    transition-delay: 0.1s;
+  }
+
+  .results[data-result-state="ready"] .target-prob,
+  .results[data-result-state="ready"] .next-steps {
+    transition-delay: 0.15s;
+  }
+}
+
+@keyframes result-rule {
+  0% {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  65% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleX(1);
+  }
 }
 
 .results .data-table-wrap {

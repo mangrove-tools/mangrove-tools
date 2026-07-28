@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 NODE_TESTS = (
     "tests/response-curve.test.js",
     "tests/product-events.test.js",
+    "tests/motion.test.js",
 )
 
 

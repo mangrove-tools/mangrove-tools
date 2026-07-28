@@ -1700,6 +1700,7 @@ summary:focus-visible {
 }
 
 .decision-story-stages {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   margin: 0;
@@ -1829,6 +1830,50 @@ summary:focus-visible {
 
 .story-boundary dd {
   margin-top: 0.2rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .decision-story[data-motion="ready"] .decision-story-stage {
+    opacity: 0.72;
+    transform: translateY(10px);
+  }
+
+  .decision-story[data-motion="ready"] .decision-story-stages::after,
+  .decision-story[data-motion="active"] .decision-story-stages::after {
+    content: "";
+    position: absolute;
+    top: -1px;
+    right: 0;
+    left: 0;
+    height: 2px;
+    background: var(--accent);
+    pointer-events: none;
+    transform: scaleX(0);
+    transform-origin: left center;
+  }
+
+  .decision-story[data-motion="active"] .decision-story-stages::after {
+    transform: scaleX(1);
+    transition: transform 0.65s var(--ease);
+  }
+
+  .decision-story[data-motion="active"] .decision-story-stage {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity 0.48s var(--ease),
+      transform 0.48s var(--ease);
+  }
+
+  .decision-story[data-motion="active"]
+    .decision-story-stage:nth-child(2) {
+    transition-delay: 0.09s;
+  }
+
+  .decision-story[data-motion="active"]
+    .decision-story-stage:nth-child(3) {
+    transition-delay: 0.18s;
+  }
 }
 
 @media (max-width: 899px) {

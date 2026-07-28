@@ -366,4 +366,3 @@ Give the independent reviewer the approved design, implementation plan, exact
 base/head SHAs, full diff, test evidence, screenshot paths, and global
 constraints. Resolve every Critical or Important finding, re-run validation,
 and re-review the fix before opening the ready pull request.
-

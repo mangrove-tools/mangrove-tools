@@ -5,7 +5,9 @@
 
 (function attachBudgetAllocator(root) {
   const TOLERANCE = 0.001;
-  const RECONCILIATION_FLOAT_OPERATIONS = 8;
+  const BALANCE_ITERATIONS = 200;
+  const SPEND_AT_THRESHOLD_OPERATIONS = 9;
+  const RECONCILIATION_OPERATIONS_PER_CHANNEL = 2;
 
   function finiteNonNegative(value) {
     return Number.isFinite(value) && value >= 0;
@@ -238,7 +240,7 @@
     while (totalAt(high) > budgetCents && high < Number.MAX_VALUE / 10) high *= 10;
     if (totalAt(high) > budgetCents + TOLERANCE * 100) return null;
 
-    for (let iteration = 0; iteration < 200; iteration += 1) {
+    for (let iteration = 0; iteration < BALANCE_ITERATIONS; iteration += 1) {
       const midpoint = geometricMidpoint(low, high);
       if (totalAt(midpoint) > budgetCents) low = midpoint;
       else high = midpoint;
@@ -286,19 +288,34 @@
     return first;
   }
 
+  function reconciliationPrecisionBound(channelCount, magnitude) {
+    // n = 200 balance refinements + 9 spend/clamp operations
+    // + 2 conversion/summation operations per channel.
+    const operationCount = BALANCE_ITERATIONS
+      + SPEND_AT_THRESHOLD_OPERATIONS
+      + RECONCILIATION_OPERATIONS_PER_CHANNEL * channelCount;
+    const scaledEpsilon = operationCount * Number.EPSILON;
+    if (!Number.isFinite(scaledEpsilon) || scaledEpsilon >= 1) return null;
+    // Standard forward-error allowance: gamma_n = n*u / (1 - n*u).
+    const gamma = scaledEpsilon / (1 - scaledEpsilon);
+    const bound = Math.ceil(gamma * magnitude);
+    return Number.isSafeInteger(bound) ? bound : null;
+  }
+
   function reconcile(modelable, targetCents, horizonFactor) {
-    const allocatedTotal = safeSum(modelable.map(function allocated(item) { return item.allocatedCents; }));
-    if (allocatedTotal == null) return false;
-    let delta = targetCents - allocatedTotal;
+    let delta = targetCents;
+    for (let index = 0; index < modelable.length; index += 1) {
+      delta -= modelable[index].allocatedCents;
+      if (!Number.isSafeInteger(delta)) return false;
+    }
     const roundingBound = Math.ceil(modelable.length / 2);
-    const precisionMagnitude = Math.max(Math.abs(targetCents), Math.abs(allocatedTotal));
-    const precisionBound = Math.ceil(
-      RECONCILIATION_FLOAT_OPERATIONS * Number.EPSILON * precisionMagnitude
-    );
+    const precisionMagnitude = Math.abs(targetCents) + Math.abs(delta);
+    const precisionBound = reconciliationPrecisionBound(modelable.length, precisionMagnitude);
+    if (precisionBound == null) return false;
     const adjustmentBound = roundingBound + precisionBound;
-    // Nearest-cent rounding contributes at most half a cent per channel. The
-    // precision term covers the eight finite operations in threshold-to-cents
-    // conversion without tying work to the requested budget.
+    // Nearest-cent rounding contributes at most half a cent per channel.
+    // The standard gamma_n term covers 200 threshold refinements, nine
+    // threshold-to-cents operations, and conversion plus summation per channel.
     if (!Number.isSafeInteger(delta) || Math.abs(delta) > adjustmentBound) return false;
     if (delta === 0) return true;
     const direction = delta > 0 ? 1 : -1;

@@ -97,6 +97,65 @@ test('reconciliation rejects pathological deltas without cent-by-cent mutation',
   assert.equal(rows[0].allocatedCents, 0);
 });
 
+test('reconciliation accepts the original near-safe-integer positive 17-cent delta', () => {
+  const { reconcile } = allocatorInternals();
+  const targetCents = 7711710266582669;
+  const rows = [
+    {
+      channel: 'Paid search',
+      curve: { a: 2, b: 0.5 },
+      allocatedCents: 3855855133291326,
+      minimumCents: 0,
+      maximumCents: Infinity
+    },
+    {
+      channel: 'Paid social',
+      curve: { a: 2, b: 0.5 },
+      allocatedCents: 3855855133291326,
+      minimumCents: 0,
+      maximumCents: Infinity
+    }
+  ];
+
+  assert.equal(
+    targetCents - rows.reduce((sum, item) => sum + item.allocatedCents, 0),
+    17
+  );
+  assert.equal(reconcile(rows, targetCents, 1), true);
+  assert.equal(
+    rows.reduce((sum, item) => sum + item.allocatedCents, 0),
+    targetCents
+  );
+});
+
+test('reconciliation safely reduces an intermediate sum just above the safe-integer ceiling', () => {
+  const { reconcile } = allocatorInternals();
+  const targetCents = Number.MAX_SAFE_INTEGER;
+  const rows = [
+    {
+      channel: 'Paid search',
+      curve: { a: 2, b: 0.5 },
+      allocatedCents: 4503599627370518,
+      minimumCents: 0,
+      maximumCents: Infinity
+    },
+    {
+      channel: 'Paid social',
+      curve: { a: 2, b: 0.5 },
+      allocatedCents: 4503599627370518,
+      minimumCents: 0,
+      maximumCents: Infinity
+    }
+  ];
+
+  assert.equal(Number.isSafeInteger(rows[0].allocatedCents + rows[1].allocatedCents), false);
+  assert.equal(reconcile(rows, targetCents, 1), true);
+  assert.equal(
+    rows.reduce((sum, item) => sum + item.allocatedCents, 0),
+    targetCents
+  );
+});
+
 test('202 identical channels reconcile the legitimate half-cent rounding delta exactly', () => {
   const result = allocate({
     model: model(Array.from({ length: 202 }, (_, index) => channel(

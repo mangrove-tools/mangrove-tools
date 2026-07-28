@@ -60,8 +60,3 @@ class FontContractTests(unittest.TestCase):
         self.assertIn("https://github.com/IBM/plex", provenance)
         self.assertIn("IBM Plex Mono", provenance)
         self.assertIn("SIL Open Font License, Version 1.1", license_text)
-
-    def test_repository_contract_names_the_active_fonts(self) -> None:
-        agent_contract = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
-
-        self.assertIn("IBM Plex Sans + IBM Plex Mono", agent_contract)

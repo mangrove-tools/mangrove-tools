@@ -97,6 +97,24 @@ class BudgetSampleDataTest(unittest.TestCase):
         self.assertAlmostEqual(actual["recommendedTotal"], 12000, delta=1)
         self.assertGreater(actual["expectedConversions"], 0)
 
+    def test_manual_entry_is_an_explicit_assumption_not_fake_history(self):
+        app_source = (REPO_ROOT / "analytics/budget/app.js").read_text()
+
+        self.assertIn("createAssumptionCurve", app_source)
+        self.assertNotIn("spend * 0.6", app_source)
+        self.assertNotIn("Math.pow(0.65", app_source)
+        self.assertIn("delete row.dataset.sampleDataPoints", app_source)
+
+    def test_budget_layout_contains_narrow_results(self):
+        tool_css = (REPO_ROOT / "tool-shell.css").read_text()
+        charts_js = (REPO_ROOT / "shared/charts.js").read_text()
+
+        self.assertIn(".channel-row {", tool_css)
+        self.assertIn("grid-template-columns: 1fr;", tool_css)
+        self.assertIn(".results .data-table-wrap", tool_css)
+        self.assertIn("recommendedLegend", charts_js)
+        self.assertNotIn("var(--surface-warm)", tool_css)
+
 
 if __name__ == "__main__":
     unittest.main()

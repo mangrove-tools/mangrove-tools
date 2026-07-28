@@ -116,8 +116,6 @@
   }
 
   var PRODUCT_EVENT_ALLOWED_PAYLOAD_KEYS = {
-    route: true,
-    tool: true,
     action: true,
     destination: true,
     link: true,
@@ -194,7 +192,9 @@
         : null;
       if (!anchor) return;
 
-      var destination = analyticsDestination(anchor);
+      var destination = anchor.matches("a.analytics-cta")
+        ? analyticsDestination(anchor)
+        : "";
       if (destination) {
         trackProductEvent("analytics_cta_clicked", {
           action: "click",

@@ -44,6 +44,8 @@ class AnalyticsExplanationTests(unittest.TestCase):
         self.assertIn("explanationConfidence", script)
         self.assertIn("explanationDriver", script)
         self.assertIn("explanationCaveat", script)
+        self.assertIn("Assumption-driven", script)
+        self.assertNotIn("Medium —", script)
 
     def test_forecast_results_include_explanation_panel(self):
         self.assert_explanation_contract("analytics/forecast")
@@ -53,6 +55,8 @@ class AnalyticsExplanationTests(unittest.TestCase):
         self.assertIn("explanationConfidence", script)
         self.assertIn("explanationDriver", script)
         self.assertIn("explanationCaveat", script)
+        self.assertIn("model fit", script.lower())
+        self.assertNotIn("High —", script)
 
 
 if __name__ == "__main__":

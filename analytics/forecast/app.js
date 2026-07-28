@@ -113,26 +113,26 @@
     return metric === 'revenue' ? fmtValue(v, 'revenue') : Math.round(v).toLocaleString() + ' conversions';
   }
 
-  function confidenceLabel(historical, model) {
+  function modelFitLabel(historical, model) {
     const values = historical.map(row => row.value);
     const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
     const residualRatio = mean > 0 ? model.residualStdDev / mean : 1;
-    if (historical.length >= 12 && model.r2 >= 0.75 && residualRatio <= 0.15) return 'High';
-    if (historical.length >= 6 && model.r2 >= 0.45 && residualRatio <= 0.3) return 'Medium';
-    return 'Directional';
+    if (historical.length >= 12 && model.r2 >= 0.75 && residualRatio <= 0.15) return 'Stronger model fit';
+    if (historical.length >= 6 && model.r2 >= 0.45 && residualRatio <= 0.3) return 'Moderate model fit';
+    return 'Directional model fit';
   }
 
   function renderExplanation(historical, model, seasonality) {
     if (!recommendationExplanation || !model || !model.trend) return;
 
-    const confidence = confidenceLabel(historical, model);
+    const modelFit = modelFitLabel(historical, model);
     const slope = model.trend.slope;
     const direction = slope > 0 ? 'upward' : slope < 0 ? 'downward' : 'mostly flat';
     const driver = model.seasonalIndices && seasonality
       ? `The forecast follows the ${direction} trend and applies the detected seasonal pattern.`
       : `The forecast is driven mainly by the ${direction} historical trend.`;
 
-    explanationConfidence.textContent = `${confidence} — based on ${historical.length} historical months and observed month-to-month variability.`;
+    explanationConfidence.textContent = `${modelFit} — an in-sample fit description based on ${historical.length} historical months, not calibrated forecast confidence.`;
     explanationDriver.textContent = driver;
     explanationCaveat.textContent = 'The model assumes current trajectory continues; launches, price changes, channel shifts, or market shocks can break the forecast.';
     recommendationExplanation.hidden = false;
@@ -254,6 +254,22 @@
     manualArea.hidden = true;
     document.getElementById('csv-input').value = SAMPLE_REVENUE_CSV;
     form.dataset.eventAction = 'sample';
+    if (typeof form.requestSubmit === 'function') {
+      form.requestSubmit();
+    } else {
+      handleSubmit({ preventDefault() {} });
+    }
+  }
+
+  function useSampleData() {
+    document.getElementById('metric-type').value = 'revenue';
+    document.getElementById('horizon').value = '6';
+    document.getElementById('growth-target').value = '42000';
+    document.getElementById('seasonality-toggle').value = 'true';
+    dataMethodSel.value = 'paste';
+    pasteArea.hidden = false;
+    manualArea.hidden = true;
+    document.getElementById('csv-input').value = SAMPLE_REVENUE_CSV;
     if (typeof form.requestSubmit === 'function') {
       form.requestSubmit();
     } else {

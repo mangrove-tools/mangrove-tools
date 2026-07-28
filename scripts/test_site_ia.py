@@ -43,6 +43,24 @@ PUBLIC_HTML_PAGES = [
     "contact/index.html",
     "404.html",
 ]
+EXPECTED_CURRENT_NAV = {
+    "index.html": ("/", "page"),
+    "analytics/index.html": ("/analytics/", "page"),
+    "analytics/budget/index.html": ("/analytics/", "page"),
+    "analytics/forecast/index.html": ("/analytics/", "page"),
+    "calculators/index.html": ("/calculators/", "page"),
+    "method/index.html": ("/method/", "page"),
+    "letterroi/index.html": ("/calculators/", "page"),
+    "sponsorquote/index.html": ("/calculators/", "page"),
+    "subtarget/index.html": ("/calculators/", "page"),
+    "mediakit/index.html": ("/calculators/", "page"),
+    "inventory/index.html": ("/calculators/", "page"),
+    "about/index.html": ("/about/", "page"),
+    "faq/index.html": ("/about/", "page"),
+    "privacy/index.html": ("/about/", "page"),
+    "contact/index.html": ("/about/", "page"),
+    "404.html": None,
+}
 
 
 @dataclass
@@ -50,6 +68,7 @@ class LinkContext:
     href: str
     in_nav: bool
     is_hero_button: bool
+    aria_current: str
     text: list[str] = field(default_factory=list)
 
 
@@ -57,6 +76,7 @@ class SiteParser(HTMLParser):
     def __init__(self) -> None:
         super().__init__()
         self.nav_links: list[tuple[str, str]] = []
+        self.current_nav_links: list[tuple[str, str]] = []
         self.links: list[tuple[str, str]] = []
         self.ids: set[str] = set()
         self.hero_buttons: list[tuple[str, str]] = []
@@ -78,7 +98,10 @@ class SiteParser(HTMLParser):
             href = attr_map.get("href", "")
             in_nav = self._nav_depth is not None
             is_hero_button = self._hero_depth is not None and "btn" in classes
-            self._link_context.append(LinkContext(href, in_nav, is_hero_button))
+            aria_current = attr_map.get("aria-current", "")
+            self._link_context.append(
+                LinkContext(href, in_nav, is_hero_button, aria_current)
+            )
         self._depth += 1
 
     def handle_data(self, data: str) -> None:
@@ -93,6 +116,10 @@ class SiteParser(HTMLParser):
             self.links.append((context.href, text))
             if context.in_nav:
                 self.nav_links.append((context.href, text))
+                if context.aria_current:
+                    self.current_nav_links.append(
+                        (context.href, context.aria_current)
+                    )
             if context.is_hero_button:
                 self.hero_buttons.append((context.href, text))
         if tag == "nav" and self._nav_depth == self._depth:
@@ -108,6 +135,33 @@ def parse_html(path: Path) -> SiteParser:
 
 
 class SiteInformationArchitectureTests(unittest.TestCase):
+    def _make_updater_fixture(self, temporary_directory: str) -> Path:
+        fixture = Path(temporary_directory)
+        (fixture / "scripts").mkdir()
+        shutil.copy2(ROOT / "scripts/apply-nav-footer.py", fixture / "scripts")
+        for relative_path in PUBLIC_HTML_PAGES:
+            page = fixture / relative_path
+            page.parent.mkdir(parents=True, exist_ok=True)
+            page.write_text(
+                '<nav class="site-nav" aria-label="Primary">\n'
+                '  <a href="/analytics/">Analytics</a>\n'
+                '  <a href="/#calculators">Calculators</a>\n'
+                '  <a href="/about/">About</a>\n'
+                '</nav>\n'
+                '<footer class="foot">\n    </footer>\n',
+                encoding="utf-8",
+            )
+        return fixture
+
+    def _run_updater(self, fixture: Path) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            [sys.executable, "scripts/apply-nav-footer.py"],
+            cwd=fixture,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
     def test_new_public_routes_exist(self) -> None:
         for route in ("calculators/index.html", "method/index.html"):
             with self.subTest(route=route):
@@ -124,6 +178,17 @@ class SiteInformationArchitectureTests(unittest.TestCase):
                 path = ROOT / relative_path
                 self.assertTrue(path.is_file(), f"Missing public page: {relative_path}")
                 self.assertEqual(EXPECTED_NAV, parse_html(path).nav_links)
+
+    def test_every_public_page_marks_exactly_one_route_family_current(self) -> None:
+        for relative_path, expected_current in EXPECTED_CURRENT_NAV.items():
+            with self.subTest(page=relative_path):
+                actual_current = parse_html(
+                    ROOT / relative_path
+                ).current_nav_links
+                expected_links = (
+                    [] if expected_current is None else [expected_current]
+                )
+                self.assertEqual(expected_links, actual_current)
 
     def test_homepage_hero_has_only_the_analytics_primary_action(self) -> None:
         hero_buttons = parse_html(ROOT / "index.html").hero_buttons
@@ -149,53 +214,73 @@ class SiteInformationArchitectureTests(unittest.TestCase):
 
     def test_navigation_script_generates_the_primary_navigation_contract(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
-            fixture = Path(temporary_directory)
-            (fixture / "scripts").mkdir()
-            shutil.copy2(ROOT / "scripts/apply-nav-footer.py", fixture / "scripts")
-            for relative_path in ("about/index.html", "404.html"):
-                destination = fixture / relative_path
-                destination.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(ROOT / relative_path, destination)
+            fixture = self._make_updater_fixture(temporary_directory)
 
-            for directory in (
-                "letterroi",
-                "sponsorquote",
-                "subtarget",
-                "mediakit",
-                "inventory",
-                "analytics",
-                "analytics/budget",
-                "analytics/forecast",
-                "faq",
-                "privacy",
-                "contact",
-            ):
-                page = fixture / directory / "index.html"
-                page.parent.mkdir(parents=True, exist_ok=True)
-                page.write_text(
-                    '<nav class="site-nav" aria-label="Primary">\n'
-                    '  <a href="/analytics/">Analytics</a>\n'
-                    '  <a href="/#calculators">Calculators</a>\n'
-                    '  <a href="/about/">About</a>\n'
-                    '</nav>\n'
-                    '<footer class="foot">\n    </footer>\n',
-                    encoding="utf-8",
-                )
+            result = self._run_updater(fixture)
 
-            subprocess.run(
-                [sys.executable, "scripts/apply-nav-footer.py"],
-                cwd=fixture,
-                check=True,
-                capture_output=True,
-                text=True,
-            )
-
-            for relative_path in ("about/index.html", "404.html"):
+            self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+            for relative_path in PUBLIC_HTML_PAGES:
                 with self.subTest(page=relative_path):
                     self.assertEqual(
                         EXPECTED_NAV,
                         parse_html(fixture / relative_path).nav_links,
                     )
+                    expected_current = EXPECTED_CURRENT_NAV[relative_path]
+                    expected_links = (
+                        [] if expected_current is None else [expected_current]
+                    )
+                    self.assertEqual(
+                        expected_links,
+                        parse_html(fixture / relative_path).current_nav_links,
+                    )
+
+    def test_navigation_script_exits_nonzero_when_page_is_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            fixture = self._make_updater_fixture(temporary_directory)
+            (fixture / "method/index.html").unlink()
+
+            result = self._run_updater(fixture)
+
+            self.assertEqual(1, result.returncode)
+            self.assertIn("method/index.html: file not found", result.stdout)
+
+    def test_navigation_script_exits_nonzero_on_replacement_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            fixture = self._make_updater_fixture(temporary_directory)
+            (fixture / "about/index.html").write_text(
+                '<nav class="site-nav" aria-label="Primary">\n'
+                '  <a href="/analytics/">Analytics</a>\n'
+                '  <a href="/#calculators">Calculators</a>\n'
+                '  <a href="/about/">About</a>\n'
+                '</nav>\n',
+                encoding="utf-8",
+            )
+
+            result = self._run_updater(fixture)
+
+            self.assertEqual(1, result.returncode)
+            self.assertIn(
+                "about/index.html: nav=1 footer=0",
+                result.stdout,
+            )
+
+    def test_navigation_script_reports_all_failures_before_exiting(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            fixture = self._make_updater_fixture(temporary_directory)
+            (fixture / "method/index.html").unlink()
+            (fixture / "about/index.html").write_text(
+                '<footer class="foot">\n    </footer>\n',
+                encoding="utf-8",
+            )
+
+            result = self._run_updater(fixture)
+
+            self.assertEqual(1, result.returncode)
+            self.assertIn("method/index.html: file not found", result.stdout)
+            self.assertIn(
+                "about/index.html: nav=0 footer=1",
+                result.stdout,
+            )
 
 
 if __name__ == "__main__":

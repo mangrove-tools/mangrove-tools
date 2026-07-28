@@ -4,9 +4,18 @@ Apply analytics-first nav + footer to all HTML pages.
 Run from repo root: python3 scripts/apply-nav-footer.py
 """
 import re
+import sys
+from enum import Enum, auto
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
+
+
+class PatchResult(Enum):
+    CHANGED = auto()
+    UNCHANGED = auto()
+    FAILED = auto()
+
 
 # Pages and their nav aria-current state
 # (file_relpath, current_section)
@@ -115,7 +124,7 @@ def patch(rel, current):
     p = REPO / rel
     if not p.is_file():
         print(f"  ! {rel}: file not found — SKIPPED")
-        return False
+        return PatchResult.FAILED
     text = p.read_text(encoding="utf-8")
     original = text
     new_nav = nav_block(current)
@@ -128,20 +137,28 @@ def patch(rel, current):
         n2 = 0
     if n1 != 1 or n2 != 1:
         print(f"  ! {rel}: nav={n1} footer={n2} (expected 1 each) — SKIPPED")
-        return False
+        return PatchResult.FAILED
     if text == original:
-        return False  # no change
+        return PatchResult.UNCHANGED
     p.write_text(text, encoding="utf-8")
     print(f"  ✓ {rel}: nav + footer updated")
-    return True
+    return PatchResult.CHANGED
 
 def main():
     print("Applying analytics-first nav + footer to all pages...")
     changed = 0
+    failures = 0
     for rel, current in PAGES:
-        if patch(rel, current):
+        result = patch(rel, current)
+        if result is PatchResult.CHANGED:
             changed += 1
+        elif result is PatchResult.FAILED:
+            failures += 1
     print(f"\n{changed} files updated.")
+    if failures:
+        print(f"{failures} files failed.")
+        return 1
+    return 0
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

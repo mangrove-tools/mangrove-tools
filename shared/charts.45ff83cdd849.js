@@ -357,16 +357,16 @@ function drawResponseCurve(canvas, channel, positions, options) {
   const observed = Array.isArray(channel?.observations)
     ? channel.observations.filter(point => finiteNonNegative(point.spend) && finiteNonNegative(point.outcome))
     : [];
-  const currentSpendRate = finiteNonNegative(positions?.currentSpendRate)
-    ? positions.currentSpendRate
-    : null;
-  const recommendedSpendRate = finiteNonNegative(positions?.recommendedSpendRate)
-    ? positions.recommendedSpendRate
-    : null;
-  const positionValues = [currentSpendRate, recommendedSpendRate].filter(finiteNonNegative);
   const modelable = channel?.status === 'modelable'
     && Number.isFinite(channel?.curve?.a)
     && Number.isFinite(channel?.curve?.b);
+  const currentSpendRate = modelable && finiteNonNegative(positions?.currentSpendRate)
+    ? positions.currentSpendRate
+    : null;
+  const recommendedSpendRate = modelable && finiteNonNegative(positions?.recommendedSpendRate)
+    ? positions.recommendedSpendRate
+    : null;
+  const positionValues = [currentSpendRate, recommendedSpendRate].filter(finiteNonNegative);
   const predictedOutcome = (spend) => modelable
     ? channel.curve.a * Math.pow(spend, channel.curve.b)
     : 0;

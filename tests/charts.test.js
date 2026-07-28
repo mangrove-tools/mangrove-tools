@@ -256,6 +256,40 @@ test('response curve preserves observed-only channels without a fitted line', ()
   assert.ok(view.fonts.every((font) => font.includes('IBM Plex Mono')));
 });
 
+test('response curve ignores supplied marker positions for observed-only channels', () => {
+  const charts = loadCharts();
+  const view = makeCanvas();
+
+  charts.drawResponseCurve(
+    view.canvas,
+    {
+      channel: 'Organic',
+      status: 'preserved',
+      modelable: false,
+      observations: [
+        { spend: 0, outcome: 12 },
+        { spend: 400, outcome: 18 },
+        { spend: 650, outcome: 20 }
+      ],
+      curve: null
+    },
+    { currentSpendRate: 400, recommendedSpendRate: 650 },
+    responseOptions
+  );
+
+  assert.ok(
+    !view.strokes.some(({ style }) => style === cssValues['--ink-soft']),
+    'observed-only channels do not draw marker lines'
+  );
+  assert.strictEqual(
+    view.arcs.filter(({ style }) => style === cssValues['--signal']).length,
+    3,
+    'only observed points are drawn'
+  );
+  assert.ok(!view.labels.some(({ text }) => text === 'CURRENT'));
+  assert.ok(!view.labels.some(({ text }) => text === 'RECOMMENDED'));
+});
+
 test('response curve treats an explicit zero as a valid marker position', () => {
   const charts = loadCharts();
   const view = makeCanvas();

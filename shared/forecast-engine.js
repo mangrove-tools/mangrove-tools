@@ -252,7 +252,7 @@ function probabilityOfHittingTarget(forecast, target) {
   // Z-score for target
   const z = (target - avgExpected) / sigma;
   // Standard normal CDF approximation
-  const prob = 0.5 * (1 + erf(z / Math.sqrt(2)));
+  const prob = 1 - (0.5 * (1 + erf(z / Math.sqrt(2))));
   return Math.max(0, Math.min(1, prob));
 }
 

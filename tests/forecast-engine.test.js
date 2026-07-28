@@ -23,3 +23,14 @@ assert.strictEqual(
   result.forecast.map(row => row.month).join(','),
   '2026-01,2026-02,2026-03'
 );
+
+const lowerTargetProbability = context.window.MangroveForecast.probabilityOfHittingTarget(
+  [{ value: 100, lower: 80, upper: 120 }],
+  90
+);
+const higherTargetProbability = context.window.MangroveForecast.probabilityOfHittingTarget(
+  [{ value: 100, lower: 80, upper: 120 }],
+  110
+);
+
+assert(lowerTargetProbability > higherTargetProbability);

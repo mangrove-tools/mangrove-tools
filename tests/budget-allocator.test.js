@@ -72,9 +72,13 @@ test('symmetric admitted curves split the budget equally', () => {
 test('geometric midpoint remains finite across overflow and zero-bound edges', () => {
   const { geometricMidpoint } = allocatorInternals();
   const overflowSafe = geometricMidpoint(1e200, 1e300);
+  const subnormalSafe = geometricMidpoint(Number.MIN_VALUE, 1);
 
   assert.equal(Number.isFinite(overflowSafe), true);
   assert.ok(Math.abs((overflowSafe / 1e250) - 1) < 1e-15);
+  assert.equal(Number.isFinite(subnormalSafe), true);
+  assert.ok(subnormalSafe > 0);
+  assert.equal(geometricMidpoint(Number.MIN_VALUE, Number.MIN_VALUE), Number.MIN_VALUE);
   assert.equal(geometricMidpoint(0, Number.MAX_VALUE), 0);
   assert.equal(geometricMidpoint(Number.MAX_VALUE, 0), 0);
 });
@@ -93,7 +97,56 @@ test('reconciliation rejects pathological deltas without cent-by-cent mutation',
   assert.equal(rows[0].allocatedCents, 0);
 });
 
-test('extreme accepted curves complete promptly with finite output or a controlled reconciliation failure', () => {
+test('202 identical channels reconcile the legitimate half-cent rounding delta exactly', () => {
+  const result = allocate({
+    model: model(Array.from({ length: 202 }, (_, index) => channel(
+      `Channel ${String(index).padStart(3, '0')}`,
+      { a: 2, b: 0.5 },
+      { currentSpendRate: 0, preservedSpendRate: 0 }
+    )), { key: 'revenue', label: 'Revenue', costTreatment: null }),
+    totalBudget: 40401.01,
+    planDays: 7
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.totals.allocatedBudget, 40401.01);
+  assert.equal(
+    result.allocation.reduce((sum, item) => sum + Math.round(item.recommendedSpend * 100), 0),
+    4040101
+  );
+  assert.equal(result.allocation.filter(item => item.recommendedSpend === 200).length, 101);
+  assert.equal(result.allocation.filter(item => item.recommendedSpend === 200.01).length, 101);
+  assert.equal(row(result, 'Channel 000').recommendedSpend, 200);
+  assert.equal(row(result, 'Channel 100').recommendedSpend, 200);
+  assert.equal(row(result, 'Channel 101').recommendedSpend, 200.01);
+});
+
+test('near-safe-integer two-channel allocation reconciles its floating-precision delta', () => {
+  const totalBudget = (Number.MAX_SAFE_INTEGER - 578) / 100;
+  const result = allocate({
+    model: model([
+      channel('Paid search', {
+        a: 0.004047999876811963,
+        b: 0.921399003872648
+      }, { currentSpendRate: 0, preservedSpendRate: 0 }),
+      channel('Paid social', {
+        a: 0.0005000356887975505,
+        b: 0.4893822947749868
+      }, { currentSpendRate: 0, preservedSpendRate: 0 })
+    ], { key: 'revenue', label: 'Revenue', costTreatment: null }, 1),
+    totalBudget,
+    planDays: 32.44467312947183
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.totals.allocatedBudget, totalBudget);
+  assert.equal(
+    result.allocation.reduce((sum, item) => sum + Math.round(item.recommendedSpend * 100), 0),
+    Math.round(totalBudget * 100)
+  );
+});
+
+test('extreme accepted curves complete promptly with exact finite allocations', () => {
   const started = process.hrtime.bigint();
   const result = allocate({
     model: model([
@@ -115,10 +168,7 @@ test('extreme accepted curves complete promptly with finite output or a controll
     elapsedMilliseconds < 1000,
     `extreme allocation took ${elapsedMilliseconds.toFixed(1)}ms`
   );
-  if (!result.ok) {
-    assert.equal(result.code, 'currency_reconciliation_failed');
-    return;
-  }
+  assert.equal(result.ok, true);
   assert.equal(result.code, 'allocated');
   assert.equal(result.totals.allocatedBudget, 10000);
   assert.equal(

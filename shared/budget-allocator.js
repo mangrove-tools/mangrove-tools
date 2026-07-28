@@ -5,7 +5,7 @@
 
 (function attachBudgetAllocator(root) {
   const TOLERANCE = 0.001;
-  const MAX_RECONCILIATION_STEPS = 100;
+  const RECONCILIATION_FLOAT_OPERATIONS = 8;
 
   function finiteNonNegative(value) {
     return Number.isFinite(value) && value >= 0;
@@ -256,32 +256,88 @@
     return marginalOutcome(item.curve, fromCents(cents) / horizonFactor);
   }
 
+  function pushHeap(heap, item, higherPriority) {
+    heap.push(item);
+    let index = heap.length - 1;
+    while (index > 0) {
+      const parent = Math.floor((index - 1) / 2);
+      if (!higherPriority(heap[index], heap[parent])) break;
+      [heap[index], heap[parent]] = [heap[parent], heap[index]];
+      index = parent;
+    }
+  }
+
+  function popHeap(heap, higherPriority) {
+    const first = heap[0];
+    const last = heap.pop();
+    if (heap.length === 0) return first;
+    heap[0] = last;
+    let index = 0;
+    while (true) {
+      const left = index * 2 + 1;
+      const right = left + 1;
+      let next = index;
+      if (left < heap.length && higherPriority(heap[left], heap[next])) next = left;
+      if (right < heap.length && higherPriority(heap[right], heap[next])) next = right;
+      if (next === index) break;
+      [heap[index], heap[next]] = [heap[next], heap[index]];
+      index = next;
+    }
+    return first;
+  }
+
   function reconcile(modelable, targetCents, horizonFactor) {
     const allocatedTotal = safeSum(modelable.map(function allocated(item) { return item.allocatedCents; }));
     if (allocatedTotal == null) return false;
     let delta = targetCents - allocatedTotal;
-    const roundingBound = Math.ceil(modelable.length / 2) + 1;
-    const stepLimit = Math.min(roundingBound, MAX_RECONCILIATION_STEPS);
+    const roundingBound = Math.ceil(modelable.length / 2);
+    const precisionMagnitude = Math.max(Math.abs(targetCents), Math.abs(allocatedTotal));
+    const precisionBound = Math.ceil(
+      RECONCILIATION_FLOAT_OPERATIONS * Number.EPSILON * precisionMagnitude
+    );
+    const adjustmentBound = roundingBound + precisionBound;
     // Nearest-cent rounding contributes at most half a cent per channel. The
-    // extra cent covers the balance tolerance and floating-point boundary.
-    if (!Number.isSafeInteger(delta) || Math.abs(delta) > stepLimit) return false;
-    let steps = 0;
+    // precision term covers the eight finite operations in threshold-to-cents
+    // conversion without tying work to the requested budget.
+    if (!Number.isSafeInteger(delta) || Math.abs(delta) > adjustmentBound) return false;
+    if (delta === 0) return true;
+    const direction = delta > 0 ? 1 : -1;
+    const required = Math.abs(delta);
+    let remainingCapacity = required;
+    const candidates = modelable.filter(function hasCapacity(item) {
+      const capacity = direction > 0
+        ? item.maximumCents - item.allocatedCents
+        : item.allocatedCents - item.minimumCents;
+      if (capacity <= 0) return false;
+      remainingCapacity -= Math.min(remainingCapacity, capacity);
+      return true;
+    });
+    if (remainingCapacity > 0) return false;
+
+    function higherPriority(left, right) {
+      const leftMarginal = marginalAtCents(left, left.allocatedCents, horizonFactor);
+      const rightMarginal = marginalAtCents(right, right.allocatedCents, horizonFactor);
+      const leftValue = leftMarginal == null ? -Infinity : leftMarginal;
+      const rightValue = rightMarginal == null ? -Infinity : rightMarginal;
+      if (leftValue !== rightValue) {
+        return direction > 0 ? leftValue > rightValue : leftValue < rightValue;
+      }
+      return left.channel.localeCompare(right.channel) < 0;
+    }
+
+    const heap = [];
+    candidates.forEach(function addCandidate(item) {
+      pushHeap(heap, item, higherPriority);
+    });
     while (delta !== 0) {
-      if (steps >= stepLimit) return false;
-      const candidates = modelable.filter(function hasCapacity(item) {
-        return delta > 0 ? item.allocatedCents < item.maximumCents : item.allocatedCents > item.minimumCents;
-      }).sort(function byMarginalThenName(left, right) {
-        const leftMarginal = marginalAtCents(left, left.allocatedCents, horizonFactor);
-        const rightMarginal = marginalAtCents(right, right.allocatedCents, horizonFactor);
-        const leftValue = leftMarginal == null ? -Infinity : leftMarginal;
-        const rightValue = rightMarginal == null ? -Infinity : rightMarginal;
-        const comparison = delta > 0 ? rightValue - leftValue : leftValue - rightValue;
-        return comparison || left.channel.localeCompare(right.channel);
-      });
-      if (candidates.length === 0) return false;
-      candidates[0].allocatedCents += delta > 0 ? 1 : -1;
-      delta += delta > 0 ? -1 : 1;
-      steps += 1;
+      const selected = popHeap(heap, higherPriority);
+      if (!selected) return false;
+      selected.allocatedCents += direction;
+      delta -= direction;
+      const hasCapacity = direction > 0
+        ? selected.allocatedCents < selected.maximumCents
+        : selected.allocatedCents > selected.minimumCents;
+      if (hasCapacity) pushHeap(heap, selected, higherPriority);
     }
     return true;
   }

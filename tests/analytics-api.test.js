@@ -97,6 +97,7 @@ test("event payload sanitizer drops request-like values under allowed metadata k
       result_state: "profitable",
       cta_id: "founder@example.com",
       source: "my actual budget is 12000",
+      surface: true,
       version: "v1",
     },
   });
@@ -105,6 +106,17 @@ test("event payload sanitizer drops request-like values under allowed metadata k
     result_state: "profitable",
     version: "v1",
   });
+});
+
+test("event payload sanitizer rejects non-object request bodies with a controlled error", () => {
+  assert.throws(
+    () => sanitizeEventPayload(null),
+    /valid event payload/i,
+  );
+  assert.throws(
+    () => sanitizeEventPayload(["tool_started", "budget"]),
+    /valid event payload/i,
+  );
 });
 
 test("event endpoint is unavailable unless explicitly enabled", async () => {

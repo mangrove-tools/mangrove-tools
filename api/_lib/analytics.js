@@ -98,14 +98,16 @@ function sanitizeMetadata(metadata) {
       ) {
         clean[key] = sanitized;
       }
-    } else if (typeof value === "boolean") {
-      clean[key] = value;
     }
     return clean;
   }, {});
 }
 
 function sanitizeEventPayload(body = {}) {
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    throw new Error("A valid event payload is required.");
+  }
+
   const eventName = sanitizeText(normalizeEventName(body));
   if (!ALLOWED_EVENT_NAMES.includes(eventName)) {
     throw new Error("Unsupported event name.");

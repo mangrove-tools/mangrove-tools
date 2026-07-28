@@ -134,7 +134,15 @@
 
           <div id="channel-rows" class="field-wide"></div>
 
-          <button type="submit" class="primary">Optimize allocation</button>
+          <div class="form-actions">
+            <button type="button" class="secondary-action" id="use-sample-data" aria-describedby="small-business-sample-description">
+              Use sample data
+            </button>
+            <button type="submit" class="primary">Optimize allocation</button>
+          </div>
+          <p class="field-hint sample-note" id="small-business-sample-description">
+            Fills a monthly marketing budget example for a small local services business.
+          </p>
         </form>
 
         <div class="results" id="results">
@@ -272,6 +280,7 @@
 
     <script src="/shared/response-curve.js"></script>
     <script src="/shared/charts.js"></script>
+    <script src="/shared/budget-sample-data.js"></script>
     <script src="/analytics/budget/app.js"></script>
   </body>
 </html>

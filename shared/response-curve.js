@@ -130,8 +130,9 @@ function optimizeBudget(channels, totalBudget) {
     if (Math.abs(delta) < TOLERANCE) break;
 
     // Compute marginal CPA for each channel at current allocation
-    const marginals = allocation.map(a => ({
+    const marginals = allocation.map((a, index) => ({
       ...a,
+      index,
       mCPA: marginalCPA(a.recommendedSpend, a.curve)
     }));
 
@@ -143,7 +144,7 @@ function optimizeBudget(channels, totalBudget) {
         if (remaining <= 0) break;
         const room = ch.maxSpend === Infinity ? remaining : Math.min(remaining, ch.maxSpend - ch.recommendedSpend);
         if (room > 0) {
-          ch.recommendedSpend = Math.min(ch.recommendedSpend + room, ch.maxSpend === Infinity ? Infinity : ch.maxSpend);
+          allocation[ch.index].recommendedSpend = Math.min(ch.recommendedSpend + room, ch.maxSpend === Infinity ? Infinity : ch.maxSpend);
           remaining -= room;
         }
       }
@@ -168,7 +169,7 @@ function optimizeBudget(channels, totalBudget) {
         const room = ch.recommendedSpend - Math.max(ch.minSpend, 0);
         if (room > 0) {
           const cut = Math.min(room, remaining);
-          ch.recommendedSpend -= cut;
+          allocation[ch.index].recommendedSpend -= cut;
           remaining -= cut;
         }
       }

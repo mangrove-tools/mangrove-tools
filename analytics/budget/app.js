@@ -7,7 +7,11 @@
 (function () {
   // DOM refs
   const form = document.getElementById('budget-form');
+  const periodSel = document.getElementById('period');
+  const totalBudgetInput = document.getElementById('total-budget');
   const numChannelsSel = document.getElementById('num-channels');
+  const targetMetricSel = document.getElementById('target-metric');
+  const sampleDataButton = document.getElementById('use-sample-data');
   const channelRows = document.getElementById('channel-rows');
   const resultsNote = document.getElementById('results-note');
   const totalConversions = document.getElementById('total-conversions');
@@ -31,41 +35,35 @@
       const preset = CHANNEL_PRESETS[i] || `Channel ${i + 1}`;
       const row = document.createElement('div');
       row.className = 'channel-row field-wide';
-      row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;padding:0.75rem 0;border-top:1px solid var(--line);';
       row.innerHTML = `
-        <div class="field" style="grid-column:1/-1;display:flex;flex-direction:column;gap:0.3rem;">
-          <label style="font-size:0.72rem;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--ink-soft);">
+        <div class="field channel-name-field">
+          <label>
             Channel ${i + 1}
           </label>
           <input type="text" class="ch-name" value="${preset}"
-            style="width:100%;border:1px solid var(--line);border-radius:2px;padding:0.65rem 0.85rem;background:var(--surface);color:var(--ink);font:inherit;font-weight:500;"
             aria-label="Channel ${i + 1} name" />
         </div>
         <div class="field">
-          <label style="font-size:0.72rem;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--ink-soft);">Monthly spend ($)</label>
+          <label>Monthly spend ($)</label>
           <input type="number" class="ch-spend" inputmode="numeric" min="0" step="50"
             placeholder="e.g. 2000"
-            style="width:100%;border:1px solid var(--line);border-radius:2px;padding:0.65rem 0.85rem;background:var(--surface);color:var(--ink);font:inherit;"
             aria-label="Monthly spend for channel ${i + 1}" />
         </div>
         <div class="field">
-          <label style="font-size:0.72rem;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--ink-soft);">Monthly conversions</label>
+          <label>Monthly conversions</label>
           <input type="number" class="ch-conversions" inputmode="numeric" min="0" step="1"
             placeholder="e.g. 50"
-            style="width:100%;border:1px solid var(--line);border-radius:2px;padding:0.65rem 0.85rem;background:var(--surface);color:var(--ink);font:inherit;"
             aria-label="Monthly conversions for channel ${i + 1}" />
         </div>
         <div class="field">
-          <label style="font-size:0.72rem;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--ink-soft);">Months of data</label>
+          <label>Months of data</label>
           <input type="number" class="ch-months" inputmode="numeric" min="1" max="36" step="1"
             value="6" min="1"
-            style="width:100%;border:1px solid var(--line);border-radius:2px;padding:0.65rem 0.85rem;background:var(--surface);color:var(--ink);font:inherit;"
             aria-label="Months of data for channel ${i + 1}" />
         </div>
         <div class="field">
-          <label style="font-size:0.72rem;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--ink-soft);">Min spend ($)</label>
+          <label>Min spend ($)</label>
           <input type="number" class="ch-min" inputmode="numeric" min="0" step="50" value="0"
-            style="width:100%;border:1px solid var(--line);border-radius:2px;padding:0.65rem 0.85rem;background:var(--surface);color:var(--ink);font:inherit;"
             aria-label="Minimum spend for channel ${i + 1}" />
         </div>
       `;
@@ -82,16 +80,30 @@
       const conversions = parseFloat(row.querySelector('.ch-conversions').value) || 0;
       const months = parseInt(row.querySelector('.ch-months').value, 10) || 6;
       const minSpend = parseFloat(row.querySelector('.ch-min').value) || 0;
+      const sampleDataPoints = row.dataset.sampleDataPoints
+        ? JSON.parse(row.dataset.sampleDataPoints)
+        : null;
 
       // Synthesize monthly data points from aggregate
       // This is a simplification: we use the monthly spend/conversions as one data point
       // and create synthetic variation for the power-law fit
       const dataPoints = [];
-      if (months >= 1 && spend > 0 && conversions > 0) {
+      if (sampleDataPoints) {
+        dataPoints.push(...sampleDataPoints);
+      } else if (months >= 1 && spend > 0 && conversions > 0) {
         // Use the single aggregate as the representative point
         dataPoints.push({ spend, conversions });
-        // Add a scaled-down synthetic point (20% spend) for curve fitting
-        if (spend > 50) {
+        // Add realistic lower/higher synthetic points for aggregate entry.
+        if (months >= 3 && spend > 50) {
+          dataPoints.unshift({
+            spend: spend * 0.65,
+            conversions: conversions * Math.pow(0.65, 0.82)
+          });
+          dataPoints.push({
+            spend: spend * 1.25,
+            conversions: conversions * Math.pow(1.25, 0.82)
+          });
+        } else if (spend > 50) {
           const scaledSpend = spend * 0.2;
           const scaledConversions = conversions * 0.2;
           dataPoints.push({ spend: scaledSpend, conversions: scaledConversions });
@@ -173,6 +185,33 @@
     nextSteps.hidden = false;
   }
 
+  /** Populate and run the built-in small-business example */
+  function useSampleData() {
+    const sample = window.MangroveBudgetSampleData;
+    if (!sample) return;
+
+    periodSel.value = sample.period;
+    targetMetricSel.value = sample.targetMetric;
+    totalBudgetInput.value = String(sample.totalBudget);
+    numChannelsSel.value = String(sample.channels.length);
+    buildChannelRows(sample.channels.length);
+
+    const rows = channelRows.querySelectorAll('.channel-row');
+    sample.channels.forEach((channel, i) => {
+      const row = rows[i];
+      row.querySelector('.ch-name').value = channel.channel;
+      row.querySelector('.ch-spend').value = String(channel.spend);
+      row.querySelector('.ch-conversions').value = String(channel.conversions);
+      row.querySelector('.ch-months').value = String(channel.months);
+      row.querySelector('.ch-min').value = String(channel.minSpend);
+      row.dataset.sampleDataPoints = JSON.stringify(channel.dataPoints);
+    });
+
+    form._hasRunOnce = true;
+    handleSubmit(new Event('submit'));
+    resultsNote.textContent = 'Sample small-business marketing data. Adjust any value to make it yours.';
+  }
+
   /** Handle form submit */
   function handleSubmit(e) {
     e.preventDefault();
@@ -204,11 +243,10 @@
 
   /** Budget slider sync */
   function setupBudgetSlider() {
-    const budgetInput = document.getElementById('total-budget');
-    budgetInput.addEventListener('input', () => {
+    totalBudgetInput.addEventListener('input', () => {
       // Re-run on slider change with debounce
-      clearTimeout(budgetInput._debounce);
-      budgetInput._debounce = setTimeout(() => {
+      clearTimeout(totalBudgetInput._debounce);
+      totalBudgetInput._debounce = setTimeout(() => {
         if (form._hasRunOnce) handleSubmit(new Event('submit'));
       }, 400);
     });
@@ -222,10 +260,17 @@
       buildChannelRows(parseInt(numChannelsSel.value, 10));
     });
 
+    channelRows.addEventListener('input', (e) => {
+      const row = e.target.closest('.channel-row');
+      if (row) delete row.dataset.sampleDataPoints;
+    });
+
     form.addEventListener('submit', (e) => {
       form._hasRunOnce = true;
       handleSubmit(e);
     });
+
+    sampleDataButton.addEventListener('click', useSampleData);
 
     setupBudgetSlider();
   }

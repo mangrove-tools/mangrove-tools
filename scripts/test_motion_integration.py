@@ -45,6 +45,17 @@ def motion_script_index(scripts: list[str]) -> int:
     )
 
 
+def app_script_index(scripts: list[str], route: str) -> int:
+    app_script_pattern = re.compile(
+        rf"/analytics/{re.escape(route)}/app(?:\.[0-9a-f]{{12}})?\.js"
+    )
+    return next(
+        index
+        for index, script in enumerate(scripts)
+        if app_script_pattern.fullmatch(script)
+    )
+
+
 class MotionIntegrationTests(unittest.TestCase):
     def test_homepage_loads_motion_for_instrument_and_story_hooks(self) -> None:
         homepage = parse_page("index.html")
@@ -61,7 +72,7 @@ class MotionIntegrationTests(unittest.TestCase):
             with self.subTest(route=route):
                 page = parse_page(f"analytics/{route}/index.html")
                 motion_index = motion_script_index(page.scripts)
-                app_index = page.scripts.index(f"/analytics/{route}/app.js")
+                app_index = app_script_index(page.scripts, route)
                 self.assertLess(motion_index, app_index)
 
     def test_analytics_apps_reveal_success_and_reset_invalid_results(self) -> None:

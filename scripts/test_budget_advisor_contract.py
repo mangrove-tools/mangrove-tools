@@ -7,6 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 CHART_SCRIPT = re.compile(r"/shared/charts\.[0-9a-f]{12}\.js")
 MOTION_SCRIPT = re.compile(r"/shared/motion\.[0-9a-f]{12}\.js")
+BUDGET_APP_SCRIPT = re.compile(r"/analytics/budget/app\.[0-9a-f]{12}\.js")
 REQUIRED_IDS = (
     "decision-canvas",
     "history-file",
@@ -184,6 +185,9 @@ class BudgetAdvisorContractTests(unittest.TestCase):
         parser = parse_budget_page()
         chart = next(script for script in parser.scripts if CHART_SCRIPT.fullmatch(script))
         motion = next(script for script in parser.scripts if MOTION_SCRIPT.fullmatch(script))
+        app = next(
+            script for script in parser.scripts if BUDGET_APP_SCRIPT.fullmatch(script)
+        )
         local_scripts = [
             script for script in parser.scripts if script.startswith("/")
         ]
@@ -198,7 +202,7 @@ class BudgetAdvisorContractTests(unittest.TestCase):
                 "/shared/tool-extras.js",
                 "/shared/budget-sample-data.js",
                 motion,
-                "/analytics/budget/app.js",
+                app,
             ],
         )
         self.assertIn("/analytics/budget/styles.css", parser.stylesheets)

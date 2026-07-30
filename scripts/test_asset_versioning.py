@@ -1,4 +1,5 @@
 import hashlib
+import posixpath
 import tempfile
 import unittest
 from html.parser import HTMLParser
@@ -12,8 +13,13 @@ CACHE_SENSITIVE_ASSETS = {
     "/site.css",
     "/tool-shell.css",
     "/analytics/budget/app.js",
+    "/shared/budget-allocator.js",
+    "/shared/budget-sample-data.js",
     "/shared/charts.js",
+    "/shared/history-data.js",
+    "/shared/marginality-engine.js",
     "/shared/motion.js",
+    "/shared/tool-extras.js",
 }
 
 
@@ -30,6 +36,19 @@ class AssetReferenceParser(HTMLParser):
             self.references.append(attributes.get("href") or "")
         if tag == "script" and attributes.get("src"):
             self.references.append(attributes["src"] or "")
+
+
+def local_reference_path(
+    html_path: Path,
+    reference: str,
+) -> str | None:
+    parsed = urlsplit(reference)
+    if parsed.scheme or parsed.netloc or not parsed.path:
+        return None
+    if parsed.path.startswith("/"):
+        return posixpath.normpath(parsed.path)
+    parent = PurePosixPath("/") / html_path.parent.as_posix()
+    return posixpath.normpath(str(parent / parsed.path))
 
 
 def content_version(asset_path: str, root: Path = ROOT) -> str:
@@ -64,7 +83,7 @@ def asset_versioning_errors(
     root: Path,
     asset_paths: set[str],
 ) -> list[str]:
-    references_by_asset: dict[str, list[tuple[Path, str]]] = {
+    references_by_asset: dict[str, list[tuple[Path, str, str]]] = {
         asset: [] for asset in asset_paths
     }
 
@@ -72,11 +91,16 @@ def asset_versioning_errors(
         parser = AssetReferenceParser()
         parser.feed(html_path.read_text(encoding="utf-8"))
         for reference in parser.references:
-            path = urlsplit(reference).path
+            path = local_reference_path(
+                html_path.relative_to(root),
+                reference,
+            )
+            if path is None:
+                continue
             for asset_path in asset_paths:
                 if belongs_to_asset_family(path, asset_path):
                     references_by_asset[asset_path].append(
-                        (html_path.relative_to(root), reference)
+                        (html_path.relative_to(root), reference, path)
                     )
                     break
 
@@ -95,8 +119,8 @@ def asset_versioning_errors(
         ).read_bytes() != versioned_file.read_bytes():
             errors.append(f"{expected_path} must match {asset_path}")
 
-        for html_path, reference in references:
-            if urlsplit(reference).path != expected_path:
+        for html_path, reference, reference_path in references:
+            if reference_path != expected_path:
                 errors.append(
                     f"{html_path} must request the fingerprinted "
                     f"asset {expected_path}"

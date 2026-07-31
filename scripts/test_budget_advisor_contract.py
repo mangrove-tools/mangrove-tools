@@ -8,6 +8,9 @@ ROOT = Path(__file__).resolve().parents[1]
 FINGERPRINTED_LOCAL_SCRIPT = re.compile(
     r"(?P<stem>/.*)\.[0-9a-f]{12}\.js"
 )
+FINGERPRINTED_LOCAL_STYLESHEET = re.compile(
+    r"(?P<stem>/.*)\.[0-9a-f]{12}\.css"
+)
 REQUIRED_IDS = (
     "decision-canvas",
     "history-file",
@@ -207,7 +210,17 @@ class BudgetAdvisorContractTests(unittest.TestCase):
                 "/analytics/budget/app.js",
             ],
         )
-        self.assertIn("/analytics/budget/styles.css", parser.stylesheets)
+        canonical_stylesheets = []
+        for stylesheet in parser.stylesheets:
+            match = FINGERPRINTED_LOCAL_STYLESHEET.fullmatch(stylesheet)
+            with self.subTest(stylesheet=stylesheet):
+                self.assertIsNotNone(match)
+            if match:
+                canonical_stylesheets.append(f"{match.group('stem')}.css")
+        self.assertIn(
+            "/analytics/budget/styles.css",
+            canonical_stylesheets,
+        )
 
     def test_app_does_not_restore_manual_assumption_curves(self) -> None:
         app_js = (ROOT / "analytics/budget/app.js").read_text(encoding="utf-8")

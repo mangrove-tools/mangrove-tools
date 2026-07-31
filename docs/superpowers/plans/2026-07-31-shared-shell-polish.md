@@ -4,7 +4,7 @@
 
 **Goal:** Make Mangrove's shared site shell feel like one calm, premium analytics instrument without changing IA, calculator behavior, or the homepage decision graph.
 
-**Architecture:** Keep the existing static HTML/CSS/vanilla-JavaScript structure. Extend the shared design tokens and cascade, separate the homepage signal rail from the sticky masthead, and use existing result-state hooks to present a restrained evidence/bound/recheck sequence. Add one focused Python contract suite before visual implementation, then re-fingerprint changed cache-sensitive CSS.
+**Architecture:** Keep the existing static HTML/CSS/vanilla-JavaScript structure. Extend the shared design tokens and cascade, separate the homepage signal rail from the sticky masthead, and use existing result-state hooks to present a restrained evidence/bound/recheck sequence. Characterize each visual behavior in a real browser before implementation, then re-fingerprint changed cache-sensitive CSS and run the repository's existing structural contracts.
 
 **Tech Stack:** Static HTML, CSS, vanilla JavaScript, Python `unittest`, Node's built-in test runner, browser automation against `python3 -m http.server`
 
@@ -21,135 +21,69 @@
 
 ---
 
-### Task 1: Encode the shared-shell visual contract
+### Task 1: Characterize the current rendered shell
 
 **Files:**
-- Create: `scripts/test_shared_shell_polish.py`
+- No repository files; this is a browser-only red phase against the unchanged baseline.
 
 **Interfaces:**
-- Consumes: `index.html`, `site.css`, `tool-shell.css`, `studio.css`, and `analytics/budget/styles.css` as text fixtures.
-- Produces: `SharedShellPolishTests`, a static contract covering masthead structure, control tokens, instrument outputs, focus contrast, and reduced-motion behavior.
+- Consumes: the site served at `http://127.0.0.1:5173`.
+- Produces: hand-checked failing browser assertions for masthead stickiness, signal-rail separation, generic control radius, calculator locators, studio surface contrast, and budget rail orientation.
 
-- [ ] **Step 1: Write the failing contract tests**
-
-```python
-import re
-import unittest
-from pathlib import Path
-
-
-ROOT = Path(__file__).resolve().parents[1]
-
-
-def source(relative_path: str) -> str:
-    return (ROOT / relative_path).read_text(encoding="utf-8")
-
-
-class SharedShellPolishTests(unittest.TestCase):
-    def test_homepage_signal_rail_is_outside_sticky_header(self) -> None:
-        homepage = source("index.html")
-        header_start = homepage.index('<header class="top is-home">')
-        header_end = homepage.index("</header>", header_start)
-        rail_start = homepage.index('<div class="header-signal-rail"')
-
-        self.assertGreater(rail_start, header_end)
-        self.assertNotIn("header-signal-rail", homepage[header_start:header_end])
-
-    def test_site_css_defines_sticky_masthead_and_control_tokens(self) -> None:
-        css = source("site.css")
-
-        for declaration in (
-            "--radius-control: 8px;",
-            "--radius-panel: 4px;",
-            "--sticky-header-offset: 6.25rem;",
-            "position: sticky;",
-            "min-height: 2.75rem;",
-        ):
-            self.assertIn(declaration, css)
-        self.assertRegex(
-            css,
-            re.compile(r"\.top\s*\{[^}]*position:\s*sticky", re.DOTALL),
-        )
-        self.assertIn(".top::after", css)
-
-    def test_secondary_headings_and_data_roles_are_precise(self) -> None:
-        site_css = source("site.css")
-        tool_css = source("tool-shell.css")
-
-        self.assertIn("--heading-weight-secondary: 500;", site_css)
-        self.assertIn("font-weight: var(--heading-weight-secondary);", site_css)
-        self.assertIn("letter-spacing: -0.035em;", site_css)
-        self.assertIn("font-family: var(--font-mono);", tool_css)
-
-    def test_tool_results_use_state_rail_locators_and_dark_focus(self) -> None:
-        css = source("tool-shell.css")
-
-        self.assertIn("--result-rail", css)
-        self.assertIn(".results::after", css)
-        self.assertIn("@keyframes result-rail-resolve", css)
-        self.assertIn("background: var(--surface-raised);", css)
-        self.assertNotRegex(
-            css,
-            r"(?:input|select|textarea)[^{}]*:focus-visible\s*\{[^}]*background:\s*#fff",
-        )
-
-    def test_studio_and_budget_outputs_share_instrument_framing(self) -> None:
-        studio_css = source("studio.css")
-        budget_css = source("analytics/budget/styles.css")
-
-        self.assertIn(".studio-result::before", studio_css)
-        self.assertIn(".studio-result::after", studio_css)
-        self.assertIn("background: var(--surface-2);", studio_css)
-        self.assertIn('.budget-decision-canvas[data-phase="result"]', budget_css)
-        self.assertIn(".budget-decision-canvas::after", budget_css)
-
-    def test_reduced_motion_disables_new_state_transitions(self) -> None:
-        tool_css = source("tool-shell.css")
-        studio_css = source("studio.css")
-
-        self.assertRegex(
-            tool_css,
-            re.compile(
-                r"@media \(prefers-reduced-motion: reduce\).*?\.results::before",
-                re.DOTALL,
-            ),
-        )
-        self.assertRegex(
-            studio_css,
-            re.compile(
-                r"@media \(prefers-reduced-motion: reduce\).*?\.studio-result",
-                re.DOTALL,
-            ),
-        )
-
-
-if __name__ == "__main__":
-    unittest.main()
-```
-
-- [ ] **Step 2: Run the focused test and verify the intended failures**
-
-Run:
+- [ ] **Step 1: Start the required local server and verify it loads**
 
 ```bash
-python3 -m unittest scripts.test_shared_shell_polish -v
+python3 -m http.server 5173 --bind 127.0.0.1
 ```
 
-Expected: failures for the still-nested homepage rail, missing sticky masthead/control tokens, missing locator/state rules, and missing shared output treatment.
+Open `/`, wait for a complete load, confirm non-empty body text, no error overlay, and expected navigation links.
 
-- [ ] **Step 3: Commit the red test**
+- [ ] **Step 2: Verify the masthead and controls fail the desired contract**
 
-```bash
-git add scripts/test_shared_shell_polish.py
-git commit -m "test: define shared shell polish contract"
+At desktop width, evaluate these literal expectations against the current homepage:
+
+```javascript
+const header = document.querySelector(".top");
+const rail = document.querySelector(".header-signal-rail");
+({
+  headerPosition: getComputedStyle(header).position,
+  railInsideHeader: header.contains(rail)
+});
 ```
+
+Then navigate to `/analytics/` and evaluate:
+
+```javascript
+getComputedStyle(document.querySelector(".btn:not(.hero-primary-cta)")).borderRadius;
+```
+
+Expected red baseline: `headerPosition` is not `sticky`, `railInsideHeader` is `true`, and the generic analytics button has a `2px` radius rather than the approved `8px` control radius.
+
+- [ ] **Step 3: Verify calculator and studio outputs fail the desired contract**
+
+On `/letterroi/`, `/mediakit/`, and `/analytics/budget/`, inspect real computed pseudo-element geometry:
+
+```javascript
+const target = document.querySelector(".results, .studio-result, .budget-decision-canvas");
+({
+  beforeWidth: getComputedStyle(target, "::before").width,
+  beforeHeight: getComputedStyle(target, "::before").height,
+  afterBackground: getComputedStyle(target, "::after").backgroundImage,
+  surface: getComputedStyle(target).backgroundColor
+});
+```
+
+Expected red baseline: calculator/studio outputs lack four-corner locator backgrounds, the studio result is not a bordered raised output surface, and the budget rail is a full-height left edge rather than a three-pixel top state rail.
+
+- [ ] **Step 4: Record the red phase in the execution log**
+
+Keep the observed values in the task commentary and proceed only after every intended production change has a real rendered behavior that currently fails.
 
 ### Task 2: Build the sticky masthead and shared action hierarchy
 
 **Files:**
 - Modify: `index.html:189-213`
 - Modify: `site.css:6-50,110-223,259-323,641-706,2380-2559,2795-3258`
-- Test: `scripts/test_shared_shell_polish.py`
 
 **Interfaces:**
 - Produces: `--radius-control`, `--radius-panel`, `--sticky-header-offset`, sticky `.top`, non-sticky `.header-signal-rail`, and shared `.btn` interaction states.
@@ -252,24 +186,23 @@ Keep `.hero-headline` untouched. Override only secondary route headings and gene
 
 Preserve the homepage split pill with a more specific override so it does not receive the generic commit marker. Ensure disabled/busy actions cannot animate or lift.
 
-- [ ] **Step 5: Run the focused test and shared IA/font tests**
+- [ ] **Step 5: Re-run the rendered masthead/action checks and shared IA/font tests**
 
 Run:
 
 ```bash
 python3 -m unittest \
-  scripts.test_shared_shell_polish \
   scripts.test_homepage_identity \
   scripts.test_site_ia \
   scripts.test_font_contract -v
 ```
 
-Expected: homepage identity/IA/font contracts pass; shared-shell tests for header/actions/headings pass, while result/studio tests may remain red until Tasks 3 and 4.
+Expected: homepage identity/IA/font contracts pass. In the browser, `.top` computes to `sticky` before and after scroll, the rail is no longer contained by the header and scrolls out of view, generic `.btn` controls compute to `8px`, and the homepage split CTA remains pill-shaped.
 
 - [ ] **Step 6: Commit the shared masthead and controls**
 
 ```bash
-git add index.html site.css scripts/test_shared_shell_polish.py
+git add index.html site.css
 git commit -m "feat: sharpen shared masthead and actions"
 ```
 
@@ -277,7 +210,6 @@ git commit -m "feat: sharpen shared masthead and actions"
 
 **Files:**
 - Modify: `tool-shell.css:79-191,251-357,790-1040`
-- Test: `scripts/test_shared_shell_polish.py`
 
 **Interfaces:**
 - Consumes: `--radius-control`, `--radius-panel`, `--sticky-header-offset`, existing `.results[data-result-state]`, `.primary`, `.secondary-action`, form controls, and the existing `MangroveMotion.revealResult()` state flow.
@@ -397,21 +329,21 @@ Apply `var(--radius-control)` and stable 44px targets to `.primary`, `.secondary
 
 Keep all output content and existing calculation hooks unchanged.
 
-- [ ] **Step 5: Run focused static and motion tests**
+- [ ] **Step 5: Run focused rendered and motion tests**
 
 Run:
 
 ```bash
-python3 -m unittest scripts.test_shared_shell_polish scripts.test_motion_integration -v
+python3 -m unittest scripts.test_motion_integration -v
 node --test tests/motion.test.js
 ```
 
-Expected: tool-result, focus, motion, and sticky-offset contracts pass; studio/budget framing tests may remain red until Task 4.
+Expected: motion tests pass. With canonical `site.css` and `tool-shell.css` injected locally, the results top stays below the masthead, controls compute to `8px`, focused fields retain a dark background, the state rail resolves to full width, locator backgrounds are present, and reduced-motion emulation reports no result animation.
 
 - [ ] **Step 6: Commit the calculator workspace polish**
 
 ```bash
-git add tool-shell.css scripts/test_shared_shell_polish.py
+git add tool-shell.css
 git commit -m "feat: frame calculator decisions as live outputs"
 ```
 
@@ -420,7 +352,6 @@ git commit -m "feat: frame calculator decisions as live outputs"
 **Files:**
 - Modify: `studio.css:17-52,108-178,237-324,374-498`
 - Modify: `analytics/budget/styles.css:1-145,209-276,284-360`
-- Test: `scripts/test_shared_shell_polish.py`
 
 **Interfaces:**
 - Consumes: shared surface, signal, radius, control, and focus tokens; existing `.studio-result`, `.choice`, `.metric`, and `.budget-decision-canvas[data-phase]` hooks.
@@ -533,20 +464,14 @@ Do not create a generic locator rule that would affect ordinary cards. Under red
 
 Do not alter `data-phase` values or JavaScript state transitions.
 
-- [ ] **Step 4: Run the complete shared-shell contract**
+- [ ] **Step 4: Run the rendered studio and budget contract**
 
-Run:
-
-```bash
-python3 -m unittest scripts.test_shared_shell_polish -v
-```
-
-Expected: all shared-shell tests pass.
+Generate a Media Kit or Inventory result and load Budget sample data. Verify computed output surfaces have a three-pixel top rail, non-`none` locator background, dark raised surface, visible status color, and no clipped focus. Confirm Budget's `data-phase` values still follow `empty` → `parsing` → readiness → `result`, with a teal parsing rail, amber blocked/correction rail, and split final rail.
 
 - [ ] **Step 5: Commit studio and budget alignment**
 
 ```bash
-git add studio.css analytics/budget/styles.css scripts/test_shared_shell_polish.py
+git add studio.css analytics/budget/styles.css
 git commit -m "feat: align decision surfaces across tools"
 ```
 

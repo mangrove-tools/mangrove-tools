@@ -1215,3 +1215,9 @@ body.tool-page {
     28px 28px,
     auto;
 }
+
+.results[data-result-state="updating"]::before,
+.results[data-result-state="ready"]::before {
+  height: 3px;
+  background: var(--result-rail);
+}

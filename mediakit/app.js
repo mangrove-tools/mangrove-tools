@@ -3,6 +3,7 @@
   const form = document.getElementById("mediakit-form");
   const out = document.getElementById("kit-out");
   const affiliate = document.getElementById("affiliate-cta");
+  const copyBtn = document.getElementById("copy-rates");
   const EXTRAS = window.MangroveToolExtras || {};
 
   function trackEvent(eventName, action) {
@@ -54,6 +55,7 @@
       err.textContent = "Need publication name, list size, open rate, and a primary rate.";
       out.hidden = true;
       affiliate.hidden = true;
+      copyBtn.disabled = true;
       return;
     }
     err.hidden = true;
@@ -83,6 +85,7 @@
 
     out.hidden = false;
     affiliate.hidden = false;
+    copyBtn.disabled = false;
 
     const base = (cfg.AFFILIATE_URL || "").trim();
     const utm = (cfg.UTM || "").trim();
@@ -99,22 +102,20 @@
     if (!out.hidden) trackEvent("calculation_completed", "submit");
   });
 
-  document.getElementById("copy-rates").addEventListener("click", function () {
-    const name = document.getElementById("kit-name").textContent;
-    const primary = document.getElementById("kit-primary").textContent;
-    const band = document.getElementById("kit-band").textContent;
-    const text =
-      name +
-      " media kit\nPrimary: " +
-      primary +
-      "\nBand: " +
-      band +
-      "\n" +
-      document.getElementById("kit-cpm").textContent;
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text);
-    }
-  });
+  function buildRateSummary() {
+    if (out.hidden) return null;
+    return [
+      document.getElementById("kit-name").textContent + " media kit",
+      "Primary: " + document.getElementById("kit-primary").textContent,
+      "Band: " + document.getElementById("kit-band").textContent,
+      document.getElementById("kit-cpm").textContent,
+    ].join("\n");
+  }
+
+  copyBtn.disabled = true;
+  if (EXTRAS.wireCopyButton) {
+    EXTRAS.wireCopyButton(copyBtn, buildRateSummary);
+  }
 
   document.getElementById("print-kit").addEventListener("click", function () {
     window.print();

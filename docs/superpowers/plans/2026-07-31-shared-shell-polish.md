@@ -354,8 +354,8 @@ git commit -m "feat: frame calculator decisions as live outputs"
 - Modify: `analytics/budget/styles.css:1-145,209-276,284-360`
 
 **Interfaces:**
-- Consumes: shared surface, signal, radius, control, and focus tokens; existing `.studio-result`, `.choice`, `.metric`, and `.budget-decision-canvas[data-phase]` hooks.
-- Produces: dark studio choice/focus treatments, framed `.studio-result`, phase-aware budget rails, and locator corners on the budget decision canvas.
+- Consumes: shared surface, signal, radius, control, and focus tokens; existing `.studio-result`, `.kit-compose`, `.choice`, `.metric`, and `.budget-decision-canvas[data-phase]` hooks.
+- Produces: dark studio choice/focus treatments, framed `.studio-result` and `.kit-compose` outputs, phase-aware budget rails, and locator corners on the budget decision canvas.
 
 - [ ] **Step 1: Correct the remaining studio dark-theme remnants**
 
@@ -381,7 +381,8 @@ Use `var(--font-mono)` for `.studio-progress`, `.result-status`, `.metric .label
 - [ ] **Step 2: Frame studio outputs without decorating input forms**
 
 ```css
-.studio-result {
+.studio-result,
+.kit-compose {
   position: relative;
   overflow: hidden;
   padding: 1.35rem;
@@ -391,7 +392,8 @@ Use `var(--font-mono)` for `.studio-progress`, `.result-status`, `.metric .label
   box-shadow: 0 22px 54px rgba(0, 0, 0, 0.26);
 }
 
-.studio-result::before {
+.studio-result::before,
+.kit-compose::before {
   content: "";
   position: absolute;
   top: 0;
@@ -401,7 +403,8 @@ Use `var(--font-mono)` for `.studio-progress`, `.result-status`, `.metric .label
   background: linear-gradient(90deg, var(--accent) 0 68%, var(--signal) 68%);
 }
 
-.studio-result::after {
+.studio-result::after,
+.kit-compose::after {
   content: "";
   position: absolute;
   inset: 7px;
@@ -419,7 +422,7 @@ Use `var(--font-mono)` for `.studio-progress`, `.result-status`, `.metric .label
 }
 ```
 
-Do not create a generic locator rule that would affect ordinary cards. Under reduced motion, disable `.studio-result` transitions and retain the final rail/locator state.
+Do not create a generic locator rule that would affect ordinary cards. Under reduced motion, disable `.studio-result` and `.kit-compose` transitions and retain the final rail/locator state. In print media, remove the Media Kit output's decorative rail, locators, shadow, and dark background.
 
 - [ ] **Step 3: Turn the budget canvas rail into a phase indicator**
 

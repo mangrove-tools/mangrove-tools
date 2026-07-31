@@ -627,3 +627,58 @@
     width: 100%;
   }
 }
+
+/* ─── Shared shell polish: phase-aware decision canvas ─── */
+.budget-decision-canvas::before {
+  z-index: 3;
+  inset: -1px -1px auto;
+  width: auto;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    var(--accent) 0 48%,
+    var(--signal) 48% 76%,
+    rgba(232, 238, 233, 0.42) 76% 100%
+  );
+}
+
+.budget-decision-canvas[data-phase="parsing"]::before,
+.budget-decision-canvas[data-phase="ready"]::before {
+  background: var(--accent);
+}
+
+.budget-decision-canvas[data-phase="needs_correction"]::before,
+.budget-decision-canvas[data-phase="blocked"]::before {
+  background: var(--signal);
+}
+
+.budget-decision-canvas[data-phase="partially_modelable"]::before,
+.budget-decision-canvas[data-phase="result"]::before {
+  background: linear-gradient(90deg, var(--accent) 0 72%, var(--signal) 72%);
+}
+
+.budget-decision-canvas::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  inset: 7px;
+  background:
+    linear-gradient(var(--accent-text), var(--accent-text)) left top / 12px 1px no-repeat,
+    linear-gradient(var(--accent-text), var(--accent-text)) left top / 1px 12px no-repeat,
+    linear-gradient(var(--signal-text), var(--signal-text)) right top / 12px 1px no-repeat,
+    linear-gradient(var(--signal-text), var(--signal-text)) right top / 1px 12px no-repeat,
+    linear-gradient(var(--accent-text), var(--accent-text)) left bottom / 12px 1px no-repeat,
+    linear-gradient(var(--accent-text), var(--accent-text)) left bottom / 1px 12px no-repeat,
+    linear-gradient(var(--signal-text), var(--signal-text)) right bottom / 12px 1px no-repeat,
+    linear-gradient(var(--signal-text), var(--signal-text)) right bottom / 1px 12px no-repeat;
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .budget-decision-canvas::before,
+  .budget-decision-canvas::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

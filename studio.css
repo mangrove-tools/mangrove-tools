@@ -496,3 +496,144 @@
   color: #8a2f24;
   font-size: 0.85rem;
 }
+
+/* ─── Shared shell polish: studio inputs + decision outputs ─── */
+.studio-progress,
+.result-status,
+.metric .label,
+.metric .value,
+.kit-meta span {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.field input[type="text"],
+.field input[type="url"],
+.field input[type="email"],
+.field input[type="number"],
+.field select,
+.field textarea,
+.check-row select {
+  border-radius: var(--radius-control);
+  transition:
+    border-color 0.2s var(--ease),
+    background-color 0.2s var(--ease),
+    box-shadow 0.2s var(--ease);
+}
+
+.field input:focus-visible,
+.field select:focus-visible,
+.field textarea:focus-visible,
+.check-row select:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--surface-raised);
+  color: var(--ink);
+  box-shadow: 0 0 0 3px rgba(66, 162, 142, 0.14);
+}
+
+.choice {
+  border-radius: var(--radius-panel);
+  background: var(--surface-2);
+}
+
+.choice:has(input:checked) {
+  border-color: var(--accent);
+  background: rgba(66, 162, 142, 0.08);
+}
+
+.result-status.is-green {
+  color: var(--ok-text);
+}
+
+.result-status.is-yellow {
+  color: var(--signal-text);
+}
+
+.result-status.is-red,
+.field-error {
+  color: var(--danger-text);
+}
+
+.studio-result,
+.kit-compose {
+  position: relative;
+  overflow: hidden;
+  padding: 1.35rem;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-panel);
+  background: var(--surface-2);
+  box-shadow:
+    0 1px 0 rgba(245, 243, 239, 0.05) inset,
+    0 22px 54px rgba(0, 0, 0, 0.26);
+}
+
+.studio-result::before,
+.kit-compose::before {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent) 0 68%, var(--signal) 68%);
+  pointer-events: none;
+}
+
+.studio-result::after,
+.kit-compose::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  inset: 7px;
+  background:
+    linear-gradient(var(--accent-text), var(--accent-text)) left top / 12px 1px no-repeat,
+    linear-gradient(var(--accent-text), var(--accent-text)) left top / 1px 12px no-repeat,
+    linear-gradient(var(--signal-text), var(--signal-text)) right top / 12px 1px no-repeat,
+    linear-gradient(var(--signal-text), var(--signal-text)) right top / 1px 12px no-repeat,
+    linear-gradient(var(--accent-text), var(--accent-text)) left bottom / 12px 1px no-repeat,
+    linear-gradient(var(--accent-text), var(--accent-text)) left bottom / 1px 12px no-repeat,
+    linear-gradient(var(--signal-text), var(--signal-text)) right bottom / 12px 1px no-repeat,
+    linear-gradient(var(--signal-text), var(--signal-text)) right bottom / 1px 12px no-repeat;
+  opacity: 0.38;
+  pointer-events: none;
+}
+
+.studio-result h2,
+.kit-compose h2 {
+  font-weight: var(--heading-weight-secondary);
+  letter-spacing: -0.035em;
+}
+
+.metric .value {
+  font-weight: 600;
+  letter-spacing: -0.045em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .studio-result,
+  .kit-compose,
+  .studio-result::before,
+  .studio-result::after,
+  .kit-compose::before,
+  .kit-compose::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media print {
+  .kit-compose {
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .kit-compose::before,
+  .kit-compose::after {
+    content: none;
+  }
+}

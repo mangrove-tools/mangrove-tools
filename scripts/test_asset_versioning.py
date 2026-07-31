@@ -1,5 +1,6 @@
 import hashlib
 import posixpath
+import re
 import tempfile
 import unittest
 from html.parser import HTMLParser
@@ -8,19 +9,17 @@ from urllib.parse import urlsplit
 
 
 ROOT = Path(__file__).resolve().parents[1]
-CACHE_SENSITIVE_ASSETS = {
-    "/fonts.css",
-    "/site.css",
-    "/tool-shell.css",
-    "/analytics/budget/app.js",
-    "/shared/budget-allocator.js",
-    "/shared/budget-sample-data.js",
-    "/shared/charts.js",
-    "/shared/history-data.js",
-    "/shared/marginality-engine.js",
-    "/shared/motion.js",
-    "/shared/tool-extras.js",
+PUBLIC_HTML_EXCLUDED_DIRECTORIES = {
+    ".git",
+    ".worktrees",
+    "docs",
+    "node_modules",
+    "scripts",
+    "tests",
 }
+FINGERPRINTED_ASSET_PATTERN = re.compile(
+    r"^(?P<stem>.+)\.[0-9a-f]{12}(?P<suffix>\.(?:css|js))$"
+)
 
 
 class AssetReferenceParser(HTMLParser):
@@ -32,7 +31,23 @@ class AssetReferenceParser(HTMLParser):
         self, tag: str, attrs: list[tuple[str, str | None]]
     ) -> None:
         attributes = dict(attrs)
-        if tag == "link" and attributes.get("href"):
+        rel = {
+            token.lower()
+            for token in (attributes.get("rel") or "").split()
+        }
+        link_is_cache_sensitive = (
+            "stylesheet" in rel
+            or "modulepreload" in rel
+            or (
+                "preload" in rel
+                and (attributes.get("as") or "").lower() == "script"
+            )
+        )
+        if (
+            tag == "link"
+            and link_is_cache_sensitive
+            and attributes.get("href")
+        ):
             self.references.append(attributes.get("href") or "")
         if tag == "script" and attributes.get("src"):
             self.references.append(attributes["src"] or "")
@@ -49,6 +64,43 @@ def local_reference_path(
         return posixpath.normpath(parsed.path)
     parent = PurePosixPath("/") / html_path.parent.as_posix()
     return posixpath.normpath(str(parent / parsed.path))
+
+
+def public_html_files(root: Path) -> list[Path]:
+    files: list[Path] = []
+    for html_path in sorted(root.rglob("*.html")):
+        relative = html_path.relative_to(root)
+        if any(
+            part in PUBLIC_HTML_EXCLUDED_DIRECTORIES
+            or part.startswith(".")
+            for part in relative.parts[:-1]
+        ):
+            continue
+        files.append(html_path)
+    return files
+
+
+def canonical_asset_path(reference_path: str) -> str:
+    match = FINGERPRINTED_ASSET_PATTERN.match(reference_path)
+    if not match:
+        return reference_path
+    return f"{match.group('stem')}{match.group('suffix')}"
+
+
+def discover_cache_sensitive_assets(root: Path) -> set[str]:
+    assets: set[str] = set()
+    for html_path in public_html_files(root):
+        parser = AssetReferenceParser()
+        parser.feed(html_path.read_text(encoding="utf-8"))
+        for reference in parser.references:
+            path = local_reference_path(
+                html_path.relative_to(root),
+                reference,
+            )
+            if path is None or PurePosixPath(path).suffix not in {".css", ".js"}:
+                continue
+            assets.add(canonical_asset_path(path))
+    return assets
 
 
 def content_version(asset_path: str, root: Path = ROOT) -> str:
@@ -81,13 +133,15 @@ def belongs_to_asset_family(reference_path: str, asset_path: str) -> bool:
 
 def asset_versioning_errors(
     root: Path,
-    asset_paths: set[str],
+    asset_paths: set[str] | None = None,
 ) -> list[str]:
+    if asset_paths is None:
+        asset_paths = discover_cache_sensitive_assets(root)
     references_by_asset: dict[str, list[tuple[Path, str, str]]] = {
         asset: [] for asset in asset_paths
     }
 
-    for html_path in sorted(root.rglob("*.html")):
+    for html_path in public_html_files(root):
         parser = AssetReferenceParser()
         parser.feed(html_path.read_text(encoding="utf-8"))
         for reference in parser.references:
@@ -110,13 +164,15 @@ def asset_versioning_errors(
             errors.append(f"{asset_path} is not referenced")
             continue
 
+        canonical_file = root / asset_path.lstrip("/")
+        if not canonical_file.is_file():
+            errors.append(f"canonical asset is missing: {asset_path}")
+            continue
         expected_path = versioned_path(asset_path, root)
         versioned_file = root / expected_path.lstrip("/")
         if not versioned_file.is_file():
             errors.append(f"versioned asset is missing: {expected_path}")
-        elif (
-            root / asset_path.lstrip("/")
-        ).read_bytes() != versioned_file.read_bytes():
+        elif canonical_file.read_bytes() != versioned_file.read_bytes():
             errors.append(f"{expected_path} must match {asset_path}")
 
         for html_path, reference, reference_path in references:
@@ -135,9 +191,41 @@ def asset_versioning_errors(
 
 class AssetVersioningTests(unittest.TestCase):
     def test_cache_sensitive_assets_use_content_fingerprints_in_public_html(self) -> None:
-        errors = asset_versioning_errors(ROOT, CACHE_SENSITIVE_ASSETS)
+        errors = asset_versioning_errors(ROOT)
 
         self.assertEqual([], errors, "\n".join(errors))
+
+    def test_discovers_every_public_local_script_and_stylesheet(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            (root / "nested").mkdir()
+            (root / "docs").mkdir()
+            (root / "index.html").write_text(
+                """
+                <link rel="stylesheet" href="/styles.0123456789ab.css">
+                <link rel="canonical" href="/ignored.css">
+                <link rel="preload" as="script" href="/preload.0123456789ab.js">
+                <script src="https://example.com/external.js"></script>
+                """,
+                encoding="utf-8",
+            )
+            (root / "nested/index.html").write_text(
+                '<script src="./app.0123456789ab.js"></script>',
+                encoding="utf-8",
+            )
+            (root / "docs/index.html").write_text(
+                '<script src="/private-docs.js"></script>',
+                encoding="utf-8",
+            )
+
+            self.assertEqual(
+                {
+                    "/nested/app.js",
+                    "/preload.js",
+                    "/styles.css",
+                },
+                discover_cache_sensitive_assets(root),
+            )
 
     def test_fixture_matrix_catches_cache_unsafe_references(self) -> None:
         asset_path = "/analytics/budget/app.js"

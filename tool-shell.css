@@ -787,6 +787,139 @@ body.tool-page {
   }
 }
 
+/* ─── Shared shell polish: stateful decision outputs ─── */
+.brand-tool-name,
+.tool-page .hero h1 {
+  font-weight: var(--heading-weight-secondary);
+  letter-spacing: -0.035em;
+}
+
+.primary,
+.secondary-action,
+.ghost-btn {
+  min-height: 2.75rem;
+  border-radius: var(--radius-control);
+}
+
+.primary {
+  box-shadow: inset -3px 0 0 var(--signal), var(--control-shadow);
+}
+
+.primary:disabled,
+.primary[aria-busy="true"],
+.secondary-action:disabled,
+.ghost-btn:disabled {
+  box-shadow: none;
+  transform: none !important;
+}
+
+.inputs input:focus-visible,
+.inputs select:focus-visible,
+.inputs textarea:focus-visible,
+.manual-row input:focus-visible {
+  border-color: var(--accent);
+  background: var(--surface-raised);
+  color: var(--ink);
+  box-shadow: 0 0 0 3px rgba(66, 162, 142, 0.14);
+}
+
+.results {
+  --result-rail: linear-gradient(
+    90deg,
+    var(--accent) 0 48%,
+    var(--signal) 48% 76%,
+    rgba(232, 238, 233, 0.42) 76% 100%
+  );
+  overflow: hidden;
+  border-radius: var(--radius-panel);
+  background:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
+    var(--surface);
+  background-size:
+    28px 28px,
+    28px 28px,
+    auto;
+}
+
+.results::before {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  top: -1px;
+  right: -1px;
+  left: -1px;
+  width: auto;
+  height: 3px;
+  background: var(--result-rail);
+  opacity: 1;
+  pointer-events: none;
+  transform: scaleX(1);
+  transform-origin: left center;
+}
+
+.results::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  inset: 7px;
+  background:
+    linear-gradient(var(--accent-text), var(--accent-text)) left top / 12px 1px no-repeat,
+    linear-gradient(var(--accent-text), var(--accent-text)) left top / 1px 12px no-repeat,
+    linear-gradient(var(--signal-text), var(--signal-text)) right top / 12px 1px no-repeat,
+    linear-gradient(var(--signal-text), var(--signal-text)) right top / 1px 12px no-repeat,
+    linear-gradient(var(--accent-text), var(--accent-text)) left bottom / 12px 1px no-repeat,
+    linear-gradient(var(--accent-text), var(--accent-text)) left bottom / 1px 12px no-repeat,
+    linear-gradient(var(--signal-text), var(--signal-text)) right bottom / 12px 1px no-repeat,
+    linear-gradient(var(--signal-text), var(--signal-text)) right bottom / 1px 12px no-repeat;
+  opacity: 0.42;
+  pointer-events: none;
+}
+
+@media (min-width: 900px) {
+  .results {
+    top: var(--sticky-header-offset);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .results[data-result-state="updating"]::before {
+    opacity: 0.48;
+    transform: scaleX(0.22);
+  }
+
+  .results[data-result-state="ready"]::before {
+    animation: result-rail-resolve 0.72s var(--ease) both;
+  }
+}
+
+@keyframes result-rail-resolve {
+  from {
+    opacity: 0.48;
+    transform: scaleX(0.22);
+  }
+
+  58% {
+    opacity: 1;
+    transform: scaleX(0.76);
+  }
+
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .results::before,
+  .results::after,
+  .results[data-result-state] > * {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
 /* ─── Premium analytics workspace refinements ─── */
 .brand-tool-name,
 .tool-page .hero h1,
@@ -1055,4 +1188,30 @@ body.tool-page {
     border-top: 1px solid var(--line);
     border-left: 0;
   }
+}
+
+/* Keep the approved shell values above legacy refinement overrides. */
+.brand-tool-name,
+.tool-page .hero h1 {
+  font-weight: var(--heading-weight-secondary);
+  letter-spacing: -0.035em;
+}
+
+.primary,
+.secondary-action,
+.ghost-btn {
+  min-height: 2.75rem;
+  border-radius: var(--radius-control);
+}
+
+.results {
+  border-radius: var(--radius-panel);
+  background:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
+    var(--surface);
+  background-size:
+    28px 28px,
+    28px 28px,
+    auto;
 }

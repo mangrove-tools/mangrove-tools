@@ -41,6 +41,11 @@
   --space-2xl: 3.75rem;
   --radius: 2px;
   --radius-sm: 2px;
+  --radius-control: 8px;
+  --radius-panel: 4px;
+  --sticky-header-offset: 6.25rem;
+  --heading-weight-secondary: 500;
+  --control-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
 
   /* Focus / motion */
   --focus-ring: var(--accent);
@@ -108,14 +113,45 @@ body {
 }
 
 .top {
+  position: sticky;
+  top: 0;
+  z-index: 40;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-md) var(--space-lg);
-  max-width: var(--shell);
+  max-width: none;
   margin: 0 auto;
-  padding: 1.35rem 1.5rem 1.1rem;
+  padding: 1rem max(1.5rem, calc((100vw - var(--shell)) / 2 + 1.5rem)) 0.85rem;
+  border-bottom: 0;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(66, 162, 142, 0.035),
+      transparent 22%,
+      transparent 78%,
+      rgba(212, 168, 92, 0.025)
+    ),
+    rgba(12, 12, 12, 0.96);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(14px);
+}
+
+.top::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--line-strong) 16% 84%,
+    transparent
+  );
+  pointer-events: none;
 }
 
 
@@ -156,9 +192,7 @@ body {
 }
 
 .top.is-home {
-  border-bottom: 1px solid var(--line);
   margin-bottom: 0;
-  padding-bottom: 1rem;
 }
 
 .site-nav {
@@ -204,6 +238,9 @@ body {
   .top {
     align-items: flex-start;
     flex-direction: column;
+    gap: 0.55rem;
+    padding-top: 0.68rem;
+    padding-bottom: 0.55rem;
   }
 
   .site-nav {
@@ -2400,7 +2437,7 @@ body {
 }
 
 .top {
-  border-bottom: 1px solid var(--line);
+  border-bottom: 0;
 }
 
 .top.is-home {
@@ -2794,13 +2831,14 @@ body {
 
 /* ─── Homepage identity sharpening: signal + glow + locator ─── */
 .top.is-home {
-  position: relative;
+  position: sticky;
   gap: 0.8rem var(--space-lg);
-  padding-bottom: 0.7rem;
+  padding-bottom: 0.85rem;
   border-bottom: 0;
 }
 
 .top.is-home .brand {
+  position: relative;
   isolation: isolate;
   gap: 0.68rem;
 }
@@ -2867,8 +2905,10 @@ body {
 }
 
 .header-signal-rail {
-  flex: 1 0 100%;
   gap: 0.35rem;
+  max-width: var(--shell);
+  margin: 0 auto;
+  padding: 0 1.5rem;
 }
 
 .header-signal-rail span,
@@ -3255,4 +3295,48 @@ body {
     right: 0.7rem;
     left: 0.7rem;
   }
+}
+
+/* ─── Shared shell polish: precise controls + secondary hierarchy ─── */
+.hero-home h1,
+.hero:not(.hero-home) h1 {
+  font-weight: var(--heading-weight-secondary);
+  letter-spacing: -0.035em;
+}
+
+.btn {
+  position: relative;
+  min-height: 2.75rem;
+  border-radius: var(--radius-control);
+  box-shadow: var(--control-shadow);
+}
+
+.btn:not(.btn-secondary, .hero-primary-cta)::after {
+  content: "";
+  flex: 0 0 auto;
+  width: 0.32rem;
+  height: 0.32rem;
+  margin-left: 0.7rem;
+  border-radius: 1px;
+  background: var(--signal);
+  box-shadow: 0 0 0 1px rgba(7, 17, 14, 0.18);
+}
+
+.btn-secondary {
+  box-shadow: 0 1px 0 rgba(245, 243, 239, 0.05) inset;
+}
+
+.btn[aria-disabled="true"],
+.btn.is-disabled,
+.btn:disabled,
+.btn[aria-busy="true"] {
+  box-shadow: none;
+  transform: none !important;
+}
+
+.hero-cta-row .hero-primary-cta {
+  border-radius: 999px;
+  box-shadow:
+    0 1px 0 rgba(245, 243, 239, 0.12) inset,
+    0 10px 26px rgba(0, 0, 0, 0.2);
 }

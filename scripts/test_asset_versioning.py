@@ -11,8 +11,10 @@ ROOT = Path(__file__).resolve().parents[1]
 CACHE_SENSITIVE_ASSETS = {
     "/fonts.css",
     "/site.css",
+    "/studio.css",
     "/tool-shell.css",
     "/analytics/budget/app.js",
+    "/analytics/budget/styles.css",
     "/shared/budget-allocator.js",
     "/shared/budget-sample-data.js",
     "/shared/charts.js",

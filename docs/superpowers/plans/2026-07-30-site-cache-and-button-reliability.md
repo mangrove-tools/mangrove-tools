@@ -239,7 +239,7 @@ git commit -m "Fingerprint all public site assets"
 **Interfaces:**
 - Produces: one reviewed feature branch and a ready pull request against `main`.
 
-- [ ] **Step 1: Run deterministic validation**
+- [x] **Step 1: Run deterministic validation**
 
 Run:
 
@@ -253,7 +253,7 @@ git diff --check
 
 The `--allow-protected` invocation is limited to byte-identical fingerprint copies of approved affiliate config files; no affiliate value may differ from its canonical source.
 
-- [ ] **Step 2: Verify generated-file integrity**
+- [x] **Step 2: Verify generated-file integrity**
 
 Programmatically inspect every public local JS/CSS reference and assert:
 
@@ -262,7 +262,7 @@ Programmatically inspect every public local JS/CSS reference and assert:
 - its bytes equal the canonical source;
 - no public local JS/CSS reference is unversioned.
 
-- [ ] **Step 3: Verify visible behavior locally**
+- [x] **Step 3: Verify visible behavior locally**
 
 Serve the repository root and test desktop plus a 390px viewport:
 

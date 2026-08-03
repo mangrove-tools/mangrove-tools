@@ -1657,6 +1657,26 @@ test('Plan value stays stacked with compact text and no intrinsic width on narro
   assert.match(styles, /@media \(max-width: 600px\)[\s\S]*?\.plan-value-panel\s*\{[\s\S]*?padding:\s*var\(--space-sm\)/);
 });
 
+test('Plan value keeps a long imported channel label wrap-safe on narrow screens', () => {
+  const { elements, window } = loadDomApp();
+  const channel = 'SearchChannelWithoutBreaks'.repeat(8);
+  elements['history-paste'].value = window.MangroveBudgetSampleData.text
+    .split('Paid search')
+    .join(channel);
+  elements['parse-pasted-history'].trigger('click');
+  elements['total-budget'].value = '72000';
+  elements['plan-days'].value = '42';
+  elements['plan-form'].trigger('submit');
+
+  const planValue = elementByClass(elements.results, 'plan-value');
+  const channelTerms = elementsByTag(planValue, 'dt');
+  assert.ok(channelTerms.some(term => term.textContent.includes(channel)));
+  assert.match(
+    styles,
+    /\.plan-value-text dt\s*\{[^}]*overflow-wrap:\s*anywhere/
+  );
+});
+
 test('conversion efficiency chart uses an increasing-is-better metric instead of raw CPA', () => {
   const { elements, chartCalls } = loadDomApp();
   elements['use-sample-data'].trigger('click');

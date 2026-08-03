@@ -498,6 +498,7 @@
   min-width: 0;
   color: var(--ink-soft);
   font-size: 0.82rem;
+  overflow-wrap: anywhere;
 }
 
 .budget-workspace .plan-value-text dd {

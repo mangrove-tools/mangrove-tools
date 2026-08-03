@@ -131,6 +131,26 @@ function successfulAllocation(metricKey, overrides) {
   }, overrides || {});
 }
 
+function createCanvasContext() {
+  const clearRects = [];
+  return {
+    clearRects,
+    scale() {},
+    clearRect(...args) {
+      clearRects.push(args);
+    },
+    beginPath() {},
+    moveTo() {},
+    lineTo() {},
+    stroke() {},
+    fillText() {},
+    setLineDash() {},
+    arc() {},
+    fill() {},
+    fillRect() {}
+  };
+}
+
 class FakeElement {
   constructor(tagName, id) {
     this.tagName = tagName.toUpperCase();
@@ -147,6 +167,7 @@ class FakeElement {
     this.listeners = {};
     this.attributes = {};
     this._textContent = '';
+    this._canvasContext = this.tagName === 'CANVAS' ? createCanvasContext() : null;
   }
 
   get textContent() {
@@ -209,6 +230,22 @@ class FakeElement {
     return Object.prototype.hasOwnProperty.call(this.attributes, name)
       ? this.attributes[name]
       : null;
+  }
+
+  getContext() {
+    return this._canvasContext;
+  }
+
+  getBoundingClientRect() {
+    let ancestor = this;
+    while (ancestor) {
+      if (ancestor.hidden) return { width: 0, height: 0 };
+      ancestor = ancestor.parentNode;
+    }
+    return {
+      width: Number.isFinite(this.width) && this.width > 0 ? this.width : 720,
+      height: Number.isFinite(this.height) && this.height > 0 ? this.height : 320
+    };
   }
 
   focus() {}
@@ -304,6 +341,7 @@ function createDocument(clickedAnchors) {
   elements['paste-history-toggle'].setAttribute('aria-expanded', 'false');
   elements['results-note'].textContent = 'Choose a budget and horizon to build the plan.';
   elements['plan-days'].value = '30';
+  elements['model-evidence'].appendChild(elements['model-evidence-charts']);
   [
     ['financial-before', 'before_marketing'],
     ['financial-after', 'after_marketing']
@@ -316,6 +354,7 @@ function createDocument(clickedAnchors) {
 
   return {
     readyState: 'complete',
+    documentElement: new FakeElement('html', 'html'),
     body: new FakeElement('body', 'body'),
     getElementById(id) {
       return elements[id] || null;
@@ -421,15 +460,29 @@ function loadDomApp(options) {
       pendingTimers.delete(id);
     }
   };
-  const domContext = { window };
+  const domContext = {
+    window,
+    document,
+    getComputedStyle() {
+      return {
+        getPropertyValue() {
+          return '';
+        }
+      };
+    }
+  };
   vm.createContext(domContext);
-  [
+  const scripts = [
     'shared/history-data.js',
     'shared/marginality-engine.js',
     'shared/budget-allocator.js',
-    'shared/budget-sample-data.js',
+    'shared/budget-sample-data.js'
+  ];
+  if (settings.withRealCharts) scripts.push('shared/charts.js');
+  scripts.push(
     'analytics/budget/app.js'
-  ].forEach(relativePath => {
+  );
+  scripts.forEach(relativePath => {
     vm.runInContext(
       fs.readFileSync(path.join(root, relativePath), 'utf8'),
       domContext
@@ -1317,6 +1370,22 @@ test('successful allocation reveals and paints every channel without opening dia
   assert.ok(elementsByTag(elements['model-diagnostics-channels'], 'table').length > 0);
   elementsByTag(elements['model-evidence-charts'], 'canvas').forEach(canvas => {
     assert.match(canvas.getAttribute('aria-label'), /channel|marginal/i);
+  });
+});
+
+test('initial evidence paint measures visible canvas geometry', () => {
+  const { elements } = loadDomApp({ withRealCharts: true });
+  elements['use-sample-data'].trigger('click');
+  elements['plan-form'].trigger('submit');
+
+  assert.equal(elements['model-evidence'].hidden, false);
+  const canvases = elementsByTag(elements['model-evidence-charts'], 'canvas');
+  assert.equal(canvases.length, 5);
+  canvases.forEach(canvas => {
+    assert.ok(canvas._canvasContext.clearRects.length > 0);
+    const firstPaint = canvas._canvasContext.clearRects[0];
+    assert.ok(firstPaint[2] > 0, 'expected nonzero canvas width on initial paint');
+    assert.ok(firstPaint[3] > 0, 'expected nonzero canvas height on initial paint');
   });
 });
 

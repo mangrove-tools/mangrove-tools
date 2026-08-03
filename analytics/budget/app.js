@@ -1767,9 +1767,9 @@
         return;
       }
       renderResult(view, planDays);
+      syncPhase();
       renderModelEvidence(model, state.allocation);
       if (downloadAllocation) downloadAllocation.disabled = false;
-      syncPhase();
       if (MOTION.revealResult) MOTION.revealResult(resultsPanel);
       if (['upload', 'paste', 'sample'].indexOf(state.sourceKind) !== -1) {
         trackEvent('calculation_completed', state.sourceKind);

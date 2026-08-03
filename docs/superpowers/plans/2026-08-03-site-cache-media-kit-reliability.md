@@ -31,7 +31,7 @@
 - Produces: `discover_cache_sensitive_assets(root: Path) -> set[str]`
 - Changes: `asset_versioning_errors(root: Path, asset_paths: set[str] | None = None) -> list[str]`
 
-- [ ] **Step 1: Write the failing discovery and overlap tests**
+- [x] **Step 1: Write the failing discovery and overlap tests**
 
 Add tests with temporary public/nested/docs HTML fixtures. Assert that local
 stylesheets, script preloads, and scripts are discovered; external/canonical and
@@ -39,7 +39,7 @@ docs references are ignored. Include both `/app.<hash>.js` and
 `/app.helper.<hash>.js` and assert they map to `/app.js` and `/app.helper.js`
 independently.
 
-- [ ] **Step 2: Run the focused tests and verify RED**
+- [x] **Step 2: Run the focused tests and verify RED**
 
 Run:
 
@@ -49,7 +49,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest scripts.test_asset_versioning.Asse
 
 Expected: FAIL because the discovery interface and behavior do not exist.
 
-- [ ] **Step 3: Implement direct canonical discovery**
+- [x] **Step 3: Implement direct canonical discovery**
 
 Add a terminal fingerprint regex, public HTML filtering, cache-bearing link
 classification, exact canonical mapping, and optional automatic discovery in
@@ -61,7 +61,7 @@ copies for only the thirteen automatically discovered unversioned JavaScript
 assets and updating only their HTML references. Do not port fingerprint files
 from PR #32; derive every filename from the current canonical bytes.
 
-- [ ] **Step 4: Run the focused and full asset tests and verify GREEN**
+- [x] **Step 4: Run the focused and full asset tests and verify GREEN**
 
 Run:
 
@@ -71,7 +71,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest scripts.test_asset_versioning -v
 
 Expected: all asset-versioning tests pass against the current public tree.
 
-- [ ] **Step 5: Commit the asset contract**
+- [x] **Step 5: Commit the asset contract**
 
 ```bash
 git add scripts/test_asset_versioning.py analytics/forecast/index.html analytics/forecast/app.*.js shared/forecast-engine.*.js shared/letterroi-model.*.js letterroi/index.html letterroi/app.*.js letterroi/config.*.js sponsorquote/index.html sponsorquote/app.*.js sponsorquote/config.*.js subtarget/index.html subtarget/app.*.js subtarget/config.*.js mediakit/index.html mediakit/app.*.js mediakit/config.*.js inventory/index.html inventory/app.*.js inventory/config.*.js
@@ -91,14 +91,14 @@ git commit -m "test: discover all public cache-sensitive assets"
 - Consumes: `window.MangroveToolExtras.wireCopyButton(button, getText)`
 - Produces: `buildRateSummary() -> string | null` inside the Media Kit application closure
 
-- [ ] **Step 1: Write the failing behavior tests**
+- [x] **Step 1: Write the failing behavior tests**
 
 Execute the real `shared/tool-extras.js` and `mediakit/app.js` in a controlled
 DOM fixture. Assert the button starts disabled; an invalid submit leaves it
 disabled; a valid submit enables it; and a rejected Clipboard API call falls
 back to the exact rendered rate summary and changes the label to `Copied ✓`.
 
-- [ ] **Step 2: Run the focused test and verify RED**
+- [x] **Step 2: Run the focused test and verify RED**
 
 Run:
 
@@ -109,20 +109,20 @@ node --test tests/mediakit-app.test.js
 Expected: FAIL because current production enables copy before a valid result and
 does not use the shared rejected-clipboard fallback.
 
-- [ ] **Step 3: Implement the minimal Media Kit change**
+- [x] **Step 3: Implement the minimal Media Kit change**
 
 Author the button with `disabled`, keep it disabled on invalid rendering, enable
 it after a successful render, build summary text only from visible output, and
 wire it through `wireCopyButton`. Do not alter rates, affiliate values, or
 analytics events.
 
-- [ ] **Step 4: Regenerate only the changed Media Kit fingerprint**
+- [x] **Step 4: Regenerate only the changed Media Kit fingerprint**
 
 Compute the first twelve SHA-256 hex characters of `mediakit/app.js`, copy those
 exact bytes to `mediakit/app.<sha12>.js`, update the single script reference in
 `mediakit/index.html`, and remove the obsolete tracked fingerprinted copy.
 
-- [ ] **Step 5: Run the focused Node test and asset contract and verify GREEN**
+- [x] **Step 5: Run the focused Node test and asset contract and verify GREEN**
 
 Run:
 
@@ -134,7 +134,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest scripts.test_asset_versioning -v
 Expected: all focused tests pass and the fingerprint copy byte-matches its
 canonical source.
 
-- [ ] **Step 6: Commit the Media Kit repair**
+- [x] **Step 6: Commit the Media Kit repair**
 
 ```bash
 git add mediakit/app.js mediakit/index.html mediakit/app.*.js tests/mediakit-app.test.js

@@ -28,6 +28,14 @@ CACHE_SENSITIVE_ASSETS = {
 FINGERPRINTED_ASSET_NAME = re.compile(
     r"^(?P<stem>.+)\.[0-9a-f]{12}(?P<suffix>\.[^.]+)$"
 )
+NON_PUBLIC_DIRECTORY_NAMES = {
+    "docs",
+    "scripts",
+    "tests",
+    ".git",
+    ".worktrees",
+    "node_modules",
+}
 
 
 class AssetReferenceParser(HTMLParser):
@@ -81,7 +89,10 @@ def public_html_files(root: Path) -> list[Path]:
     return [
         path
         for path in sorted(root.rglob("*.html"))
-        if path.relative_to(root).parts[:1] != ("docs",)
+        if not (
+            set(path.relative_to(root).parts[:-1])
+            & NON_PUBLIC_DIRECTORY_NAMES
+        )
     ]
 
 
@@ -165,7 +176,17 @@ class AssetVersioningTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             (root / "nested").mkdir()
-            (root / "docs").mkdir()
+            excluded_html_trees = (
+                root / "docs",
+                root / "scripts",
+                root / "tests",
+                root / ".git",
+                root / ".worktrees",
+                root / "node_modules",
+                root / "nested" / "docs",
+            )
+            for excluded_tree in excluded_html_trees:
+                excluded_tree.mkdir()
             (root / "index.html").write_text(
                 "\n".join(
                     (
@@ -182,10 +203,11 @@ class AssetVersioningTests(unittest.TestCase):
                 '<script src="../shared/tool.111111111111.js"></script>',
                 encoding="utf-8",
             )
-            (root / "docs" / "index.html").write_text(
-                '<script src="/docs-only.222222222222.js"></script>',
-                encoding="utf-8",
-            )
+            for excluded_tree in excluded_html_trees:
+                (excluded_tree / "index.html").write_text(
+                    '<script src="/excluded.222222222222.js"></script>',
+                    encoding="utf-8",
+                )
 
             self.assertEqual(
                 [root / "index.html", root / "nested" / "index.html"],

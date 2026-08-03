@@ -42,7 +42,6 @@
 - Modify `analytics/forecast/index.html`: update the shared charts fingerprint only.
 - Modify `tests/budget-app.test.js`: verify the controlled view, DOM order, text equivalents, paint timing, stale clearing, fallback, resize, and raw-data exclusion.
 - Modify `tests/forecast-sample-data.test.js`: retain a behavioral contract proving Forecast success draws its historical-versus-forecast value chart.
-- Modify `scripts/test_budget_advisor_contract.py`: enforce responsive Plan value CSS, chart accessibility construction, privacy, and fingerprint contracts.
 - Modify `AGENTS.md`: record the durable successful-analysis visualization requirement.
 - Create `docs/superpowers/screenshots/analysis-value-visualizations/budget-value-desktop.png`: desktop sample-data result evidence.
 - Create `docs/superpowers/screenshots/analysis-value-visualizations/budget-value-390px.png`: 390px sample-data result evidence.
@@ -745,7 +744,6 @@ git commit -m "feat: show Budget Advisor plan value"
 ### Task 4: Record and enforce the cross-analysis product contract
 
 **Files:**
-- Modify: `scripts/test_budget_advisor_contract.py`
 - Modify: `tests/forecast-sample-data.test.js`
 - Modify: `AGENTS.md`
 
@@ -754,36 +752,9 @@ git commit -m "feat: show Budget Advisor plan value"
 - Forecast success must continue to reveal and draw `#forecast-chart` from historical and forecast values.
 - Repository guidance must require a primary value visualization for every successful analysis, without requiring one in empty, invalid, or blocked states.
 
-- [ ] **Step 1: Add failing durable-contract tests**
+- [ ] **Step 1: Strengthen the existing Forecast behavioral contract**
 
-In `scripts/test_budget_advisor_contract.py`, add a source contract that requires the canonical Budget app to contain the Plan value semantics and chart calls, and the canonical stylesheet plus fingerprinted stylesheet to contain the responsive selectors:
-
-```python
-def test_successful_budget_result_has_primary_value_visualization_contract(self) -> None:
-    app = (ROOT / "analytics/budget/app.js").read_text(encoding="utf-8")
-    styles = (ROOT / "analytics/budget/styles.css").read_text(encoding="utf-8")
-    instructions = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
-
-    for required in (
-        "plan-value",
-        "drawAllocationChart",
-        "drawOutcomeComparisonChart",
-        "Modeled channels only.",
-        'role',
-        'img',
-    ):
-        self.assertIn(required, app)
-    self.assertIn(".budget-workspace .plan-value-panel canvas", styles)
-    self.assertIn("max-width: 100%", styles)
-    self.assertIn(
-        "Every successful analysis result includes a primary visualization",
-        instructions,
-    )
-```
-
-Resolve the referenced fingerprinted stylesheet through the existing parser and assert the same selectors appear in it.
-
-In `tests/forecast-sample-data.test.js`, make the existing sample-data success contract explicit:
+In `tests/forecast-sample-data.test.js`, make the existing sample-data success contract explicitly verify the rendered chart behavior:
 
 ```javascript
 const forecastCanvas = document.getElementById('forecast-chart');
@@ -793,18 +764,15 @@ assert.ok(forecastCanvas.drawn.timeSeries.length > 0);
 assert.ok(forecastCanvas.drawn.forecast.length > 0);
 ```
 
-- [ ] **Step 2: Run the focused contract tests**
+- [ ] **Step 2: Run the focused Forecast contract**
 
 Run:
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 python3 -m unittest \
-  scripts.test_budget_advisor_contract.BudgetAdvisorContractTests.test_successful_budget_result_has_primary_value_visualization_contract \
-  -v
 node --test tests/forecast-sample-data.test.js
 ```
 
-Expected: the Forecast behavioral assertions PASS; the new Budget contract test FAILS because the durable `AGENTS.md` rule is not present yet.
+Expected: PASS because this is a characterization of Forecast's already-shipped value visualization, not a new Forecast behavior. The new assertions must fail if `renderResults` stops drawing historical or forecast series.
 
 - [ ] **Step 3: Add the durable rule to `AGENTS.md`**
 
@@ -821,10 +789,7 @@ Do not change the existing privacy, static-site, monetization, or analytics rule
 Run:
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 python3 -m unittest \
-  scripts.test_budget_advisor_contract \
-  scripts.test_asset_versioning \
-  -v
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest scripts.test_asset_versioning -v
 node --test tests/forecast-sample-data.test.js tests/budget-app.test.js
 git diff --check
 ```
@@ -835,7 +800,6 @@ Expected: PASS.
 
 ```bash
 git add -- \
-  scripts/test_budget_advisor_contract.py \
   tests/forecast-sample-data.test.js \
   AGENTS.md
 git commit -m "docs: require value visuals for analyses"

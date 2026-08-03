@@ -105,6 +105,7 @@ function successfulAllocation(metricKey, overrides) {
         currentSpend: 200,
         recommendedSpend: 400,
         recommendedSpendRate: 200,
+        currentPredictedOutcome: metricKey === 'conversions' ? 20 : 900,
         predictedOutcome: metricKey === 'conversions' ? 32 : 1200,
         marginalMetric: marginal,
         constraint: 'interior'
@@ -125,6 +126,7 @@ function successfulAllocation(metricKey, overrides) {
       allocatedBudget: 500,
       optimizedBudget: 400,
       preservedBudget: 100,
+      currentPredictedOutcome: metricKey === 'conversions' ? 20 : 900,
       predictedOutcome: metricKey === 'conversions' ? 32 : 1200
     },
     conflicts: []
@@ -389,10 +391,28 @@ function loadDomApp(options) {
   const revokedObjectUrls = [];
   let nextObjectUrl = 1;
   const chartCalls = {
+    allocation: [],
+    outcome: [],
     response: [],
     marginal: []
   };
   const chartApi = {
+    drawAllocationChart(canvas, rows, unit) {
+      chartCalls.allocation.push({
+        canvas,
+        rows,
+        unit,
+        visible: document.elements.results.hidden === false
+      });
+    },
+    drawOutcomeComparisonChart(canvas, comparison, options) {
+      chartCalls.outcome.push({
+        canvas,
+        comparison,
+        options,
+        visible: document.elements.results.hidden === false
+      });
+    },
     drawResponseCurve(...args) {
       chartCalls.response.push(args);
     },
@@ -776,6 +796,119 @@ test('result view uses observational modeled-marginal copy without confidence cl
   assert.equal(preserved.evidence, 'Preserved');
   assert.equal(preserved.marginalMetric, '—');
   assert.doesNotMatch(JSON.stringify(preserved), /fit/i);
+});
+
+test('result view projects a controlled Plan value comparison without imported evidence', () => {
+  const view = plain(app.resultView(planningModel(), successfulAllocation('revenue')));
+
+  assert.deepEqual(view.valueVisualization.allocation.rows, [
+    {
+      channel: 'Paid search <em>unsafe</em>',
+      status: 'modeled',
+      currentSpend: 200,
+      recommendedSpend: 400
+    },
+    {
+      channel: 'Local partnerships',
+      status: 'preserved',
+      currentSpend: 100,
+      recommendedSpend: 100
+    }
+  ]);
+  assert.equal(view.valueVisualization.outcome.currentValue, 900);
+  assert.equal(view.valueVisualization.outcome.recommendedValue, 1200);
+  assert.equal(view.valueVisualization.outcome.absoluteDifference, 300);
+  assert.equal(view.valueVisualization.outcome.percentageDifference, 1 / 3);
+  assert.equal(view.valueVisualization.outcome.modeledCount, 1);
+  assert.equal(view.valueVisualization.outcome.unscoredCount, 1);
+  assert.doesNotMatch(
+    JSON.stringify(view.valueVisualization),
+    /observations|normalizedRawRow|diagnostics|Uncontrolled allocator detail/
+  );
+});
+
+test('Plan value outcome preserves units, zero baselines, and non-positive changes', () => {
+  const conversionView = plain(app.resultView(
+    planningModel({ key: 'conversions', label: 'Conversions', costTreatment: null }),
+    successfulAllocation('conversions')
+  ));
+  const zeroBaseline = successfulAllocation('revenue', {
+    totals: Object.assign({}, successfulAllocation('revenue').totals, {
+      currentPredictedOutcome: 0,
+      predictedOutcome: 1200
+    })
+  });
+  const flatBaseline = successfulAllocation('financial', {
+    totals: Object.assign({}, successfulAllocation('financial').totals, {
+      currentPredictedOutcome: 900,
+      predictedOutcome: 900
+    })
+  });
+  const negativeBaseline = successfulAllocation('revenue', {
+    totals: Object.assign({}, successfulAllocation('revenue').totals, {
+      currentPredictedOutcome: 900,
+      predictedOutcome: 600
+    })
+  });
+
+  assert.equal(conversionView.valueVisualization.outcome.unit, '');
+  assert.equal(conversionView.valueVisualization.outcome.currentValue, 20);
+  assert.equal(conversionView.valueVisualization.outcome.recommendedValue, 32);
+  assert.equal(
+    plain(app.resultView(planningModel(), zeroBaseline)).valueVisualization.outcome.percentageDifference,
+    null
+  );
+  assert.equal(
+    plain(app.resultView(
+      planningModel({ key: 'financial', label: 'Contribution', costTreatment: 'after_marketing' }),
+      flatBaseline
+    )).valueVisualization.outcome.unit,
+    '$'
+  );
+  assert.equal(
+    plain(app.resultView(
+      planningModel({ key: 'financial', label: 'Contribution', costTreatment: 'after_marketing' }),
+      flatBaseline
+    )).valueVisualization.outcome.absoluteDifference,
+    0
+  );
+  assert.equal(
+    plain(app.resultView(planningModel(), negativeBaseline)).valueVisualization.outcome.absoluteDifference,
+    -300
+  );
+});
+
+test('Plan value counts excluded rows by model support and keeps their allocation status', () => {
+  const allocation = successfulAllocation('revenue');
+  allocation.allocation[0] = Object.assign({}, allocation.allocation[0], { constraint: 'excluded' });
+  allocation.allocation[1] = Object.assign({}, allocation.allocation[1], { constraint: 'excluded' });
+  const view = plain(app.resultView(planningModel(), allocation));
+
+  assert.deepEqual(
+    view.valueVisualization.allocation.rows.map(row => row.status),
+    ['excluded', 'excluded']
+  );
+  assert.equal(view.valueVisualization.outcome.modeledCount, 1);
+  assert.equal(view.valueVisualization.outcome.unscoredCount, 1);
+});
+
+test('Plan value reports a controlled not-estimable outcome when no curve was admitted', () => {
+  const allocation = successfulAllocation('revenue', {
+    allocation: [Object.assign({}, successfulAllocation('revenue').allocation[1], {
+      constraint: 'preserved'
+    })],
+    totals: Object.assign({}, successfulAllocation('revenue').totals, {
+      currentPredictedOutcome: null,
+      predictedOutcome: null
+    })
+  });
+  const view = plain(app.resultView(planningModel(null, ['preserved']), allocation));
+
+  assert.equal(view.valueVisualization.outcome.state, 'not_estimable');
+  assert.equal(
+    view.valueVisualization.outcome.message,
+    'Modeled outcome comparison is unavailable because no channel has an admitted response curve.'
+  );
 });
 
 test('model evidence view separates modeled curves from preserved observations', () => {
@@ -1162,11 +1295,13 @@ test('objective changes select the cached model, rebuild constraints, and clear 
   const priorFirstConstraint = elements['constraints-list'].children[0];
   elements['plan-form'].trigger('submit');
   assert.equal(elements.results.hidden, false);
+  assert.equal(elementsByTag(elements.results, 'canvas').length, 2);
 
   elements.objective.value = 'conversions';
   elements.objective.trigger('change');
 
   assert.equal(elements.results.hidden, true);
+  assert.equal(elementsByTag(elements.results, 'canvas').length, 0);
   assert.notEqual(elements['constraints-list'].children[0], priorFirstConstraint);
   assert.equal(
     elements['import-status'].textContent,
@@ -1226,6 +1361,70 @@ test('successful result DOM is complete before reveal and charts inspect every c
     name: 'calculation_completed',
     metadata: { action: 'sample' }
   });
+});
+
+test('successful allocation builds an accessible Plan value block before reveal and paints it visibly', () => {
+  const { elements, motion, chartCalls } = loadDomApp();
+  elements['use-sample-data'].trigger('click');
+  elements['plan-form'].trigger('submit');
+
+  const details = elementByClass(elements.results, 'result-details');
+  const summary = elementByClass(details, 'result-summary');
+  const planValue = elementByClass(details, 'plan-value');
+  const table = elementByClass(details, 'table-scroll');
+  const panels = elementsByClass(planValue, 'plan-value-panel');
+  const canvases = elementsByTag(planValue, 'canvas');
+
+  assert.ok(planValue);
+  assert.ok(details.children.indexOf(summary) < details.children.indexOf(planValue));
+  assert.ok(details.children.indexOf(planValue) < details.children.indexOf(table));
+  assert.equal(panels.length, 2);
+  assert.ok(String(panels[0].className).includes('allocation-comparison'));
+  assert.ok(String(panels[1].className).includes('outcome-comparison'));
+  assert.equal(canvases.length, 2);
+  assert.equal(canvases[0].getAttribute('role'), 'img');
+  assert.equal(
+    canvases[0].getAttribute('aria-label'),
+    'Current and recommended plan allocation by channel'
+  );
+  assert.equal(canvases[1].getAttribute('role'), 'img');
+  assert.match(canvases[1].getAttribute('aria-label'), /Current and recommended modeled-channel Revenue/i);
+  assert.match(planValue.textContent, /Current/);
+  assert.match(planValue.textContent, /Recommended/);
+  assert.match(planValue.textContent, /Modeled difference/);
+  assert.match(planValue.textContent, /%/);
+  assert.match(planValue.textContent, /modeled channel/i);
+  assert.match(planValue.textContent, /unscored channel/i);
+  assert.match(planValue.textContent, /Preserved and excluded unsupported channels remain/i);
+  assert.ok(chartCalls.allocation.every(call => call.visible));
+  assert.ok(chartCalls.outcome.every(call => call.visible));
+  assert.match(motion.revealSnapshots[0], /Plan value.*See what changes/);
+});
+
+test('Plan value text remains when chart functions are unavailable and hides an unestimable outcome canvas', () => {
+  const missingCharts = loadDomApp({ withoutCharts: true });
+  missingCharts.elements['use-sample-data'].trigger('click');
+  assert.doesNotThrow(() => missingCharts.elements['plan-form'].trigger('submit'));
+  const readyPlanValue = elementByClass(missingCharts.elements.results, 'plan-value');
+  assert.match(readyPlanValue.textContent, /Current.*Recommended.*Modeled difference/);
+
+  const fixedPlan = loadDomApp();
+  const { elements } = fixedPlan;
+  const lines = ['period,channel,spend,conversions'];
+  for (let week = 1; week <= 12; week += 1) {
+    lines.push(`2024-W${String(week).padStart(2, '0')},Local partnerships,100,10`);
+  }
+  elements['history-paste'].value = lines.join('\n');
+  elements['parse-pasted-history'].trigger('click');
+  elements['total-budget'].value = '428.57';
+  elements['plan-form'].trigger('submit');
+
+  const fixedPlanValue = elementByClass(elements.results, 'plan-value');
+  assert.equal(elementsByTag(fixedPlanValue, 'canvas').length, 1);
+  assert.match(
+    fixedPlanValue.textContent,
+    /Modeled outcome comparison is unavailable because no channel has an admitted response curve\./
+  );
 });
 
 test('product events contain only a controlled import action', () => {
@@ -1401,6 +1600,14 @@ test('initial evidence paint measures visible canvas geometry', () => {
   elements['plan-form'].trigger('submit');
 
   assert.equal(elements['model-evidence'].hidden, false);
+  const planValue = elementByClass(elements.results, 'plan-value');
+  const planCanvases = elementsByTag(planValue, 'canvas');
+  assert.equal(planCanvases.length, 2);
+  planCanvases.forEach(canvas => {
+    const firstPaint = canvas._canvasContext.clearRects[0];
+    assert.ok(firstPaint[2] > 0, 'expected nonzero Plan value canvas width on initial paint');
+    assert.ok(firstPaint[3] > 0, 'expected nonzero Plan value canvas height on initial paint');
+  });
   const canvases = elementsByTag(elements['model-evidence-charts'], 'canvas');
   assert.equal(canvases.length, 5);
   canvases.forEach(canvas => {
@@ -1442,6 +1649,14 @@ test('narrow inspector marker text stacks without an intrinsic two-column minimu
   );
 });
 
+test('Plan value stays stacked with compact text and no intrinsic width on narrow screens', () => {
+  assert.match(styles, /\.plan-value\s*\{[\s\S]*?min-width:\s*0[\s\S]*?border-block:\s*1px solid var\(--line\)/);
+  assert.match(styles, /\.plan-value-stack\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0,\s*1fr\)/);
+  assert.match(styles, /\.plan-value-panel canvas\s*\{[\s\S]*?width:\s*100%[\s\S]*?height:\s*300px/);
+  assert.match(styles, /\.outcome-comparison canvas\s*\{[\s\S]*?height:\s*220px/);
+  assert.match(styles, /@media \(max-width: 600px\)[\s\S]*?\.plan-value-panel\s*\{[\s\S]*?padding:\s*var\(--space-sm\)/);
+});
+
 test('conversion efficiency chart uses an increasing-is-better metric instead of raw CPA', () => {
   const { elements, chartCalls } = loadDomApp();
   elements['use-sample-data'].trigger('click');
@@ -1463,21 +1678,25 @@ test('editing budget or constraints clears a stale result before rebuilding', ()
   elements['use-sample-data'].trigger('click');
   elements['plan-form'].trigger('submit');
   assert.equal(elements.results.hidden, false);
+  assert.equal(elementsByTag(elements.results, 'canvas').length, 2);
 
   elements['total-budget'].value = '20000';
   elements['total-budget'].trigger('input');
   assert.equal(elements.results.hidden, true);
+  assert.equal(elementsByTag(elements.results, 'canvas').length, 0);
   assert.equal(elements['model-evidence'].hidden, true);
   assert.equal(elements['model-evidence-charts'].children.length, 0);
   assert.match(elements['import-status'].textContent, /Budget changed.*rebuild/i);
 
   elements['plan-form'].trigger('submit');
   assert.equal(elements.results.hidden, false);
+  assert.equal(elementsByTag(elements.results, 'canvas').length, 2);
   const minimum = elementsByTag(elements['constraints-list'], 'input')
     .find(input => input.id === 'constraint-minimum-2');
   minimum.value = '1000';
   minimum.trigger('input');
   assert.equal(elements.results.hidden, true);
+  assert.equal(elementsByTag(elements.results, 'canvas').length, 0);
   assert.equal(elements['model-evidence'].hidden, true);
   assert.equal(elements['model-evidence-charts'].children.length, 0);
   assert.match(elements['import-status'].textContent, /Constraint changed.*rebuild/i);
@@ -1488,12 +1707,14 @@ test('editing plan days clears allocation evidence on native input before change
   elements['use-sample-data'].trigger('click');
   elements['plan-form'].trigger('submit');
   assert.equal(elements.results.hidden, false);
+  assert.equal(elementsByTag(elements.results, 'canvas').length, 2);
   assert.equal(elements['model-evidence'].hidden, false);
 
   elements['plan-days'].value = '21';
   elements['plan-days'].trigger('input');
 
   assert.equal(elements.results.hidden, true);
+  assert.equal(elementsByTag(elements.results, 'canvas').length, 0);
   assert.equal(elements['model-evidence'].hidden, true);
   assert.equal(elements['model-evidence-charts'].children.length, 0);
   assert.match(elements['import-status'].textContent, /Planning window changed.*rebuild/i);
@@ -1520,15 +1741,18 @@ test('blocked result renders the allocator feasible-budget boundaries', () => {
     /Channel maximums leave part of this budget unassigned/
   );
   assert.doesNotMatch(elements.results.textContent, /Uncontrolled allocator detail/);
+  assert.equal(elementsByTag(elements.results, 'canvas').length, 0);
 });
 
-test('response charts debounce resize by 150ms and replacement cancels the pending repaint', () => {
+test('Plan value and evidence charts debounce resize once and replacement cancels the pending repaint', () => {
   const harness = loadDomApp();
   const { elements, window, chartCalls, timers } = harness;
   elements['use-sample-data'].trigger('click');
   elements['plan-form'].trigger('submit');
   const initialResponses = chartCalls.response.length;
   const initialMarginals = chartCalls.marginal.length;
+  const initialAllocations = chartCalls.allocation.length;
+  const initialOutcomes = chartCalls.outcome.length;
 
   assert.equal(initialResponses, 4);
   assert.equal(initialMarginals, 1);
@@ -1536,6 +1760,8 @@ test('response charts debounce resize by 150ms and replacement cancels the pendi
   elements['model-inspector'].trigger('toggle');
   assert.equal(chartCalls.response.length, initialResponses);
   assert.equal(chartCalls.marginal.length, initialMarginals);
+  assert.equal(chartCalls.allocation.length, initialAllocations);
+  assert.equal(chartCalls.outcome.length, initialOutcomes);
 
   window.trigger('resize');
   assert.equal(timers.pendingCount(), 1);
@@ -1543,6 +1769,8 @@ test('response charts debounce resize by 150ms and replacement cancels the pendi
   timers.flush();
   assert.equal(chartCalls.response.length, initialResponses + 4);
   assert.equal(chartCalls.marginal.length, initialMarginals + 1);
+  assert.equal(chartCalls.allocation.length, initialAllocations + 1);
+  assert.equal(chartCalls.outcome.length, initialOutcomes + 1);
 
   window.trigger('resize');
   window.trigger('resize');
@@ -1572,6 +1800,7 @@ test('confirmed replacement clears prior UI, object URLs, and timers before read
       replacementSnapshot = {
         resultsHidden: elements.results.hidden,
         resultText: elements.results.textContent,
+        planValueCanvases: elementsByTag(elements.results, 'canvas').length,
         constraintCount: elements['constraints-list'].children.length,
         readinessCount: elements['readiness-summary'].children.length,
         activeUrls: downloads.activeObjectUrls.size,
@@ -1587,6 +1816,7 @@ test('confirmed replacement clears prior UI, object URLs, and timers before read
   assert.deepEqual(replacementSnapshot, {
     resultsHidden: true,
     resultText: '',
+    planValueCanvases: 0,
     constraintCount: 0,
     readinessCount: 0,
     activeUrls: 0,
@@ -1643,6 +1873,7 @@ test('successful replanning is invalidated before an invalid budget is rejected'
   elements['plan-form'].trigger('submit');
 
   assert.equal(elements.results.hidden, true);
+  assert.equal(elementsByTag(elements.results, 'canvas').length, 0);
   assert.equal(elements['decision-canvas'].dataset.phase, 'partially_modelable');
   assert.equal(
     elements['results-note'].textContent,
@@ -1660,11 +1891,13 @@ test('successful replanning is invalidated when the allocator returns infeasible
   elements['plan-form'].trigger('submit');
   const successfulText = elements['results-note'].textContent;
   assert.equal(elements.results.hidden, false);
+  assert.equal(elementsByTag(elements.results, 'canvas').length, 2);
 
   elements['total-budget'].value = '1';
   elements['plan-form'].trigger('submit');
 
   assert.equal(elements.results.hidden, false);
+  assert.equal(elementsByTag(elements.results, 'canvas').length, 0);
   assert.equal(elements['decision-canvas'].dataset.phase, 'blocked');
   assert.equal(elements['results-note'].textContent, [
     'Preserved and minimum allocations exceed this budget.',

@@ -86,3 +86,16 @@ changes, and it must not reuse stale generated files from PR #32.
 - No Budget Advisor changes in this PR.
 - No merge or deployment before the exact head passes independent review and
   the protected-change gate is satisfied if triggered.
+
+## Verification evidence — 2026-08-03
+
+The canonical validator against `origin/main` reported only the expected
+protected-change requirement for the ten regenerated affiliate-bearing
+fingerprints; its allow-protected run passed all named checks. The full Python
+suite passed 70 tests, the full Node suite passed 165 tests, and
+`git diff --check` passed. Local browser verification at 1440px and 390px
+confirmed disabled initial and invalid-copy states, valid compose enablement,
+rejected-Clipboard API fallback with visible `Copied ✓`, no console errors,
+and no horizontal overflow. Screenshots use synthetic, non-user fixture values
+only and are recorded in
+`docs/superpowers/screenshots/site-cache-media-kit-reliability/`.

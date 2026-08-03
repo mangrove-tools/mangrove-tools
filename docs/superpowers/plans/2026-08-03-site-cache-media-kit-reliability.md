@@ -141,7 +141,7 @@ git add mediakit/app.js mediakit/index.html mediakit/app.*.js tests/mediakit-app
 git commit -m "fix: harden Media Kit copy feedback"
 ```
 
-### Task 3: Validate and review the replacement PR head
+### Task 3: Validate and package the replacement PR head
 
 **Files:**
 - Modify: `docs/superpowers/specs/2026-08-03-site-cache-media-kit-reliability-design.md`
@@ -176,15 +176,49 @@ Save desktop and 390px screenshots under the declared screenshot directory,
 record exact commands/results in the plan, and commit only the scoped docs and
 screenshots.
 
-- [ ] **Step 4: Request independent exact-HEAD review**
+- [ ] **Step 4: Commit evidence and hand off the exact head**
 
-Give the reviewer `origin/main`, exact `HEAD`, this design, this plan, protected
-boundaries, and fresh verification output. Resolve every Critical or Important
-finding before publishing.
+Commit the scoped evidence and documentation. The controller then performs the
+required broad exact-HEAD review through the subagent-driven workflow before
+using the repository's PR-finishing workflow. The eventual ready PR must include
+summary, changed routes/files, validation, desktop/390px evidence, independent
+review notes, remaining risks, and an explicit note that stale PR #32 is
+superseded. The agent must not apply the protected label.
 
-- [ ] **Step 5: Push and open the replacement PR**
+## Task 3 verification evidence — 2026-08-03
 
-Open a ready PR against `main` with summary, changed routes/files, validation,
-desktop/390px evidence, independent review notes, remaining risks, and an
-explicit note that the stale PR #32 is superseded. Do not apply the protected
-label as an agent.
+Exact validation ran against the replacement head based on `origin/main`:
+
+```bash
+python3 scripts/validate_site.py --base-ref origin/main
+```
+
+This exited non-zero only at `protected changes`. The ten reported regenerated
+affiliate-bearing fingerprint files were `inventory/app.5d1f88269d02.js`,
+`inventory/config.733033950e00.js`, `letterroi/app.14266b9999ff.js`,
+`letterroi/config.d8adbbb0e484.js`, `mediakit/app.86d122f0f1cd.js`,
+`mediakit/config.c58f1c6c20db.js`, `sponsorquote/app.f5404950f5b4.js`,
+`sponsorquote/config.9267b0138b95.js`, `subtarget/app.489b629b931f.js`, and
+`subtarget/config.e35a16646d91.js`. Every other validator check passed.
+
+```bash
+python3 scripts/validate_site.py --base-ref origin/main --allow-protected
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts -p 'test_*.py' -v
+node --test tests/*.test.js
+git diff --check
+```
+
+All four commands passed: the allow-protected validator reported all seven
+named checks as `PASS`; Python reported `Ran 70 tests ... OK`; Node reported
+`165` passing tests with zero failures; and `git diff --check` exited 0.
+
+Browser evidence used `python3 -m http.server 5173` from repository root and
+synthetic, non-user fixture values only. At `1440 × 1000` and `390 × 844`,
+`Copy rates` was disabled initially and after invalid compose, enabled after a
+valid compose, and showed `Copied ✓` when the Clipboard API was locally forced
+to reject and the existing fallback ran. Each viewport had zero console errors
+and `scrollWidth === clientWidth` (`1440 === 1440`; `390 === 390`). The
+temporary local Clipboard override was removed by reload after capture.
+
+- Desktop: `docs/superpowers/screenshots/site-cache-media-kit-reliability/mediakit-desktop.png` (`1440 × 1710`)
+- Mobile: `docs/superpowers/screenshots/site-cache-media-kit-reliability/mediakit-390px.png` (`390 × 3253`)

@@ -814,7 +814,7 @@ git commit -m "docs: require value visuals for analyses"
 - Create: `docs/superpowers/screenshots/analysis-value-visualizations/budget-value-390px.png`
 - Modify: `docs/superpowers/plans/2026-08-03-analysis-value-visualizations.md` only to mark completed checkboxes truthfully after each step passes.
 
-- [ ] **Step 1: Run every deterministic repository check**
+- [x] **Step 1: Run every deterministic repository check**
 
 From the isolated worktree root, run:
 
@@ -834,7 +834,9 @@ Expected:
 - diff check emits no output;
 - status contains only the plan checkbox update and the two intended screenshot files before the evidence commit.
 
-- [ ] **Step 2: Start the local site and verify the desktop success path**
+Verification note (2026-08-03): the unflagged validator stopped at the expected owner-approval gate for `AGENTS.md` (6 pass, 1 protected-change failure). The owner-approved local rerun with `--allow-protected` passed all 7 checks; GitHub still requires the owner-applied `protected-change-approved` label after the pull request exists.
+
+- [x] **Step 2: Start the local site and verify the desktop success path**
 
 Run:
 
@@ -860,7 +862,7 @@ Capture the result at:
 docs/superpowers/screenshots/analysis-value-visualizations/budget-value-desktop.png
 ```
 
-- [ ] **Step 3: Verify 390px behavior and capture mobile evidence**
+- [x] **Step 3: Verify 390px behavior and capture mobile evidence**
 
 At a 390px viewport, reload, use sample data, and submit. In the browser console, run:
 
@@ -893,7 +895,7 @@ Capture:
 docs/superpowers/screenshots/analysis-value-visualizations/budget-value-390px.png
 ```
 
-- [ ] **Step 4: Verify outcome edge states locally**
+- [x] **Step 4: Verify outcome edge states locally**
 
 Use the already-passing chart and Budget harness cases for deterministic financial negative/flat/zero-baseline evidence. In the browser, also select each eligible sample objective and confirm currency is used for revenue/contribution while unprefixed counts are used for conversions. Confirm no page text uses causal or guaranteed language:
 
@@ -904,7 +906,7 @@ rg -ni "causal lift|incremental lift|guaranteed return|guaranteed performance|ca
 
 Expected: no matches.
 
-- [ ] **Step 5: Commit screenshots and completed plan state**
+- [x] **Step 5: Commit screenshots and completed plan state**
 
 Mark only steps actually completed as `[x]`, then run:
 
@@ -916,7 +918,7 @@ git add -- \
 git commit -m "test: record analysis value visual evidence"
 ```
 
-- [ ] **Step 6: Re-run exact-HEAD verification**
+- [x] **Step 6: Re-run exact-HEAD verification**
 
 Run after the evidence commit:
 

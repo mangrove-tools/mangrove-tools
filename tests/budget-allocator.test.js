@@ -783,6 +783,7 @@ test('preserved and excluded rows publish only modeled current outcomes', () => 
       'Excluded modeled': constraints['Excluded modeled']
     }
   });
+  const active = row(result, 'Active modeled');
   const preserved = row(result, 'Excluded unsupported');
   const excludedModeled = row(result, 'Excluded modeled');
   const expectedCurrentOutcome = 2 * Math.pow(400, 0.5) * 2;
@@ -793,6 +794,14 @@ test('preserved and excluded rows publish only modeled current outcomes', () => 
   assert.equal(preserved.predictedOutcome, null);
   assert.equal(excludedModeled.currentPredictedOutcome, expectedCurrentOutcome);
   assert.equal(excludedModeled.predictedOutcome, 0);
+  assert.equal(
+    result.totals.currentPredictedOutcome,
+    active.currentPredictedOutcome + excludedModeled.currentPredictedOutcome
+  );
+  assert.equal(
+    result.totals.predictedOutcome,
+    active.predictedOutcome + excludedModeled.predictedOutcome
+  );
   assert.equal(result.totals.currentPredictedOutcome, withoutUnsupported.totals.currentPredictedOutcome);
   assert.equal(result.totals.predictedOutcome, withoutUnsupported.totals.predictedOutcome);
 });

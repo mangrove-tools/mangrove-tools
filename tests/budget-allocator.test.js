@@ -69,6 +69,66 @@ test('symmetric admitted curves split the budget equally', () => {
   assert.equal(row(result, 'Paid social').recommendedSpend, 30000);
 });
 
+test('modeled rows publish current and recommended outcomes over the same horizon', () => {
+  const result = allocate({
+    model: model([
+      channel('Paid search', { a: 2, b: 0.5 }, {
+        currentSpendRate: 400,
+        preservedSpendRate: 400
+      })
+    ], { key: 'revenue', label: 'Revenue', costTreatment: null }),
+    totalBudget: 1800,
+    planDays: 14,
+    constraints: { 'Paid search': { minimum: 1800, maximum: 1800, excluded: false } }
+  });
+  const item = row(result, 'Paid search');
+
+  assert.equal(result.ok, true);
+  assert.equal(item.currentSpend, 800);
+  assert.equal(item.currentPredictedOutcome, 2 * Math.pow(400, 0.5) * 2);
+  assert.equal(item.predictedOutcome, 2 * Math.pow(900, 0.5) * 2);
+  assert.equal(result.totals.currentPredictedOutcome, item.currentPredictedOutcome);
+  assert.equal(result.totals.predictedOutcome, item.predictedOutcome);
+});
+
+test('conversion rows and totals publish finite current modeled outcomes', () => {
+  const result = allocate({
+    model: model([
+      channel('Paid search', { a: 2, b: 0.5 }, {
+        currentSpendRate: 100,
+        preservedSpendRate: 100
+      }),
+      channel('Paid social', { a: 3, b: 0.5 }, {
+        currentSpendRate: 200,
+        preservedSpendRate: 200
+      })
+    ]),
+    totalBudget: 1000,
+    planDays: 14,
+    constraints: {
+      'Paid search': { minimum: 400, maximum: 400, excluded: false },
+      'Paid social': { minimum: 600, maximum: 600, excluded: false }
+    }
+  });
+  const modeledRows = result.allocation.filter(item => item.status === 'modelable');
+
+  assert.equal(result.ok, true);
+  modeledRows.forEach(item => {
+    assert.equal(Number.isFinite(item.currentPredictedOutcome), true);
+    assert.equal(Number.isFinite(item.predictedOutcome), true);
+  });
+  assert.equal(Number.isFinite(result.totals.currentPredictedOutcome), true);
+  assert.equal(Number.isFinite(result.totals.predictedOutcome), true);
+  assert.equal(
+    result.totals.currentPredictedOutcome,
+    modeledRows.reduce((sum, item) => sum + item.currentPredictedOutcome, 0)
+  );
+  assert.equal(
+    result.totals.predictedOutcome,
+    modeledRows.reduce((sum, item) => sum + item.predictedOutcome, 0)
+  );
+});
+
 test('geometric midpoint remains finite across overflow and zero-bound edges', () => {
   const { geometricMidpoint } = allocatorInternals();
   const overflowSafe = geometricMidpoint(1e200, 1e300);
@@ -658,6 +718,85 @@ test('before-marketing financial outcomes report net contribution and raw margin
   assert.ok(item.marginalMetric.value < 0);
 });
 
+test('financial current outcomes retain the metric cost treatment', () => {
+  const channelOptions = { currentSpendRate: 400, preservedSpendRate: 400 };
+  const constraints = { 'Paid search': { minimum: 1800, maximum: 1800, excluded: false } };
+  const before = allocate({
+    model: model([
+      channel('Paid search', { a: 3, b: 0.5 }, channelOptions)
+    ], { key: 'financial', label: 'Contribution', costTreatment: 'before_marketing' }),
+    totalBudget: 1800,
+    planDays: 14,
+    constraints
+  });
+  const after = allocate({
+    model: model([
+      channel('Paid search', { a: 3, b: 0.5 }, channelOptions)
+    ], { key: 'financial', label: 'Contribution', costTreatment: 'after_marketing' }),
+    totalBudget: 1800,
+    planDays: 14,
+    constraints
+  });
+  const beforeItem = row(before, 'Paid search');
+  const afterItem = row(after, 'Paid search');
+  const beforeRawCurrent = 3 * Math.pow(400, 0.5) * 2;
+  const afterRawCurrent = 3 * Math.pow(400, 0.5) * 2;
+
+  assert.equal(before.ok, true);
+  assert.equal(after.ok, true);
+  assert.equal(beforeItem.currentPredictedOutcome, beforeRawCurrent - beforeItem.currentSpend);
+  assert.equal(afterItem.currentPredictedOutcome, afterRawCurrent);
+});
+
+test('preserved and excluded rows publish only modeled current outcomes', () => {
+  const channels = [
+    channel('Active modeled', { a: 2, b: 0.5 }, {
+      currentSpendRate: 300,
+      preservedSpendRate: 300
+    }),
+    channel('Excluded modeled', { a: 2, b: 0.5 }, {
+      currentSpendRate: 400,
+      preservedSpendRate: 400
+    }),
+    channel('Excluded unsupported', null, {
+      currentSpendRate: 500,
+      preservedSpendRate: 500
+    })
+  ];
+  const constraints = {
+    'Active modeled': { minimum: 1800, maximum: 1800, excluded: false },
+    'Excluded modeled': { minimum: null, maximum: null, excluded: true },
+    'Excluded unsupported': { minimum: null, maximum: null, excluded: true }
+  };
+  const result = allocate({
+    model: model(channels, { key: 'revenue', label: 'Revenue', costTreatment: null }),
+    totalBudget: 1800,
+    planDays: 14,
+    constraints
+  });
+  const withoutUnsupported = allocate({
+    model: model(channels.slice(0, 2), { key: 'revenue', label: 'Revenue', costTreatment: null }),
+    totalBudget: 1800,
+    planDays: 14,
+    constraints: {
+      'Active modeled': constraints['Active modeled'],
+      'Excluded modeled': constraints['Excluded modeled']
+    }
+  });
+  const preserved = row(result, 'Excluded unsupported');
+  const excludedModeled = row(result, 'Excluded modeled');
+  const expectedCurrentOutcome = 2 * Math.pow(400, 0.5) * 2;
+
+  assert.equal(result.ok, true);
+  assert.equal(withoutUnsupported.ok, true);
+  assert.equal(preserved.currentPredictedOutcome, null);
+  assert.equal(preserved.predictedOutcome, null);
+  assert.equal(excludedModeled.currentPredictedOutcome, expectedCurrentOutcome);
+  assert.equal(excludedModeled.predictedOutcome, 0);
+  assert.equal(result.totals.currentPredictedOutcome, withoutUnsupported.totals.currentPredictedOutcome);
+  assert.equal(result.totals.predictedOutcome, withoutUnsupported.totals.predictedOutcome);
+});
+
 test('after-marketing financial outcomes do not subtract spend twice', () => {
   const result = allocate({ model: model([
     channel('Paid search', { a: 3, b: 0.5 }),
@@ -730,6 +869,36 @@ test('a direct channel prediction overflow fails closed instead of becoming zero
   assert.equal(result.code, 'prediction_overflow');
   assert.equal(Object.hasOwn(result, 'allocation'), false);
   assert.equal(Object.hasOwn(result, 'totals'), false);
+});
+
+test('a current-only channel prediction overflow fails closed', () => {
+  const result = allocate({
+    model: model([
+      channel('Active modeled', { a: 2, b: 0.5 }, {
+        currentSpendRate: 0,
+        preservedSpendRate: 0
+      }),
+      channel('Excluded modeled', { a: 1.3482698511467367e308, b: 0.5 }, {
+        currentSpendRate: 4,
+        preservedSpendRate: 0
+      })
+    ], { key: 'revenue', label: 'Revenue', costTreatment: null }),
+    totalBudget: 2,
+    planDays: 7,
+    constraints: {
+      'Active modeled': { minimum: 2, maximum: 2, excluded: false },
+      'Excluded modeled': { minimum: null, maximum: null, excluded: true }
+    }
+  });
+
+  assert.deepEqual(result, {
+    ok: false,
+    code: 'prediction_overflow',
+    message: 'The modeled outcome exceeds the safe calculation range.',
+    minimumBudget: null,
+    maximumBudget: null,
+    conflicts: []
+  });
 });
 
 test('a subnormal horizon cannot publish an infinite preserved spend rate', () => {

@@ -152,7 +152,7 @@ git commit -m "fix: harden Media Kit copy feedback"
 **Interfaces:**
 - Produces: an exact reviewed Git HEAD suitable for a replacement pull request against `main`
 
-- [ ] **Step 1: Run the complete deterministic suite**
+- [x] **Step 1: Run the complete deterministic suite**
 
 ```bash
 python3 scripts/validate_site.py --base-ref origin/main
@@ -164,19 +164,19 @@ git diff --check
 Expected: all checks pass, except the validator may report only the documented
 protected-change label requirement for the regenerated affiliate-bearing script.
 
-- [ ] **Step 2: Verify the browser behavior**
+- [x] **Step 2: Verify the browser behavior**
 
 Serve the repository root on port 5173. At desktop and 390px, verify initial
 disabled state, invalid submit, valid compose, rejected Clipboard API fallback,
 visible copied feedback, `scrollWidth === clientWidth`, and no console errors.
 
-- [ ] **Step 3: Capture evidence and commit documentation**
+- [x] **Step 3: Capture evidence and commit documentation**
 
 Save desktop and 390px screenshots under the declared screenshot directory,
 record exact commands/results in the plan, and commit only the scoped docs and
 screenshots.
 
-- [ ] **Step 4: Commit evidence and hand off the exact head**
+- [x] **Step 4: Commit evidence and hand off the exact head**
 
 Commit the scoped evidence and documentation. The controller then performs the
 required broad exact-HEAD review through the subagent-driven workflow before
@@ -220,5 +220,5 @@ to reject and the existing fallback ran. Each viewport had zero console errors
 and `scrollWidth === clientWidth` (`1440 === 1440`; `390 === 390`). The
 temporary local Clipboard override was removed by reload after capture.
 
-- Desktop: `docs/superpowers/screenshots/site-cache-media-kit-reliability/mediakit-desktop.png` (`1440 × 1710`)
-- Mobile: `docs/superpowers/screenshots/site-cache-media-kit-reliability/mediakit-390px.png` (`390 × 3253`)
+- Desktop: `docs/superpowers/screenshots/site-cache-media-kit-reliability/mediakit-desktop.png` — normal `1440 × 1000` viewport capture, positioned on the rendered rate card and visible `Copied ✓` feedback.
+- Mobile: `docs/superpowers/screenshots/site-cache-media-kit-reliability/mediakit-390px.png` — normal `390 × 843` viewport capture, with `window.innerWidth`, `clientWidth`, and `scrollWidth` each equal to `390`, `scrollX` equal to `0`, and the rendered rate card plus visible `Copied ✓` feedback in-frame.

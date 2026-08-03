@@ -103,6 +103,7 @@ function makeCanvas(width = 500, height = 260) {
         return { width, height };
       }
     },
+    context,
     clears,
     fillRects,
     fills,
@@ -184,6 +185,67 @@ test('allocation chart exposes the full Current and Recommended legend on deskto
 
   assert.ok(view.labels.some(({ text }) => text === 'Current'));
   assert.ok(view.labels.some(({ text }) => text === 'Recommended'));
+});
+
+test('allocation chart fits finite extreme-value labels inside a 266px canvas', () => {
+  // This catches a capped value column that lets a valid large amount extend beyond the left edge.
+  const charts = loadCharts();
+  const view = makeCanvas(266, 300);
+  charts.drawAllocationChart(view.canvas, [
+    { label: 'Paid search', current: Number.MAX_VALUE, recommended: Number.MAX_VALUE }
+  ], '$');
+
+  assertLabelsInside(view, 266, 300);
+});
+
+test('allocation chart rejects an invalid canvas context before mutation', () => {
+  // This catches partial contexts being cleared or resized before a later required canvas method throws.
+  const charts = loadCharts();
+  const allocation = makeCanvas();
+  delete allocation.context.fillRect;
+
+  assert.doesNotThrow(() => charts.drawAllocationChart(null, [
+    { label: 'Paid search', current: 100, recommended: 200 }
+  ], '$'));
+  assert.doesNotThrow(() => charts.drawAllocationChart(allocation.canvas, [
+    { label: 'Paid search', current: 100, recommended: 200 }
+  ], '$'));
+  assert.strictEqual(allocation.clears.length, 0);
+});
+
+test('outcome comparison rejects missing measurement and baseline capabilities before mutation', () => {
+  // This catches positive and negative outcomes clearing a partial context before their later render calls fail.
+  const charts = loadCharts();
+  const missingMeasurement = makeCanvas();
+  const missingBaselineStroke = makeCanvas();
+  delete missingMeasurement.context.measureText;
+  delete missingBaselineStroke.context.stroke;
+
+  assert.doesNotThrow(() => charts.drawOutcomeComparisonChart(missingMeasurement.canvas, {
+    current: 100,
+    recommended: 200,
+    difference: 100
+  }, { unit: '$', metricLabel: 'Contribution' }));
+  assert.doesNotThrow(() => charts.drawOutcomeComparisonChart(missingBaselineStroke.canvas, {
+    current: -100,
+    recommended: 200,
+    difference: 300
+  }, { unit: '$', metricLabel: 'Contribution' }));
+  assert.strictEqual(missingMeasurement.clears.length, 0);
+  assert.strictEqual(missingBaselineStroke.clears.length, 0);
+});
+
+test('outcome comparison rejects invalid dimensions without drawing', () => {
+  // This catches zero-sized canvases being cleared and then populated with invalid geometry.
+  const charts = loadCharts();
+  const invalidDimensions = makeCanvas(0, 300);
+
+  assert.doesNotThrow(() => charts.drawOutcomeComparisonChart(invalidDimensions.canvas, {
+    current: 100,
+    recommended: 200,
+    difference: 100
+  }, { unit: '$', metricLabel: 'Contribution' }));
+  assert.strictEqual(invalidDimensions.clears.length, 0);
 });
 
 test('outcome comparison draws currency and count values in Current then Recommended order', () => {
@@ -269,6 +331,19 @@ test('outcome comparison keeps a zero current baseline and narrow geometry insid
     assert.ok(rect.args[0] >= 0 && rect.args[0] + rect.args[2] <= 266);
     assert.ok(rect.args[1] >= 0 && rect.args[1] + rect.args[3] <= 300);
   }
+});
+
+test('outcome comparison fits finite extreme-value labels inside a 266px canvas', () => {
+  // This catches an oversized modeled amount escaping the value column despite finite input.
+  const charts = loadCharts();
+  const view = makeCanvas(266, 300);
+  charts.drawOutcomeComparisonChart(view.canvas, {
+    current: Number.MAX_VALUE,
+    recommended: Number.MAX_VALUE,
+    difference: Number.MAX_VALUE
+  }, { unit: '$', metricLabel: 'Contribution' });
+
+  assertLabelsInside(view, 266, 300);
 });
 
 test('outcome comparison skips invalid or nonfinite comparison data', () => {

@@ -96,6 +96,7 @@ If uncertain, choose the safer reversible path and document the assumption.
 6. Analytics tools = free client-side calculators; affiliate CTAs after value where relevant; never invent checkout links for unconfigured products.
 7. Every page: professional UX + SEO-complete head/body + link back to Mangrove home.
 8. Deploy entire repo root as a static site (Vercel). Production DNS / custom-domain changes require approval.
+9. Every successful analysis result includes a primary visualization that shows the value of the analysis. The visualization must expose its scope and values in accessible text, remain truthful about modeled versus unmodeled data, and may be omitted from empty, invalid, or blocked states.
 
 ## Stack
 

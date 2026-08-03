@@ -158,6 +158,7 @@ function loadForecastApp() {
 
 const { document, productEvents } = loadForecastApp();
 document.getElementById('use-sample-data').dispatchEvent({ type: 'click' });
+const forecastCanvas = document.getElementById('forecast-chart');
 
 assert.strictEqual(document.getElementById('metric-type').value, 'revenue');
 assert.strictEqual(document.getElementById('horizon').value, '6');
@@ -167,6 +168,9 @@ assert.strictEqual(document.getElementById('data-method').value, 'paste');
 assert.match(document.getElementById('csv-input').value, /^date,value\n2025-01,28600/m);
 assert.match(document.getElementById('forecast-summary').textContent, /^Avg \$[0-9.]+k\/mo over 6 months$/);
 assert.strictEqual(document.getElementById('chart-wrap').hidden, false);
+assert.ok(forecastCanvas.drawn);
+assert.ok(forecastCanvas.drawn.timeSeries.length > 0);
+assert.ok(forecastCanvas.drawn.forecast.length > 0);
 assert.strictEqual(document.getElementById('forecast-table-wrap').hidden, false);
 assert.strictEqual(document.getElementById('next-steps').hidden, false);
 assert.strictEqual(document.getElementById('guardrail').hidden, true);

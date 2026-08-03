@@ -21,6 +21,48 @@ function getChartColors() {
   };
 }
 
+function fitCanvasText(ctx, text, maxWidth) {
+  const value = String(text);
+  if (!Number.isFinite(maxWidth) || maxWidth <= 0) return '';
+  if (ctx.measureText(value).width <= maxWidth) return value;
+
+  const ellipsis = '…';
+  if (ctx.measureText(ellipsis).width > maxWidth) return '';
+
+  let end = value.length;
+  while (end > 0 && ctx.measureText(value.slice(0, end) + ellipsis).width > maxWidth) {
+    end -= 1;
+  }
+  return value.slice(0, end) + ellipsis;
+}
+
+function chartValue(value, unit, signed) {
+  const rounded = Math.round(value);
+  const absolute = Math.abs(rounded).toLocaleString();
+  const prefix = signed && rounded > 0 ? '+' : rounded < 0 ? '-' : '';
+  return prefix + (unit === '$' ? '$' : '') + absolute;
+}
+
+function prepareCanvas(canvas) {
+  if (!canvas || typeof canvas.getContext !== 'function' || typeof canvas.getBoundingClientRect !== 'function') {
+    return null;
+  }
+  const ctx = canvas.getContext('2d');
+  const rect = canvas.getBoundingClientRect();
+  if (!ctx || !rect || !Number.isFinite(rect.width) || !Number.isFinite(rect.height)
+    || rect.width <= 0 || rect.height <= 0 || typeof ctx.clearRect !== 'function'
+    || typeof ctx.scale !== 'function') {
+    return null;
+  }
+
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, rect.width, rect.height);
+  return { ctx, width: rect.width, height: rect.height };
+}
+
 /**
  * Draw a horizontal bar chart (current vs recommended allocation).
  * @param {HTMLCanvasElement} canvas
@@ -28,78 +70,179 @@ function getChartColors() {
  * @param {string} unit - e.g. "$" or ""
  */
 function drawAllocationChart(canvas, data, unit) {
-  const ctx = canvas.getContext('2d');
-  const dpr = window.devicePixelRatio || 1;
-  const rect = canvas.getBoundingClientRect();
+  const rows = Array.isArray(data) ? data : [];
+  const validRows = rows.length > 0 && rows.every((row) => (
+    row && typeof row.label === 'string'
+      && Number.isFinite(row.current) && row.current >= 0
+      && Number.isFinite(row.recommended) && row.recommended >= 0
+  ));
+  if (!validRows) return;
 
-  canvas.width = rect.width * dpr;
-  canvas.height = rect.height * dpr;
-  ctx.scale(dpr, dpr);
-
-  const W = rect.width;
-  const H = rect.height;
+  const view = prepareCanvas(canvas);
+  if (!view) return;
+  const ctx = view.ctx;
+  const W = view.width;
+  const H = view.height;
   const colors = getChartColors();
-
-  const labelWidth = 100;
-  const barAreaWidth = W - labelWidth - 16;
-  const rowH = Math.min(40, H / data.length);
-  const padding = 4;
-
-  ctx.clearRect(0, 0, W, H);
-
-  // Find max value for scaling
-  const allValues = data.flatMap(d => [d.current, d.recommended]);
+  const chartUnit = unit === '$' ? '$' : '';
+  const allValues = rows.flatMap((row) => [row.current, row.recommended]);
   const maxVal = Math.max(...allValues, 1);
+  const outer = 4;
+  const legendSpace = Math.min(28, Math.max(20, H * 0.14));
+  const chartHeight = Math.max(0, H - legendSpace);
+  const rowH = chartHeight / rows.length;
 
-  data.forEach((d, i) => {
-    const y = i * rowH + padding;
+  ctx.font = '600 11px IBM Plex Mono, monospace';
+  const valueWidth = Math.min(
+    Math.max(...allValues.map((value) => ctx.measureText(chartValue(value, chartUnit, false)).width), 0) + 8,
+    Math.max(0, W * 0.38)
+  );
+  const labelWidth = Math.max(0, Math.min(W * 0.36, W - outer * 2 - valueWidth - 12));
+  const barStart = outer + labelWidth + 8;
+  const barEnd = Math.max(barStart, W - outer - valueWidth);
+  const barMaxWidth = Math.max(0, barEnd - barStart);
 
-    // Label
+  rows.forEach((row, index) => {
+    const y = index * rowH;
+    const labelY = y + rowH / 2;
+    const barHeight = Math.max(0, Math.min(11, rowH * 0.32));
+    const currentY = y + Math.max(0, rowH * 0.14);
+    const recommendedY = y + Math.max(0, rowH * 0.58);
+
     ctx.fillStyle = colors.text;
     ctx.font = '500 12px IBM Plex Mono, monospace';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    const label = d.label.length > 14 ? d.label.slice(0, 13) + '...' : d.label;
-    ctx.fillText(label, 0, y + rowH / 2);
+    ctx.fillText(fitCanvasText(ctx, row.label, labelWidth), outer, labelY);
 
-    const barStart = labelWidth;
-    const barMaxWidth = barAreaWidth - 80; // leave room for value text
-
-    // Current bar
-    const currentW = (d.current / maxVal) * barMaxWidth;
+    const currentWidth = Math.max(0, Math.min(barMaxWidth, (row.current / maxVal) * barMaxWidth));
     ctx.fillStyle = colors.current;
-    ctx.fillRect(barStart, y, currentW, (rowH - padding * 2) * 0.45);
+    ctx.fillRect(barStart, currentY, currentWidth, barHeight);
 
-    // Recommended bar
-    const recW = (d.recommended / maxVal) * barMaxWidth;
+    const recommendedWidth = Math.max(0, Math.min(barMaxWidth, (row.recommended / maxVal) * barMaxWidth));
     ctx.fillStyle = colors.recommended;
-    ctx.fillRect(barStart, y + (rowH - padding * 2) * 0.5, recW, (rowH - padding * 2) * 0.45);
+    ctx.fillRect(barStart, recommendedY, recommendedWidth, barHeight);
 
-    // Values
     ctx.fillStyle = colors.muted;
     ctx.font = '600 11px IBM Plex Mono, monospace';
     ctx.textAlign = 'right';
-    const fmt = (v) => unit === '$' ? `$${Math.round(v).toLocaleString()}` : Math.round(v).toLocaleString();
-    ctx.fillText(fmt(d.current), barStart + barMaxWidth + 4, y + (rowH - padding * 2) * 0.28);
+    ctx.fillText(chartValue(row.current, chartUnit, false), W - outer, currentY + barHeight / 2);
     ctx.fillStyle = colors.recommended;
-    ctx.fillText(fmt(d.recommended), barStart + barMaxWidth + 4, y + (rowH - padding * 2) * 0.73);
+    ctx.fillText(chartValue(row.recommended, chartUnit, false), W - outer, recommendedY + barHeight / 2);
   });
 
-  // Legend
-  const recommendedLegend = W < 360 ? 'Rec.' : 'Recommended';
-  const legendX = Math.max(labelWidth, W - (recommendedLegend === 'Rec.' ? 112 : 180));
-  const legendY = H - 18;
+  ctx.font = '500 11px IBM Plex Mono, monospace';
+  const currentLegend = 'Current';
+  const recommendedLegend = 'Recommended';
+  const legendWidth = 12 + 4 + ctx.measureText(currentLegend).width + 14
+    + 12 + 4 + ctx.measureText(recommendedLegend).width;
+  const legendX = Math.max(outer, Math.min((W - legendWidth) / 2, W - legendWidth - outer));
+  const legendY = Math.max(chartHeight + 4, H - 16);
   ctx.fillStyle = colors.current;
   ctx.fillRect(legendX, legendY, 12, 8);
   ctx.fillStyle = colors.muted;
-  ctx.font = '500 11px IBM Plex Mono, monospace';
   ctx.textAlign = 'left';
-  ctx.fillText('Current', legendX + 16, legendY + 7);
+  ctx.textBaseline = 'middle';
+  ctx.fillText(currentLegend, legendX + 16, legendY + 4);
 
   ctx.fillStyle = colors.recommended;
-  ctx.fillRect(legendX + 72, legendY, 12, 8);
+  const recommendedX = legendX + 16 + ctx.measureText(currentLegend).width + 14;
+  ctx.fillRect(recommendedX, legendY, 12, 8);
   ctx.fillStyle = colors.muted;
-  ctx.fillText(recommendedLegend, legendX + 88, legendY + 7);
+  ctx.fillText(recommendedLegend, recommendedX + 16, legendY + 4);
+}
+
+/**
+ * Draw a signed current/recommended outcome comparison around a zero baseline.
+ * @param {HTMLCanvasElement} canvas
+ * @param {{current: number, recommended: number, difference: number}} comparison
+ * @param {{unit: '$'|'', metricLabel: string}} options
+ */
+function drawOutcomeComparisonChart(canvas, comparison, options) {
+  if (!comparison || !Number.isFinite(comparison.current) || !Number.isFinite(comparison.recommended)
+    || !Number.isFinite(comparison.difference) || !options
+    || (options.unit !== '$' && options.unit !== '') || typeof options.metricLabel !== 'string') {
+    return;
+  }
+
+  const view = prepareCanvas(canvas);
+  if (!view) return;
+  const ctx = view.ctx;
+  const W = view.width;
+  const H = view.height;
+  const colors = getChartColors();
+  const outer = 4;
+  const currentValue = chartValue(comparison.current, options.unit, false);
+  const recommendedValue = chartValue(comparison.recommended, options.unit, false);
+  const differenceValue = chartValue(comparison.difference, options.unit, true);
+
+  ctx.font = '600 11px IBM Plex Mono, monospace';
+  const valueWidth = Math.min(
+    Math.max(ctx.measureText(currentValue).width, ctx.measureText(recommendedValue).width) + 8,
+    Math.max(0, W * 0.36)
+  );
+  const labelWidth = Math.max(0, Math.min(W * 0.3, W - outer * 2 - valueWidth - 12));
+  const plotLeft = outer + labelWidth + 8;
+  const plotRight = Math.max(plotLeft, W - outer - valueWidth);
+  const plotWidth = Math.max(0, plotRight - plotLeft);
+  const top = 28;
+  const bottom = 30;
+  const rowH = Math.max(0, Math.min(44, (H - top - bottom) / 2));
+  const barHeight = Math.max(0, Math.min(12, rowH * 0.38));
+  const minValue = Math.min(0, comparison.current, comparison.recommended);
+  const maxValue = Math.max(0, comparison.current, comparison.recommended);
+  const span = Math.max(maxValue - minValue, 1);
+  const zeroX = plotLeft + ((0 - minValue) / span) * plotWidth;
+  const scaleX = value => plotLeft + ((value - minValue) / span) * plotWidth;
+
+  ctx.fillStyle = colors.muted;
+  ctx.font = '600 10px IBM Plex Mono, monospace';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText(fitCanvasText(ctx, options.metricLabel, Math.max(0, W - outer * 2)), outer, 6);
+
+  if (minValue < 0) {
+    ctx.strokeStyle = colors.muted;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(zeroX, top - 4);
+    ctx.lineTo(zeroX, top + rowH * 2);
+    ctx.stroke();
+  }
+
+  [
+    { label: 'Current', value: comparison.current, valueLabel: currentValue, color: colors.current },
+    { label: 'Recommended', value: comparison.recommended, valueLabel: recommendedValue, color: colors.recommended }
+  ].forEach((row, index) => {
+    const y = top + index * rowH;
+    const scaledX = scaleX(row.value);
+    const barX = Math.min(zeroX, scaledX);
+    const barWidth = Math.abs(scaledX - zeroX);
+
+    ctx.fillStyle = colors.text;
+    ctx.font = '500 11px IBM Plex Mono, monospace';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(fitCanvasText(ctx, row.label, labelWidth), outer, y + rowH / 2);
+
+    ctx.fillStyle = row.color;
+    ctx.fillRect(barX, y + (rowH - barHeight) / 2, barWidth, barHeight);
+
+    ctx.fillStyle = row.color;
+    ctx.font = '600 11px IBM Plex Mono, monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(row.valueLabel, W - outer, y + rowH / 2);
+  });
+
+  const differenceY = Math.min(H - 6, top + rowH * 2 + 8);
+  ctx.fillStyle = colors.muted;
+  ctx.font = '500 10px IBM Plex Mono, monospace';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(fitCanvasText(ctx, 'Modeled difference', Math.max(0, W - outer * 2 - ctx.measureText(differenceValue).width - 8)), outer, differenceY);
+  ctx.fillStyle = colors.recommended;
+  ctx.textAlign = 'right';
+  ctx.fillText(differenceValue, W - outer, differenceY);
 }
 
 /**
@@ -533,6 +676,7 @@ function drawMarginalEfficiencyChart(canvas, rows, options) {
 
 window.MangroveCharts = {
   drawAllocationChart,
+  drawOutcomeComparisonChart,
   drawForecastChart,
   drawResponseCurve,
   drawMarginalEfficiencyChart

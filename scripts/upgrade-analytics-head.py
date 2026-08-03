@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Upgrade the <head> of the two analytics tool pages:
-- Add Google Analytics tag (was missing!)
+- Add the shared production-only Google Analytics loader
 - Add JSON-LD WebApplication schema
 - Add OG image with width/height/alt
 - Add theme-color
@@ -34,15 +34,7 @@ TOOLS = [
     ),
 ]
 
-GA_TAG = """    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-E20401V5WB"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-
-      gtag('config', 'G-E20401V5WB');
-    </script>
+GA_TAG = """    <script src="/shared/google-analytics.4fee7e2daffc.js"></script>
 """
 
 OG_OG_URL = "https://mangrovetools.com/og-analytics.png"

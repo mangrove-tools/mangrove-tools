@@ -7,6 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 NODE_TESTS = (
+    "tests/google-analytics-loader.test.js",
     "tests/response-curve.test.js",
     "tests/history-data.test.js",
     "tests/marginality-engine.test.js",

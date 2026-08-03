@@ -380,8 +380,10 @@
         const name = channel && typeof channel.channel === 'string'
           ? channel.channel
           : 'Unnamed channel';
-        const status = channel && channel.status === 'modelable' ? 'modelable' : 'preserved';
         const allocationRow = rowsByName.get(name) || {};
+        const modelable = channel && channel.status === 'modelable';
+        const excluded = !modelable && allocationRow.constraint === 'excluded';
+        const status = modelable ? 'modelable' : excluded ? 'excluded' : 'preserved';
         const horizonFactor = finiteValue(result.horizonFactor);
         const currentSpend = finiteValue(allocationRow.currentSpend);
         const currentSpendRate = status === 'modelable'
@@ -390,7 +392,9 @@
           : finiteValue(channel && channel.currentSpendRate);
         const recommendedSpendRate = status === 'modelable'
           ? finiteValue(allocationRow.recommendedSpendRate)
-          : null;
+          : status === 'excluded'
+            ? finiteValue(allocationRow.recommendedSpendRate)
+            : null;
         const failedLabels = (Array.isArray(channel && channel.failedGates)
           ? channel.failedGates
           : []).map(function controlledGate(code) {
@@ -438,11 +442,16 @@
         return {
           name: name,
           status: status,
-          statusLabel: status === 'modelable' ? 'Modeled' : 'Preserved',
+          statusLabel: status === 'modelable'
+            ? 'Modeled'
+            : status === 'excluded' ? 'Excluded' : 'Preserved',
           summary: status === 'modelable'
             ? 'Modeled response admitted; the curve shows observed diminishing returns and the spend markers used in this plan.'
-            : 'Not modeled — allocation preserved.'
-              + (evidenceGaps ? ' Evidence gaps: ' + evidenceGaps + '.' : ''),
+            : status === 'excluded'
+              ? 'Excluded from this plan — no budget allocated and no fitted response curve was admitted.'
+                + (evidenceGaps ? ' Evidence gaps: ' + evidenceGaps + '.' : '')
+              : 'Not modeled — allocation preserved.'
+                + (evidenceGaps ? ' Evidence gaps: ' + evidenceGaps + '.' : ''),
           fitText: curve && curve.r2 != null
             ? curve.r2.toLocaleString('en-US', { maximumFractionDigits: 4 })
             : '—',
@@ -453,7 +462,9 @@
           positionRows: positionRows,
           accessibleLabel: status === 'modelable'
             ? name + ' response curve with observed data and current and recommended spend markers'
-            : name + ' observed spend and outcome points; no fitted response curve',
+            : status === 'excluded'
+              ? name + ' observed spend and outcome points; excluded from this plan with no fitted response curve'
+              : name + ' observed spend and outcome points; no fitted response curve',
           chartChannel: {
             status: status,
             curve: curve,
@@ -1707,6 +1718,10 @@
         ? model.metric.label
         : 'the selected outcome';
       setImportStatus('Objective changed to ' + label + '. Review constraints before rebuilding the plan.');
+    });
+
+    planDaysInput.addEventListener('input', function invalidatePlanHorizon() {
+      invalidateAllocation('Planning window changed. Rebuild the plan to update the recommendation.');
     });
 
     planDaysInput.addEventListener('change', function updatePlanHorizon() {

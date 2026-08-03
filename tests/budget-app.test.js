@@ -797,6 +797,25 @@ test('model evidence view separates modeled curves from preserved observations',
   assert.doesNotMatch(JSON.stringify(view), /normalizedRawRow|must not enter a view model/);
 });
 
+test('model evidence labels an excluded unsupported channel without fitting a curve', () => {
+  const allocation = successfulAllocation('revenue');
+  allocation.allocation[1] = Object.assign({}, allocation.allocation[1], {
+    constraint: 'excluded',
+    recommendedSpend: 0,
+    recommendedSpendRate: 0
+  });
+
+  const view = plain(app.modelEvidenceView(planningModel(), allocation));
+  const excluded = view.channels[1];
+
+  assert.equal(excluded.status, 'excluded');
+  assert.equal(excluded.statusLabel, 'Excluded');
+  assert.equal(excluded.positions.recommendedSpendRate, 0);
+  assert.equal(excluded.chartChannel.curve, null);
+  assert.match(excluded.summary, /Excluded from this plan/);
+  assert.doesNotMatch(excluded.summary, /preserved/i);
+});
+
 test('conversion evidence compares increasing marginal conversions per dollar', () => {
   const view = app.modelEvidenceView(
     planningModel({ key: 'conversions', label: 'Conversions', costTreatment: null }),
@@ -1462,6 +1481,22 @@ test('editing budget or constraints clears a stale result before rebuilding', ()
   assert.equal(elements['model-evidence'].hidden, true);
   assert.equal(elements['model-evidence-charts'].children.length, 0);
   assert.match(elements['import-status'].textContent, /Constraint changed.*rebuild/i);
+});
+
+test('editing plan days clears allocation evidence on native input before change', () => {
+  const { elements } = loadDomApp();
+  elements['use-sample-data'].trigger('click');
+  elements['plan-form'].trigger('submit');
+  assert.equal(elements.results.hidden, false);
+  assert.equal(elements['model-evidence'].hidden, false);
+
+  elements['plan-days'].value = '21';
+  elements['plan-days'].trigger('input');
+
+  assert.equal(elements.results.hidden, true);
+  assert.equal(elements['model-evidence'].hidden, true);
+  assert.equal(elements['model-evidence-charts'].children.length, 0);
+  assert.match(elements['import-status'].textContent, /Planning window changed.*rebuild/i);
 });
 
 test('blocked result renders the allocator feasible-budget boundaries', () => {

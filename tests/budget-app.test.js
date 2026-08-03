@@ -131,6 +131,29 @@ function successfulAllocation(metricKey, overrides) {
   }, overrides || {});
 }
 
+function createCanvasContext() {
+  const clearRects = [];
+  return {
+    clearRects,
+    scale() {},
+    clearRect(...args) {
+      clearRects.push(args);
+    },
+    beginPath() {},
+    moveTo() {},
+    lineTo() {},
+    stroke() {},
+    fillText() {},
+    measureText(text) {
+      return { width: String(text).length * 6 };
+    },
+    setLineDash() {},
+    arc() {},
+    fill() {},
+    fillRect() {}
+  };
+}
+
 class FakeElement {
   constructor(tagName, id) {
     this.tagName = tagName.toUpperCase();
@@ -147,6 +170,7 @@ class FakeElement {
     this.listeners = {};
     this.attributes = {};
     this._textContent = '';
+    this._canvasContext = this.tagName === 'CANVAS' ? createCanvasContext() : null;
   }
 
   get textContent() {
@@ -211,6 +235,22 @@ class FakeElement {
       : null;
   }
 
+  getContext() {
+    return this._canvasContext;
+  }
+
+  getBoundingClientRect() {
+    let ancestor = this;
+    while (ancestor) {
+      if (ancestor.hidden) return { width: 0, height: 0 };
+      ancestor = ancestor.parentNode;
+    }
+    return {
+      width: Number.isFinite(this.width) && this.width > 0 ? this.width : 720,
+      height: Number.isFinite(this.height) && this.height > 0 ? this.height : 320
+    };
+  }
+
   focus() {}
 
   click() {
@@ -271,7 +311,11 @@ function createDocument(clickedAnchors) {
     'constraints-list': 'div',
     results: 'section',
     'results-note': 'p',
+    'model-evidence': 'section',
+    'model-evidence-title': 'h2',
+    'model-evidence-charts': 'div',
     'model-inspector': 'details',
+    'model-diagnostics-channels': 'div',
     'cleaned-history-head': 'thead',
     'cleaned-history-rows': 'tbody',
     'download-cleaned-data': 'button',
@@ -293,12 +337,14 @@ function createDocument(clickedAnchors) {
     'readiness-panel',
     'plan-form',
     'results',
+    'model-evidence',
     'model-inspector',
     'recommendation-explanation'
   ].forEach(id => { elements[id].hidden = true; });
   elements['paste-history-toggle'].setAttribute('aria-expanded', 'false');
   elements['results-note'].textContent = 'Choose a budget and horizon to build the plan.';
   elements['plan-days'].value = '30';
+  elements['model-evidence'].appendChild(elements['model-evidence-charts']);
   [
     ['financial-before', 'before_marketing'],
     ['financial-after', 'after_marketing']
@@ -311,6 +357,7 @@ function createDocument(clickedAnchors) {
 
   return {
     readyState: 'complete',
+    documentElement: new FakeElement('html', 'html'),
     body: new FakeElement('body', 'body'),
     getElementById(id) {
       return elements[id] || null;
@@ -332,7 +379,8 @@ function createDocument(clickedAnchors) {
   };
 }
 
-function loadDomApp() {
+function loadDomApp(options) {
+  const settings = options || {};
   const clickedAnchors = [];
   const document = createDocument(clickedAnchors);
   const events = [];
@@ -391,7 +439,7 @@ function loadDomApp() {
       }
     },
     MangroveMotion: motion,
-    MangroveCharts: chartApi,
+    MangroveCharts: settings.withoutCharts ? {} : chartApi,
     MangroveToolExtras: {
       trackProductEvent(name, metadata) {
         events.push({ name, metadata });
@@ -415,15 +463,29 @@ function loadDomApp() {
       pendingTimers.delete(id);
     }
   };
-  const domContext = { window };
+  const domContext = {
+    window,
+    document,
+    getComputedStyle() {
+      return {
+        getPropertyValue() {
+          return '';
+        }
+      };
+    }
+  };
   vm.createContext(domContext);
-  [
+  const scripts = [
     'shared/history-data.js',
     'shared/marginality-engine.js',
     'shared/budget-allocator.js',
-    'shared/budget-sample-data.js',
+    'shared/budget-sample-data.js'
+  ];
+  if (settings.withRealCharts) scripts.push('shared/charts.js');
+  scripts.push(
     'analytics/budget/app.js'
-  ].forEach(relativePath => {
+  );
+  scripts.forEach(relativePath => {
     vm.runInContext(
       fs.readFileSync(path.join(root, relativePath), 'utf8'),
       domContext
@@ -714,6 +776,55 @@ test('result view uses observational modeled-marginal copy without confidence cl
   assert.equal(preserved.evidence, 'Preserved');
   assert.equal(preserved.marginalMetric, '—');
   assert.doesNotMatch(JSON.stringify(preserved), /fit/i);
+});
+
+test('model evidence view separates modeled curves from preserved observations', () => {
+  const view = plain(app.modelEvidenceView(
+    planningModel(),
+    successfulAllocation('revenue')
+  ));
+
+  assert.equal(view.state, 'ready');
+  assert.equal(view.overview.chartRows.length, 1);
+  assert.equal(view.channels.length, 2);
+  assert.equal(view.channels[0].statusLabel, 'Modeled');
+  assert.equal(view.channels[0].fitText, '0.91');
+  assert.equal(view.channels[0].positions.currentSpendRate, 100);
+  assert.equal(view.channels[0].positions.recommendedSpendRate, 200);
+  assert.equal(view.channels[1].statusLabel, 'Preserved');
+  assert.equal(view.channels[1].chartChannel.curve, null);
+  assert.match(view.channels[1].summary, /Not modeled — allocation preserved/);
+  assert.doesNotMatch(JSON.stringify(view), /normalizedRawRow|must not enter a view model/);
+});
+
+test('model evidence labels an excluded unsupported channel without fitting a curve', () => {
+  const allocation = successfulAllocation('revenue');
+  allocation.allocation[1] = Object.assign({}, allocation.allocation[1], {
+    constraint: 'excluded',
+    recommendedSpend: 0,
+    recommendedSpendRate: 0
+  });
+
+  const view = plain(app.modelEvidenceView(planningModel(), allocation));
+  const excluded = view.channels[1];
+
+  assert.equal(excluded.status, 'excluded');
+  assert.equal(excluded.statusLabel, 'Excluded');
+  assert.equal(excluded.positions.recommendedSpendRate, 0);
+  assert.equal(excluded.chartChannel.curve, null);
+  assert.match(excluded.summary, /Excluded from this plan/);
+  assert.doesNotMatch(excluded.summary, /preserved/i);
+});
+
+test('conversion evidence compares increasing marginal conversions per dollar', () => {
+  const view = app.modelEvidenceView(
+    planningModel({ key: 'conversions', label: 'Conversions', costTreatment: null }),
+    successfulAllocation('conversions')
+  );
+
+  assert.equal(view.overview.chartRows[0].marginalMetric.key, 'marginal_conversions_per_dollar');
+  assert.equal(view.overview.chartRows[0].marginalMetric.value, 1 / 12.5);
+  assert.match(view.overview.summary, /higher is better/i);
 });
 
 test('result view assigns the objective-specific marginal metric label', () => {
@@ -1263,37 +1374,59 @@ test('allocation JSON is projected only on click without raw observations or imp
   );
 });
 
-test('closed model inspector waits to paint until opened and repaints on each reopen', () => {
+test('successful allocation reveals and paints every channel without opening diagnostics', () => {
   const { elements, chartCalls } = loadDomApp();
   elements['use-sample-data'].trigger('click');
   elements['plan-form'].trigger('submit');
 
+  assert.equal(elements['model-evidence'].hidden, false);
   assert.equal(elements['model-inspector'].open, false);
-  assert.equal(chartCalls.response.length, 0);
-  assert.equal(chartCalls.marginal.length, 0);
-
-  elements['model-inspector'].open = true;
-  elements['model-inspector'].trigger('toggle');
   assert.equal(chartCalls.response.length, 4);
   assert.equal(chartCalls.marginal.length, 1);
+  assert.ok(chartCalls.marginal[0][1].every(row => row.status === 'modelable'));
 
-  elements['model-inspector'].open = false;
-  elements['model-inspector'].trigger('toggle');
-  elements['model-inspector'].open = true;
-  elements['model-inspector'].trigger('toggle');
-  assert.equal(chartCalls.response.length, 8);
-  assert.equal(chartCalls.marginal.length, 2);
+  const cards = elementsByClass(elements['model-evidence-charts'], 'evidence-card');
+  assert.equal(cards.length, 4);
+  assert.ok(cards.some(card => /Not modeled — allocation preserved/.test(card.textContent)));
+  assert.equal(elementsByTag(elements['model-evidence-charts'], 'table').length, 0);
+  assert.ok(elementsByTag(elements['model-diagnostics-channels'], 'table').length > 0);
+  elementsByTag(elements['model-evidence-charts'], 'canvas').forEach(canvas => {
+    assert.match(canvas.getAttribute('aria-label'), /channel|marginal/i);
+  });
 });
 
-test('model inspector exposes fitted treatment, marker positions, and in-sample fit as text', () => {
+test('initial evidence paint measures visible canvas geometry', () => {
+  const { elements } = loadDomApp({ withRealCharts: true });
+  elements['use-sample-data'].trigger('click');
+  elements['plan-form'].trigger('submit');
+
+  assert.equal(elements['model-evidence'].hidden, false);
+  const canvases = elementsByTag(elements['model-evidence-charts'], 'canvas');
+  assert.equal(canvases.length, 5);
+  canvases.forEach(canvas => {
+    assert.ok(canvas._canvasContext.clearRects.length > 0);
+    const firstPaint = canvas._canvasContext.clearRects[0];
+    assert.ok(firstPaint[2] > 0, 'expected nonzero canvas width on initial paint');
+    assert.ok(firstPaint[3] > 0, 'expected nonzero canvas height on initial paint');
+  });
+});
+
+test('missing chart functions preserve textual evidence without throwing', () => {
+  const { elements } = loadDomApp({ withoutCharts: true });
+  elements['use-sample-data'].trigger('click');
+  assert.doesNotThrow(() => elements['plan-form'].trigger('submit'));
+  assert.equal(elements['model-evidence'].hidden, false);
+  assert.match(elements['model-evidence-charts'].textContent, /Modeled|Preserved/);
+});
+
+test('model evidence exposes fitted treatment, marker positions, and in-sample fit as text', () => {
   const { elements } = loadDomApp();
   elements['use-sample-data'].trigger('click');
-  elements['model-inspector'].open = true;
   elements['plan-form'].trigger('submit');
 
   const modelableInspector = elementsByClass(
-    elements['model-inspector'],
-    'channel-inspector'
+    elements['model-evidence-charts'],
+    'evidence-card'
   )[0];
   assert.match(modelableInspector.textContent, /Fitted treatment.*diminishing-return curve/i);
   assert.match(modelableInspector.textContent, /Current spend rate.*\$1,550.*weekly period/i);
@@ -1314,7 +1447,6 @@ test('conversion efficiency chart uses an increasing-is-better metric instead of
   elements['use-sample-data'].trigger('click');
   elements.objective.value = 'conversions';
   elements.objective.trigger('change');
-  elements['model-inspector'].open = true;
   elements['plan-form'].trigger('submit');
 
   const [canvas, rows, options] = chartCalls.marginal[0];
@@ -1335,6 +1467,8 @@ test('editing budget or constraints clears a stale result before rebuilding', ()
   elements['total-budget'].value = '20000';
   elements['total-budget'].trigger('input');
   assert.equal(elements.results.hidden, true);
+  assert.equal(elements['model-evidence'].hidden, true);
+  assert.equal(elements['model-evidence-charts'].children.length, 0);
   assert.match(elements['import-status'].textContent, /Budget changed.*rebuild/i);
 
   elements['plan-form'].trigger('submit');
@@ -1344,7 +1478,25 @@ test('editing budget or constraints clears a stale result before rebuilding', ()
   minimum.value = '1000';
   minimum.trigger('input');
   assert.equal(elements.results.hidden, true);
+  assert.equal(elements['model-evidence'].hidden, true);
+  assert.equal(elements['model-evidence-charts'].children.length, 0);
   assert.match(elements['import-status'].textContent, /Constraint changed.*rebuild/i);
+});
+
+test('editing plan days clears allocation evidence on native input before change', () => {
+  const { elements } = loadDomApp();
+  elements['use-sample-data'].trigger('click');
+  elements['plan-form'].trigger('submit');
+  assert.equal(elements.results.hidden, false);
+  assert.equal(elements['model-evidence'].hidden, false);
+
+  elements['plan-days'].value = '21';
+  elements['plan-days'].trigger('input');
+
+  assert.equal(elements.results.hidden, true);
+  assert.equal(elements['model-evidence'].hidden, true);
+  assert.equal(elements['model-evidence-charts'].children.length, 0);
+  assert.match(elements['import-status'].textContent, /Planning window changed.*rebuild/i);
 });
 
 test('blocked result renders the allocator feasible-budget boundaries', () => {
@@ -1374,19 +1526,28 @@ test('response charts debounce resize by 150ms and replacement cancels the pendi
   const harness = loadDomApp();
   const { elements, window, chartCalls, timers } = harness;
   elements['use-sample-data'].trigger('click');
-  elements['model-inspector'].open = true;
   elements['plan-form'].trigger('submit');
   const initialResponses = chartCalls.response.length;
+  const initialMarginals = chartCalls.marginal.length;
+
+  assert.equal(initialResponses, 4);
+  assert.equal(initialMarginals, 1);
+  elements['model-inspector'].open = true;
+  elements['model-inspector'].trigger('toggle');
+  assert.equal(chartCalls.response.length, initialResponses);
+  assert.equal(chartCalls.marginal.length, initialMarginals);
+
+  window.trigger('resize');
+  assert.equal(timers.pendingCount(), 1);
+  assert.equal(timers.delays.at(-1), 150);
+  timers.flush();
+  assert.equal(chartCalls.response.length, initialResponses + 4);
+  assert.equal(chartCalls.marginal.length, initialMarginals + 1);
 
   window.trigger('resize');
   window.trigger('resize');
   assert.equal(timers.pendingCount(), 1);
   assert.deepEqual(timers.delays.slice(-2), [150, 150]);
-  timers.flush();
-  assert.equal(chartCalls.response.length, initialResponses + 4);
-
-  window.trigger('resize');
-  assert.equal(timers.pendingCount(), 1);
   elements['use-sample-data'].trigger('click');
   elements['confirm-replacement'].trigger('click');
   assert.equal(timers.pendingCount(), 0);

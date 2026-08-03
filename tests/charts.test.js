@@ -75,7 +75,17 @@ function makeCanvas(width = 500, height = 260) {
     },
     fillText(text, x, y) {
       fonts.push(this.font);
-      labels.push({ text, x, y, align: this.textAlign });
+      labels.push({
+        text,
+        x,
+        y,
+        align: this.textAlign,
+        width: this.measureText(text).width
+      });
+    },
+    measureText(text) {
+      const fontSize = Number(this.font.match(/(\d+(?:\.\d+)?)px/)?.[1]) || 10;
+      return { width: String(text).length * fontSize * 0.6 };
     }
   };
 
@@ -217,6 +227,46 @@ test('response curve renders modeled observed points, fitted evidence, and posit
   assert.ok(view.labels.some(({ text }) => text === 'RECOMMENDED'));
   assert.ok(view.labels.every(({ x }) => x >= 0 && x <= 300), 'labels stay inside a 300px canvas');
   assert.ok(view.fonts.every((font) => font.includes('IBM Plex Mono')));
+});
+
+test('response curve keeps narrow y-axis and endpoint spend labels inside the canvas', () => {
+  const charts = loadCharts();
+  const width = 266;
+  const view = makeCanvas(width, 120);
+
+  charts.drawResponseCurve(
+    view.canvas,
+    {
+      channel: 'Local partnerships',
+      status: 'preserved',
+      observations: [
+        { spend: 895, outcome: 3269 },
+        { spend: 905, outcome: 3290 },
+        { spend: 910, outcome: 3331 }
+      ],
+      curve: null
+    },
+    {},
+    {
+      spendLabel: 'Spend per weekly period',
+      outcomeLabel: 'Revenue',
+      formatSpend: () => '$915.82',
+      formatOutcome: () => '$3,331.18'
+    }
+  );
+
+  for (const label of view.labels) {
+    const left = label.align === 'right'
+      ? label.x - label.width
+      : label.align === 'center'
+        ? label.x - label.width / 2
+        : label.x;
+    const right = left + label.width;
+    assert.ok(
+      left >= 0 && right <= width,
+      `${label.text} should stay inside the ${width}px response canvas (left=${left}, right=${right})`
+    );
+  }
 });
 
 test('response curve preserves observed-only channels without a fitted line', () => {

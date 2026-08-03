@@ -151,6 +151,20 @@ class BudgetAdvisorContractTests(unittest.TestCase):
         )
         self.assertIn("Inspect diagnostics and cleaned data", html)
         self.assertRegex(
+            html,
+            re.compile(
+                r'<details\s+id="model-inspector"[^>]*>'
+                r'(?:(?!</details>).)*?'
+                r'<div\s+id="model-diagnostics-channels"[^>]*></div>'
+                r'(?:(?!</details>).)*?'
+                r'<p>Review the normalized periods used by the model\. '
+                r'Rejected cell values are not reproduced\.</p>'
+                r'(?:(?!</details>).)*?'
+                r'<table\s+id="cleaned-history-table"',
+                re.DOTALL,
+            ),
+        )
+        self.assertRegex(
             styles,
             re.compile(
                 r"@media\s*\(min-width:\s*900px\).*?"
@@ -168,6 +182,48 @@ class BudgetAdvisorContractTests(unittest.TestCase):
                 re.DOTALL,
             ),
         )
+
+    def test_legacy_inspector_renderer_classes_remain_styled_until_migration(
+        self,
+    ) -> None:
+        parser = parse_budget_page()
+        app = (ROOT / "analytics/budget/app.js").read_text(encoding="utf-8")
+        styles = (ROOT / "analytics/budget/styles.css").read_text(encoding="utf-8")
+        fingerprinted_stylesheet = next(
+            href
+            for href in parser.stylesheets
+            if href.startswith("/analytics/budget/styles.")
+        )
+        fingerprinted_styles = (
+            ROOT / fingerprinted_stylesheet.lstrip("/")
+        ).read_text(encoding="utf-8")
+        legacy_selectors = (
+            ("inspector-charts", ".budget-workspace .inspector-charts"),
+            ("inspector-overview", ".budget-workspace .inspector-overview"),
+            ("channel-inspector", ".budget-workspace .channel-inspector"),
+            (
+                "channel-inspector-summary",
+                ".budget-workspace .channel-inspector-summary",
+            ),
+            (
+                "channel-inspector-positions",
+                ".budget-workspace .channel-inspector-positions",
+            ),
+            (
+                "inspector-observations",
+                ".budget-workspace .channel-inspector .inspector-observations",
+            ),
+            (
+                "inspector-gates",
+                ".budget-workspace .channel-inspector .inspector-gates",
+            ),
+        )
+
+        for legacy_class, selector in legacy_selectors:
+            with self.subTest(legacy_class=legacy_class):
+                self.assertIn(legacy_class, app)
+                self.assertIn(selector, styles)
+                self.assertIn(selector, fingerprinted_styles)
 
     def test_import_controls_are_accessible_and_sample_precedes_planning(
         self,

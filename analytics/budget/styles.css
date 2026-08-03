@@ -326,14 +326,17 @@
 
 .budget-workspace .constraint-card h3,
 .budget-workspace .evidence-card h3,
-.budget-workspace .evidence-overview h3 {
+.budget-workspace .evidence-overview h3,
+.budget-workspace .channel-inspector h3,
+.budget-workspace .inspector-overview h3 {
   margin: 0;
   color: var(--ink);
   font-size: 1rem;
 }
 
 .budget-workspace .constraint-status,
-.budget-workspace .evidence-card-summary {
+.budget-workspace .evidence-card-summary,
+.budget-workspace .channel-inspector-summary {
   margin: var(--space-2xs) 0 var(--space-sm);
   color: var(--signal-text);
   font-family: var(--font-mono);
@@ -503,7 +506,8 @@
 }
 
 .budget-workspace .model-evidence-charts,
-.budget-workspace .model-diagnostics-channels {
+.budget-workspace .model-diagnostics-channels,
+.budget-workspace .inspector-charts {
   display: grid;
   gap: var(--space-md);
   margin-top: var(--space-lg);
@@ -512,7 +516,9 @@
 
 .budget-workspace .evidence-overview,
 .budget-workspace .evidence-card,
-.budget-workspace .channel-diagnostics {
+.budget-workspace .channel-diagnostics,
+.budget-workspace .inspector-overview,
+.budget-workspace .channel-inspector {
   min-width: 0;
   padding: var(--space-md);
   border: 1px solid var(--line);
@@ -526,35 +532,42 @@
   min-width: 0;
 }
 
-.budget-workspace .evidence-overview > p {
+.budget-workspace .evidence-overview > p,
+.budget-workspace .inspector-overview > p {
   margin: var(--space-2xs) 0 var(--space-sm);
   color: var(--ink-soft);
 }
 
-.budget-workspace .evidence-card-positions {
+.budget-workspace .evidence-card-positions,
+.budget-workspace .channel-inspector-positions {
   display: grid;
   gap: var(--space-xs);
   margin: 0 0 var(--space-sm);
 }
 
-.budget-workspace .evidence-card-positions div {
+.budget-workspace .evidence-card-positions div,
+.budget-workspace .channel-inspector-positions div {
   display: grid;
   grid-template-columns: minmax(10rem, 0.7fr) minmax(0, 1.3fr);
   gap: var(--space-xs);
 }
 
-.budget-workspace .evidence-card-positions dt {
+.budget-workspace .evidence-card-positions dt,
+.budget-workspace .channel-inspector-positions dt {
   color: var(--ink-soft);
 }
 
-.budget-workspace .evidence-card-positions dd {
+.budget-workspace .evidence-card-positions dd,
+.budget-workspace .channel-inspector-positions dd {
   margin: 0;
   color: var(--ink);
   font-family: var(--font-mono);
 }
 
 .budget-workspace .evidence-overview canvas,
-.budget-workspace .evidence-card canvas {
+.budget-workspace .evidence-card canvas,
+.budget-workspace .inspector-overview canvas,
+.budget-workspace .channel-inspector canvas {
   display: block;
   width: 100%;
   max-width: 100%;
@@ -563,12 +576,15 @@
   background: var(--surface);
 }
 
-.budget-workspace .channel-diagnostics .table-scroll {
+.budget-workspace .channel-diagnostics .table-scroll,
+.budget-workspace .channel-inspector .table-scroll {
   margin-top: var(--space-md);
 }
 
 .budget-workspace .channel-diagnostics .inspector-observations,
-.budget-workspace .channel-diagnostics .inspector-gates {
+.budget-workspace .channel-diagnostics .inspector-gates,
+.budget-workspace .channel-inspector .inspector-observations,
+.budget-workspace .channel-inspector .inspector-gates {
   min-width: 36rem;
   background: var(--surface);
 }
@@ -619,11 +635,13 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .budget-workspace .evidence-card-positions div {
+  .budget-workspace .evidence-card-positions div,
+  .budget-workspace .channel-inspector-positions div {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .budget-workspace .evidence-card-positions dd {
+  .budget-workspace .evidence-card-positions dd,
+  .budget-workspace .channel-inspector-positions dd {
     overflow-wrap: anywhere;
   }
 

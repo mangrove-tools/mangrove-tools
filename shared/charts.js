@@ -376,17 +376,26 @@ function drawResponseCurve(canvas, channel, positions, options) {
   }
   const xBounds = chartBounds([...observed.map(point => point.spend), ...positionValues]);
   const yBounds = chartBounds(outcomeValues);
-  const pad = { top: 28, right: 16, bottom: 42, left: 58 };
-  const chartW = Math.max(1, W - pad.left - pad.right);
-  const chartH = Math.max(1, H - pad.top - pad.bottom);
-  const scaleX = (value) => pad.left + ((value - xBounds.minimum) / (xBounds.maximum - xBounds.minimum)) * chartW;
-  const scaleY = (value) => pad.top + chartH - ((value - yBounds.minimum) / (yBounds.maximum - yBounds.minimum)) * chartH;
   const formatSpend = typeof settings.formatSpend === 'function'
     ? settings.formatSpend
     : value => Math.round(value).toLocaleString();
   const formatOutcome = typeof settings.formatOutcome === 'function'
     ? settings.formatOutcome
     : value => Math.round(value).toLocaleString();
+  const yTickValues = Array.from({ length: 5 }, (_, index) => (
+    yBounds.maximum - (index / 4) * (yBounds.maximum - yBounds.minimum)
+  ));
+  const yTickLabels = yTickValues.map(formatOutcome);
+  const xTickValues = [xBounds.minimum, (xBounds.minimum + xBounds.maximum) / 2, xBounds.maximum];
+  const xTickLabels = xTickValues.map(formatSpend);
+
+  ctx.font = '500 10px IBM Plex Mono, monospace';
+  const widestYTick = Math.max(...yTickLabels.map(label => ctx.measureText(label).width), 0);
+  const pad = { top: 28, right: 16, bottom: 42, left: Math.max(58, Math.ceil(widestYTick) + 8) };
+  const chartW = Math.max(1, W - pad.left - pad.right);
+  const chartH = Math.max(1, H - pad.top - pad.bottom);
+  const scaleX = (value) => pad.left + ((value - xBounds.minimum) / (xBounds.maximum - xBounds.minimum)) * chartW;
+  const scaleY = (value) => pad.top + chartH - ((value - yBounds.minimum) / (yBounds.maximum - yBounds.minimum)) * chartH;
 
   ctx.strokeStyle = colors.grid;
   ctx.lineWidth = 1;
@@ -400,7 +409,7 @@ function drawResponseCurve(canvas, channel, positions, options) {
     ctx.font = '500 10px IBM Plex Mono, monospace';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
-    ctx.fillText(formatOutcome(yBounds.maximum - (index / 4) * (yBounds.maximum - yBounds.minimum)), pad.left - 6, y);
+    ctx.fillText(yTickLabels[index], pad.left - 6, y);
   }
 
   ctx.fillStyle = colors.muted;
@@ -410,9 +419,9 @@ function drawResponseCurve(canvas, channel, positions, options) {
   ctx.fillText(settings.outcomeLabel || 'Outcome', pad.left, 6);
   ctx.textAlign = 'center';
   ctx.fillText(settings.spendLabel || 'Spend', pad.left + chartW / 2, H - 14);
-  [xBounds.minimum, (xBounds.minimum + xBounds.maximum) / 2, xBounds.maximum].forEach((value) => {
-    ctx.textAlign = 'center';
-    ctx.fillText(formatSpend(value), scaleX(value), H - pad.bottom + 5);
+  xTickValues.forEach((value, index) => {
+    ctx.textAlign = index === 0 ? 'left' : index === xTickValues.length - 1 ? 'right' : 'center';
+    ctx.fillText(xTickLabels[index], scaleX(value), H - pad.bottom + 5);
   });
 
   if (modelable) {

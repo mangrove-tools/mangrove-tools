@@ -739,7 +739,7 @@ document.documentElement.scrollWidth <= 390
 
 Expected: `true`.
 
-4. Confirm modeled/preserved text, canvas, and spend-position text do not clip.
+4. Confirm modeled/preserved text, canvas, and spend-position text do not clip. The response-curve y-axis labels and endpoint spend ticks must remain inside a 266px-wide canvas; verify this after any chart-label remediation.
 5. Confirm the browser console has no errors.
 6. Save `docs/superpowers/screenshots/budget-curve-discoverability/budget-evidence-390px.png` with a response-curve card and its interpretation visible.
 

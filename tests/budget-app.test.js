@@ -144,6 +144,9 @@ function createCanvasContext() {
     lineTo() {},
     stroke() {},
     fillText() {},
+    measureText(text) {
+      return { width: String(text).length * 6 };
+    },
     setLineDash() {},
     arc() {},
     fill() {},

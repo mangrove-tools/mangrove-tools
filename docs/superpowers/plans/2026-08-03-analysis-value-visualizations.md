@@ -63,7 +63,7 @@
 - `totals.currentPredictedOutcome` is the finite sum across admitted curves only.
 - Allocation amounts, constraints, `predictedOutcome`, marginal metrics, failure codes, and allocation order remain unchanged.
 
-- [ ] **Step 1: Add failing revenue and conversion current-outcome tests**
+- [x] **Step 1: Add failing revenue and conversion current-outcome tests**
 
 In `tests/budget-allocator.test.js`, add a test that uses a two-week horizon and checks the current and recommended calculations through the same curve:
 
@@ -93,7 +93,7 @@ test('modeled rows publish current and recommended outcomes over the same horizo
 
 Add a conversion case with two modeled channels and assert every row plus both totals are finite. The test must compare the total to the sum of row values, not only to a hard-coded fixture.
 
-- [ ] **Step 2: Add failing financial-treatment, preservation, exclusion, and overflow tests**
+- [x] **Step 2: Add failing financial-treatment, preservation, exclusion, and overflow tests**
 
 Add focused cases that assert:
 
@@ -120,7 +120,7 @@ Extend the existing overflow coverage with a curve/current-rate combination whos
 }
 ```
 
-- [ ] **Step 3: Run the allocator tests and confirm the red state**
+- [x] **Step 3: Run the allocator tests and confirm the red state**
 
 Run:
 
@@ -130,7 +130,7 @@ node --test tests/budget-allocator.test.js
 
 Expected: FAIL because successful rows and totals do not yet publish `currentPredictedOutcome`; the current-only overflow case incorrectly succeeds.
 
-- [ ] **Step 4: Add one shared plan-outcome helper**
+- [x] **Step 4: Add one shared plan-outcome helper**
 
 In `shared/budget-allocator.js`, place this helper next to `predict` and use it for both current and recommended outcomes:
 
@@ -152,7 +152,7 @@ function planOutcome(metric, curve, planSpend, horizonFactor) {
 
 This helper is calculation-only. It must not inspect constraints, choose allocations, format numbers, or mutate rows.
 
-- [ ] **Step 5: Enrich rows and totals without changing allocation decisions**
+- [x] **Step 5: Enrich rows and totals without changing allocation decisions**
 
 In the result-building section of `allocatePlan`:
 
@@ -190,7 +190,7 @@ Add `currentPredictedOutcome` to `result.totals`.
 
 Update `validPublishedAllocation` so modeled rows require both outcome fields to be finite, preserved rows require both to be `null`, and totals require finite `currentPredictedOutcome`. Keep the existing marginal-metric requirements unchanged.
 
-- [ ] **Step 6: Run focused and regression allocator tests**
+- [x] **Step 6: Run focused and regression allocator tests**
 
 Run:
 
@@ -201,7 +201,7 @@ node --test tests/marginality-engine.test.js tests/budget-app.test.js
 
 Expected: PASS. Existing `recommendedSpend`, marginal metric, and failure assertions remain unchanged.
 
-- [ ] **Step 7: Fingerprint the allocator and update its one public reference**
+- [x] **Step 7: Fingerprint the allocator and update its one public reference**
 
 Run:
 
@@ -227,7 +227,7 @@ git diff --check
 
 Expected: PASS and the canonical allocator is byte-identical to its referenced fingerprinted copy.
 
-- [ ] **Step 8: Commit Task 1**
+- [x] **Step 8: Commit Task 1**
 
 Stage only the Task 1 paths, substituting the computed fingerprinted filename:
 
@@ -259,7 +259,7 @@ git commit -m "feat: compare current modeled outcomes"
 - `options` contains controlled `unit` (`'$'` or `''`) and `metricLabel` text produced by the Budget application.
 - A chart function returns without drawing when the canvas, dimensions, data, or context is invalid; it never fabricates values.
 
-- [ ] **Step 1: Add failing allocation narrow-width tests**
+- [x] **Step 1: Add failing allocation narrow-width tests**
 
 Extend `tests/charts.test.js` so `makeCanvas` records `clearRect`, `fillRect`, line paths, measured labels, alignment, and coordinates. Add a 266px allocation test with long labels and five rows:
 
@@ -288,7 +288,7 @@ test('allocation chart keeps labels, values, and legend inside 266px', () => {
 
 Also assert the legend still exposes the full words `Current` and `Recommended` through canvas text at desktop width; mobile may use a controlled abbreviated visible legend only if the accessible/text equivalent retains the full labels.
 
-- [ ] **Step 2: Add failing outcome comparison tests**
+- [x] **Step 2: Add failing outcome comparison tests**
 
 Add tests for:
 
@@ -316,7 +316,7 @@ assert.ok(view.labels.some(label => label.text === 'Recommended'));
 assert.ok(view.labels.some(label => label.text.includes('+$300')));
 ```
 
-- [ ] **Step 3: Run chart tests and confirm the red state**
+- [x] **Step 3: Run chart tests and confirm the red state**
 
 Run:
 
@@ -326,7 +326,7 @@ node --test tests/charts.test.js
 
 Expected: FAIL because `drawOutcomeComparisonChart` is absent and the existing fixed allocation geometry clips narrow labels/values.
 
-- [ ] **Step 4: Harden `drawAllocationChart`**
+- [x] **Step 4: Harden `drawAllocationChart`**
 
 Refactor only its layout math:
 
@@ -341,7 +341,7 @@ Refactor only its layout math:
 
 Add a small private `fitCanvasText(ctx, text, maxWidth)` helper that returns a measured ellipsis form and is reused by both chart functions. Do not mutate the input rows.
 
-- [ ] **Step 5: Implement `drawOutcomeComparisonChart`**
+- [x] **Step 5: Implement `drawOutcomeComparisonChart`**
 
 Add a focused function before the response-curve functions. Its scaling must include zero:
 
@@ -368,7 +368,7 @@ function chartValue(value, unit, signed) {
 
 Display `Modeled difference` plus the signed difference below the two bars. Export the function in `root.MangroveCharts` beside the existing chart exports.
 
-- [ ] **Step 6: Run focused chart and Forecast regression tests**
+- [x] **Step 6: Run focused chart and Forecast regression tests**
 
 Run:
 
@@ -378,7 +378,7 @@ node --test tests/charts.test.js tests/forecast-sample-data.test.js
 
 Expected: PASS. Forecast's call signature and historical/forecast drawing remain unchanged.
 
-- [ ] **Step 7: Fingerprint shared charts and update both consumers**
+- [x] **Step 7: Fingerprint shared charts and update both consumers**
 
 Run:
 
@@ -405,7 +405,7 @@ git diff --check
 
 Expected: PASS and both pages reference the same byte-identical fingerprinted chart asset.
 
-- [ ] **Step 8: Commit Task 2**
+- [x] **Step 8: Commit Task 2**
 
 Stage only the Task 2 paths, substituting the computed filename:
 
@@ -439,7 +439,7 @@ git commit -m "feat: add shared outcome comparison chart"
 - `renderResult` builds text and canvases but does not paint them while `#results` is hidden.
 - A separate paint callback calls shared chart functions only after `syncPhase()` reveals the result.
 
-- [ ] **Step 1: Update the allocation fixture and add failing pure-view tests**
+- [x] **Step 1: Update the allocation fixture and add failing pure-view tests**
 
 In `tests/budget-app.test.js`, add `currentPredictedOutcome` to every modeled fixture row and total. Use values that make the revenue fixture's expected difference obvious:
 
@@ -484,7 +484,7 @@ Add cases proving:
 - a successful fixed allocation with no admitted curve yields `outcome.state === 'not_estimable'` and the approved controlled copy;
 - `JSON.stringify(valueVisualization)` contains no observations, normalized rows, gate diagnostics, or unrestricted allocator message.
 
-- [ ] **Step 2: Add failing DOM, paint-order, fallback, and stale-state tests**
+- [x] **Step 2: Add failing DOM, paint-order, fallback, and stale-state tests**
 
 Extend the DOM chart harness with:
 
@@ -514,7 +514,7 @@ Extend the invalidation tests so budget input, plan-days input, constraints, obj
 
 Extend the resize test so one 150ms debounced callback repaints allocation, outcome, response, and marginal charts exactly once, then confirm source replacement cancels it.
 
-- [ ] **Step 3: Run Budget application tests and confirm the red state**
+- [x] **Step 3: Run Budget application tests and confirm the red state**
 
 Run:
 
@@ -524,7 +524,7 @@ node --test tests/budget-app.test.js
 
 Expected: FAIL because the controlled view and Plan value DOM/paint lifecycle do not exist.
 
-- [ ] **Step 4: Build the controlled `valueVisualization` projection**
+- [x] **Step 4: Build the controlled `valueVisualization` projection**
 
 In `resultView`, project from the model and published allocation only. Preserve raw numeric values in this object:
 
@@ -571,7 +571,7 @@ Modeled outcome comparison is unavailable because no channel has an admitted res
 
 Do not copy raw allocator messages, observations, diagnostic arrays, or imported rows into this projection.
 
-- [ ] **Step 5: Build text-first DOM and defer canvas paint**
+- [x] **Step 5: Build text-first DOM and defer canvas paint**
 
 Refactor `renderResult` into two responsibilities:
 
@@ -621,7 +621,7 @@ renderModelEvidence(model, state.allocation);
 
 Blocked `renderResult` and `clearAllocationResult` must set `repaintValueCharts = null` before clearing DOM. The chart closure must use `CHARTS.drawAllocationChart` and `CHARTS.drawOutcomeComparisonChart` only when those functions exist.
 
-- [ ] **Step 6: Integrate resize and every stale-state boundary**
+- [x] **Step 6: Integrate resize and every stale-state boundary**
 
 Replace the evidence-only repaint condition with one combined controlled callback. The debounced resize callback may invoke `repaintValueCharts` and existing evidence `repaintCharts`, but only for callbacks that are non-null and whose parent sections are visible.
 
@@ -636,7 +636,7 @@ Ensure these existing paths call `clearAllocationResult()` before any new plan c
 
 `cancelChartRepaint()` remains the single timer cancellation boundary and must be invoked by source replacement and allocation invalidation. Do not add a second timer.
 
-- [ ] **Step 7: Add responsive Plan value styles**
+- [x] **Step 7: Add responsive Plan value styles**
 
 In `analytics/budget/styles.css`, add scoped styles that keep the selected stacked composition at all widths:
 
@@ -675,7 +675,7 @@ In `analytics/budget/styles.css`, add scoped styles that keep the selected stack
 
 Add compact definition-list styles and a `max-width: 600px` rule that reduces panel padding without introducing columns or intrinsic minimum widths. Do not hide text equivalents at any breakpoint.
 
-- [ ] **Step 8: Run the focused Budget tests and inspect source privacy**
+- [x] **Step 8: Run the focused Budget tests and inspect source privacy**
 
 Run:
 
@@ -687,7 +687,7 @@ rg -n "fetch\(|XMLHttpRequest|sendBeacon|localStorage|sessionStorage|console\." 
 
 Expected: all tests PASS and `rg` returns no matches in the three touched runtime sources.
 
-- [ ] **Step 9: Fingerprint Budget application and styles**
+- [x] **Step 9: Fingerprint Budget application and styles**
 
 Run:
 
@@ -722,7 +722,7 @@ git diff --check
 
 Expected: PASS and each canonical Budget asset is byte-identical to its referenced fingerprinted copy.
 
-- [ ] **Step 10: Commit Task 3**
+- [x] **Step 10: Commit Task 3**
 
 Stage only the Task 3 paths, substituting the two computed filenames:
 
@@ -752,7 +752,7 @@ git commit -m "feat: show Budget Advisor plan value"
 - Forecast success must continue to reveal and draw `#forecast-chart` from historical and forecast values.
 - Repository guidance must require a primary value visualization for every successful analysis, without requiring one in empty, invalid, or blocked states.
 
-- [ ] **Step 1: Strengthen the existing Forecast behavioral contract**
+- [x] **Step 1: Strengthen the existing Forecast behavioral contract**
 
 In `tests/forecast-sample-data.test.js`, make the existing sample-data success contract explicitly verify the rendered chart behavior:
 
@@ -764,7 +764,7 @@ assert.ok(forecastCanvas.drawn.timeSeries.length > 0);
 assert.ok(forecastCanvas.drawn.forecast.length > 0);
 ```
 
-- [ ] **Step 2: Run the focused Forecast contract**
+- [x] **Step 2: Run the focused Forecast contract**
 
 Run:
 
@@ -774,7 +774,7 @@ node --test tests/forecast-sample-data.test.js
 
 Expected: PASS because this is a characterization of Forecast's already-shipped value visualization, not a new Forecast behavior. The new assertions must fail if `renderResults` stops drawing historical or forecast series.
 
-- [ ] **Step 3: Add the durable rule to `AGENTS.md`**
+- [x] **Step 3: Add the durable rule to `AGENTS.md`**
 
 Append this numbered item to **Product contract**:
 
@@ -784,7 +784,7 @@ Append this numbered item to **Product contract**:
 
 Do not change the existing privacy, static-site, monetization, or analytics rules.
 
-- [ ] **Step 4: Run product-contract and privacy tests**
+- [x] **Step 4: Run product-contract and privacy tests**
 
 Run:
 
@@ -796,7 +796,7 @@ git diff --check
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit Task 4**
+- [x] **Step 5: Commit Task 4**
 
 ```bash
 git add -- \
@@ -933,7 +933,7 @@ git rev-parse HEAD
 
 Expected: all checks pass, the worktree is clean, and the exact review SHA is recorded.
 
-- [ ] **Step 7: Request independent review of exact HEAD**
+- [x] **Step 7: Request independent review of exact HEAD**
 
 Give the independent reviewer the exact SHA and approved spec. Require review of:
 
@@ -970,15 +970,15 @@ Do not create or apply `protected-change-approved`. Do not merge the PR and do n
 
 ## Plan Self-Review Checklist
 
-- [ ] Every approved design requirement maps to a named task and verification step.
-- [ ] No step changes allocation decisions, fitting, evidence gates, Forecast math, downloads, telemetry, backend, or production wiring.
-- [ ] Current and recommended outcomes use one helper and the same horizon/financial treatment.
-- [ ] Preserved unsupported rows publish `null`; excluded modeled rows remain scored; excluded unsupported rows remain unscored.
-- [ ] Percentage comparison is emitted only for a positive current modeled baseline.
-- [ ] Signed outcome chart includes zero and cannot create negative-width bars.
-- [ ] DOM is built before visibility synchronization and canvas paint.
-- [ ] All stale-result paths clear chart DOM and repaint closures.
-- [ ] Every changed public asset has a byte-identical content fingerprint and updated reference.
-- [ ] Forecast retains its existing primary value visualization.
-- [ ] No unresolved marker, type, or file path remains.
+- [x] Every approved design requirement maps to a named task and verification step.
+- [x] No step changes allocation decisions, fitting, evidence gates, Forecast math, downloads, telemetry, backend, or production wiring.
+- [x] Current and recommended outcomes use one helper and the same horizon/financial treatment.
+- [x] Preserved unsupported rows publish `null`; excluded modeled rows remain scored; excluded unsupported rows remain unscored.
+- [x] Percentage comparison is emitted only for a positive current modeled baseline.
+- [x] Signed outcome chart includes zero and cannot create negative-width bars.
+- [x] DOM is built before visibility synchronization and canvas paint.
+- [x] All stale-result paths clear chart DOM and repaint closures.
+- [x] Every changed public asset has a byte-identical content fingerprint and updated reference.
+- [x] Forecast retains its existing primary value visualization.
+- [x] No unresolved marker, type, or file path remains.
 - [ ] Final delivery stops at a reviewed draft PR.

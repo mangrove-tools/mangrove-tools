@@ -22,6 +22,8 @@
 
 **Files:**
 - Modify: `scripts/test_asset_versioning.py`
+- Modify: public HTML files that currently reference a discovered canonical JavaScript asset
+- Create: the exact content-fingerprinted copies required for those references
 
 **Interfaces:**
 - Produces: `public_html_files(root: Path) -> list[Path]`
@@ -54,6 +56,11 @@ classification, exact canonical mapping, and optional automatic discovery in
 `asset_versioning_errors`. Replace prefix-family association with direct
 canonical association for discovered references.
 
+Reconcile the current public tree by creating byte-identical fingerprinted
+copies for only the thirteen automatically discovered unversioned JavaScript
+assets and updating only their HTML references. Do not port fingerprint files
+from PR #32; derive every filename from the current canonical bytes.
+
 - [ ] **Step 4: Run the focused and full asset tests and verify GREEN**
 
 Run:
@@ -67,7 +74,7 @@ Expected: all asset-versioning tests pass against the current public tree.
 - [ ] **Step 5: Commit the asset contract**
 
 ```bash
-git add scripts/test_asset_versioning.py
+git add scripts/test_asset_versioning.py analytics/forecast/index.html analytics/forecast/app.*.js shared/forecast-engine.*.js shared/letterroi-model.*.js letterroi/index.html letterroi/app.*.js letterroi/config.*.js sponsorquote/index.html sponsorquote/app.*.js sponsorquote/config.*.js subtarget/index.html subtarget/app.*.js subtarget/config.*.js mediakit/index.html mediakit/app.*.js mediakit/config.*.js inventory/index.html inventory/app.*.js inventory/config.*.js
 git commit -m "test: discover all public cache-sensitive assets"
 ```
 

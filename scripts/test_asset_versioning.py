@@ -214,6 +214,11 @@ class AssetVersioningTests(unittest.TestCase):
 
         self.assertEqual([], errors, "\n".join(errors))
 
+    def test_current_public_assets_use_automatic_fingerprint_contract(self) -> None:
+        errors = asset_versioning_errors(ROOT)
+
+        self.assertEqual([], errors, "\n".join(errors))
+
     def test_fixture_matrix_catches_cache_unsafe_references(self) -> None:
         asset_path = "/analytics/budget/app.js"
         canonical_bytes = b"window.MangroveBudget = true;\n"

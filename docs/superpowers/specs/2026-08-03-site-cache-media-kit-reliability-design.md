@@ -70,9 +70,18 @@ system shipped by PRs #33 and #34.
 - Verify `/mediakit/` at desktop and 390px, including invalid and valid compose
   states and the denied-clipboard fallback, with no console errors or overflow.
 
+## Owner-approved fingerprint reconciliation
+
+Automatic discovery exposes thirteen current public JavaScript assets that are
+still referenced without content fingerprints. The owner approved one
+mechanical reconciliation pass: copy the exact current canonical bytes to their
+derived fingerprint paths and update only the corresponding HTML references.
+This does not authorize logic, configuration-value, affiliate-value, or routing
+changes, and it must not reuse stale generated files from PR #32.
+
 ## Non-goals
 
-- No broad asset rewrite.
+- No JavaScript or CSS logic rewrite during fingerprint reconciliation.
 - No Media Kit redesign or new calculator fields.
 - No Budget Advisor changes in this PR.
 - No merge or deployment before the exact head passes independent review and

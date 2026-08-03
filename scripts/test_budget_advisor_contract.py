@@ -200,6 +200,7 @@ class BudgetAdvisorContractTests(unittest.TestCase):
         self.assertEqual(
             canonical_scripts,
             [
+                "/shared/google-analytics.js",
                 "/shared/history-data.js",
                 "/shared/marginality-engine.js",
                 "/shared/budget-allocator.js",

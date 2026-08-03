@@ -18,6 +18,7 @@ CACHE_SENSITIVE_ASSETS = {
     "/shared/budget-allocator.js",
     "/shared/budget-sample-data.js",
     "/shared/charts.js",
+    "/shared/google-analytics.js",
     "/shared/history-data.js",
     "/shared/marginality-engine.js",
     "/shared/motion.js",

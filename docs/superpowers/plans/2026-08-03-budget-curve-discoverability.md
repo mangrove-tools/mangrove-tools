@@ -48,7 +48,7 @@
 - Produces: authored `#model-evidence`, `#model-evidence-title`, `#model-evidence-charts`, and `#model-diagnostics-channels` elements for Task 2.
 - Produces: `.evidence-overview`, `.evidence-curve-grid`, `.evidence-card`, and `.model-diagnostics-channels` style contracts.
 
-- [ ] **Step 1: Write the failing semantic and responsive contract tests**
+- [x] **Step 1: Write the failing semantic and responsive contract tests**
 
 Add the new element IDs to `REQUIRED_IDS` in `scripts/test_budget_advisor_contract.py`:
 
@@ -98,7 +98,7 @@ def test_model_evidence_precedes_collapsed_diagnostics_and_is_responsive(self) -
     )
 ```
 
-- [ ] **Step 2: Run the focused contract test and confirm the red state**
+- [x] **Step 2: Run the focused contract test and confirm the red state**
 
 Run:
 
@@ -111,7 +111,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest \
 
 Expected: FAIL because `model-evidence` and the new responsive CSS do not exist.
 
-- [ ] **Step 3: Add the authored evidence region and diagnostics container**
+- [x] **Step 3: Add the authored evidence region and diagnostics container**
 
 In `analytics/budget/index.html`, insert this section after `.plan-result-layout` and before `#model-inspector`:
 
@@ -142,7 +142,7 @@ Keep the existing details ID to avoid needless contract churn, change its summar
 
 Retain the existing normalized-history paragraph, table, download button, and closing `</details>` byte-for-byte after the new diagnostics container.
 
-- [ ] **Step 4: Add the evidence layout styles**
+- [x] **Step 4: Add the evidence layout styles**
 
 Replace the inspector-only chart selectors in `analytics/budget/styles.css` with evidence-specific styles while retaining the existing table styles for diagnostics:
 
@@ -203,7 +203,7 @@ Replace the inspector-only chart selectors in `analytics/budget/styles.css` with
 
 Reuse the current typographic treatment for `.channel-inspector-positions` under a renamed `.evidence-card-positions` selector. Keep `.inspector-observations` and `.inspector-gates` table widths scoped to `.channel-diagnostics` so those minimums never apply to visible evidence cards.
 
-- [ ] **Step 5: Fingerprint the changed stylesheet and update the HTML reference**
+- [x] **Step 5: Fingerprint the changed stylesheet and update the HTML reference**
 
 Run:
 
@@ -219,7 +219,7 @@ Update the stylesheet reference in `analytics/budget/index.html` to `/${new_styl
 git rm -- analytics/budget/styles.7493968e0786.css
 ```
 
-- [ ] **Step 6: Run the focused contracts and asset test**
+- [x] **Step 6: Run the focused contracts and asset test**
 
 Run:
 
@@ -233,7 +233,7 @@ git diff --check
 
 Expected: PASS, with the canonical and fingerprinted stylesheet byte-identical.
 
-- [ ] **Step 7: Commit Task 1**
+- [x] **Step 7: Commit Task 1**
 
 Stage only the Task 1 paths, substituting the actual computed fingerprint in the command:
 
@@ -265,7 +265,7 @@ git commit -m "feat: add Budget Advisor model evidence layout"
 - Produces: `MangroveBudgetApp.modelEvidenceView(model, allocation)`.
 - Produces: visible evidence cards with sanitized chart inputs and textual interpretations; collapsed channel diagnostic tables from `renderDiagnostics(model, inspection)`; one active evidence repaint callback.
 
-- [ ] **Step 1: Extend the deterministic DOM harness**
+- [x] **Step 1: Extend the deterministic DOM harness**
 
 In `tests/budget-app.test.js`, add these authored IDs to `tagsById`:
 
@@ -290,7 +290,7 @@ function loadDomApp(options) {
 }
 ```
 
-- [ ] **Step 2: Write failing pure-view tests**
+- [x] **Step 2: Write failing pure-view tests**
 
 Add:
 
@@ -326,7 +326,7 @@ test('conversion evidence compares increasing marginal conversions per dollar', 
 });
 ```
 
-- [ ] **Step 3: Write failing visible-evidence behavior tests**
+- [x] **Step 3: Write failing visible-evidence behavior tests**
 
 Replace the old closed-inspector paint expectation with tests for the approved hierarchy:
 
@@ -370,7 +370,7 @@ assert.equal(elements['model-evidence-charts'].children.length, 0);
 
 Update the resize test to assert that initial painting occurs immediately, a resize schedules exactly one `150` millisecond repaint, and replacement clears that pending callback. Diagnostics toggling must not trigger a chart repaint.
 
-- [ ] **Step 4: Run the Budget app test and confirm the red state**
+- [x] **Step 4: Run the Budget app test and confirm the red state**
 
 Run:
 
@@ -380,7 +380,7 @@ node --test tests/budget-app.test.js
 
 Expected: FAIL because `modelEvidenceView` and visible evidence rendering do not exist.
 
-- [ ] **Step 5: Implement the pure evidence projection**
+- [x] **Step 5: Implement the pure evidence projection**
 
 Add this `modelEvidenceView(model, allocation)` before the public `MangroveBudgetApp` export:
 
@@ -530,7 +530,7 @@ function modelEvidenceView(model, allocation) {
 
 Export the helper alongside `createState`, `derivePhase`, `readinessView`, `resultView`, and `constraintRows`. Keep the exact projection free of period keys, imported row objects, dimensions, and rejected values.
 
-- [ ] **Step 6: Run the pure-view tests**
+- [x] **Step 6: Run the pure-view tests**
 
 Run:
 
@@ -540,7 +540,7 @@ node --test --test-name-pattern='model evidence view|conversion evidence' tests/
 
 Expected: PASS.
 
-- [ ] **Step 7: Split visible evidence rendering from diagnostics rendering**
+- [x] **Step 7: Split visible evidence rendering from diagnostics rendering**
 
 In `init()`:
 
@@ -562,7 +562,7 @@ The evidence renderer must:
 
 The diagnostics renderer must move the existing observation and gate-table construction intact, preserving `textContent` assignment for imported strings.
 
-- [ ] **Step 8: Make evidence lifecycle follow allocation lifecycle**
+- [x] **Step 8: Make evidence lifecycle follow allocation lifecycle**
 
 Update state handling so:
 
@@ -587,18 +587,18 @@ syncPhase();
 
 When the selected objective changes, rebuild diagnostics with the newly selected cached model and `state.importResult` after clearing the stale allocation.
 
-After successful allocation, call in this order before the existing motion reveal:
+After successful allocation, construct the result, synchronize phase to reveal `#model-evidence`, then paint the evidence. This ordering is required because the chart renderer measures canvas geometry synchronously; it must not paint under a hidden ancestor. Do this before the existing motion reveal:
 
 ```javascript
 renderResult(view, planDays);
+syncPhase();
 renderModelEvidence(model, state.allocation);
 downloadAllocation.disabled = false;
-syncPhase();
 ```
 
 Remove the model-inspector toggle repaint handler. Resize handling must repaint only when a callback exists and the visible evidence section is not hidden.
 
-- [ ] **Step 9: Run all Budget app behavior tests**
+- [x] **Step 9: Run all Budget app behavior tests**
 
 Run:
 
@@ -608,7 +608,7 @@ node --test tests/budget-app.test.js
 
 Expected: PASS. Confirm the existing event tests still prove that only controlled action labels are emitted.
 
-- [ ] **Step 10: Fingerprint the changed app and update the HTML reference**
+- [x] **Step 10: Fingerprint the changed app and update the HTML reference**
 
 Run:
 
@@ -624,7 +624,7 @@ Update the app script reference in `analytics/budget/index.html` to `/${new_app}
 git rm -- analytics/budget/app.9770583dec71.js
 ```
 
-- [ ] **Step 11: Run the complete focused feature suite**
+- [x] **Step 11: Run the complete focused feature suite**
 
 Run:
 
@@ -643,7 +643,7 @@ git diff --check
 
 Expected: PASS. Numerical marginality and allocation expectations must be unchanged.
 
-- [ ] **Step 12: Commit Task 2**
+- [x] **Step 12: Commit Task 2**
 
 Stage only these paths, substituting the actual app fingerprint:
 
@@ -672,7 +672,7 @@ git commit -m "feat: surface Budget Advisor response curves"
 - Consumes: the complete Task 1 and Task 2 feature branch.
 - Produces: deterministic test evidence, desktop and 390px screenshots, overflow/console results, and independent exact-HEAD approval for PR creation.
 
-- [ ] **Step 1: Run the unapproved protected-change gate**
+- [x] **Step 1: Run the unapproved protected-change gate**
 
 Run:
 
@@ -688,7 +688,7 @@ python3 scripts/validate_site.py --base-ref origin/main --allow-protected
 
 Any privacy, secret, JavaScript, JSON, link, asset, or other validator failure stops the task and returns to the failing feature test before a fix.
 
-- [ ] **Step 2: Run the complete deterministic suite**
+- [x] **Step 2: Run the complete deterministic suite**
 
 Run:
 
@@ -700,7 +700,7 @@ git diff --check
 
 Expected: all Python and JavaScript tests pass with zero failures, and `git diff --check` emits no output.
 
-- [ ] **Step 3: Start the local static server from the worktree root**
+- [x] **Step 3: Start the local static server from the worktree root**
 
 Run in a persistent terminal:
 
@@ -710,7 +710,7 @@ python3 -m http.server 5173
 
 Verify `http://localhost:5173/analytics/budget/` rather than serving the route directory directly.
 
-- [ ] **Step 4: Verify the desktop result and capture evidence**
+- [x] **Step 4: Verify the desktop result and capture evidence**
 
 At a `1440 × 1000` viewport:
 
@@ -725,7 +725,7 @@ At a `1440 × 1000` viewport:
 9. Confirm the browser console has no errors.
 10. Save `docs/superpowers/screenshots/budget-curve-discoverability/budget-evidence-desktop.png` with the allocation context and visible evidence in frame.
 
-- [ ] **Step 5: Verify 390px behavior and capture evidence**
+- [x] **Step 5: Verify 390px behavior and capture evidence**
 
 At a `390px` viewport:
 
@@ -743,7 +743,7 @@ Expected: `true`.
 5. Confirm the browser console has no errors.
 6. Save `docs/superpowers/screenshots/budget-curve-discoverability/budget-evidence-390px.png` with a response-curve card and its interpretation visible.
 
-- [ ] **Step 6: Verify stale evidence removal manually**
+- [x] **Step 6: Verify stale evidence removal manually**
 
 After a successful allocation, change the total budget. Confirm:
 
@@ -751,7 +751,7 @@ After a successful allocation, change the total budget. Confirm:
 - no previous current/recommended marker remains visible; and
 - the status instructs the user to rebuild the plan.
 
-- [ ] **Step 7: Commit visual evidence**
+- [x] **Step 7: Commit visual evidence**
 
 Run:
 

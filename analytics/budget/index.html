@@ -30,7 +30,7 @@
     <link rel="stylesheet" href="/fonts.435be0cb58b8.css" />
     <link rel="stylesheet" href="/site.de24ee6aa5f7.css" />
     <link rel="stylesheet" href="/tool-shell.6e9a61bc065d.css" />
-    <link rel="stylesheet" href="/analytics/budget/styles.7493968e0786.css" />
+    <link rel="stylesheet" href="/analytics/budget/styles.d65d3d0d3df6.css" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -259,8 +259,24 @@
           </section>
         </div>
 
+        <section
+          id="model-evidence"
+          class="workspace-panel model-evidence"
+          aria-labelledby="model-evidence-title"
+          hidden
+        >
+          <p class="results-kicker">Model evidence</p>
+          <h2 id="model-evidence-title">Why the budget moved</h2>
+          <p>
+            Compare modeled marginal efficiency and inspect each channel's observed response.
+            Preserved channels remain visible without a fitted line.
+          </p>
+          <div id="model-evidence-charts" class="model-evidence-charts"></div>
+        </section>
+
         <details id="model-inspector" class="workspace-panel model-inspector" hidden>
-          <summary>Inspect cleaned history</summary>
+          <summary>Inspect diagnostics and cleaned data</summary>
+          <div id="model-diagnostics-channels" class="model-diagnostics-channels"></div>
           <p>Review the normalized periods used by the model. Rejected cell values are not reproduced.</p>
           <div class="table-scroll">
             <table id="cleaned-history-table" class="data-table">

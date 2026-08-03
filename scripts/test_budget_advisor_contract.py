@@ -37,7 +37,11 @@ REQUIRED_IDS = (
     "advanced-constraints",
     "constraints-list",
     "results",
+    "model-evidence",
+    "model-evidence-title",
+    "model-evidence-charts",
     "model-inspector",
+    "model-diagnostics-channels",
     "cleaned-history-table",
     "download-cleaned-data",
     "download-allocation",
@@ -127,6 +131,43 @@ class BudgetAdvisorContractTests(unittest.TestCase):
                     "hidden",
                     parser.elements[region_id]["attrs"],
                 )
+
+    def test_model_evidence_precedes_collapsed_diagnostics_and_is_responsive(
+        self,
+    ) -> None:
+        parser = parse_budget_page()
+        html = (ROOT / "analytics/budget/index.html").read_text(encoding="utf-8")
+        styles = (ROOT / "analytics/budget/styles.css").read_text(encoding="utf-8")
+
+        self.assertEqual(parser.elements["model-evidence"]["tag"], "section")
+        self.assertIn("hidden", parser.elements["model-evidence"]["attrs"])
+        self.assertEqual(
+            parser.elements["model-evidence"]["attrs"].get("aria-labelledby"),
+            "model-evidence-title",
+        )
+        self.assertLess(
+            parser.order.index("model-evidence"),
+            parser.order.index("model-inspector"),
+        )
+        self.assertIn("Inspect diagnostics and cleaned data", html)
+        self.assertRegex(
+            styles,
+            re.compile(
+                r"@media\s*\(min-width:\s*900px\).*?"
+                r"\.budget-workspace\s+\.evidence-curve-grid\s*\{.*?"
+                r"grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)",
+                re.DOTALL,
+            ),
+        )
+        self.assertRegex(
+            styles,
+            re.compile(
+                r"@media\s*\(max-width:\s*600px\).*?"
+                r"\.budget-workspace\s+\.evidence-curve-grid\s*\{.*?"
+                r"grid-template-columns:\s*minmax\(0,\s*1fr\)",
+                re.DOTALL,
+            ),
+        )
 
     def test_import_controls_are_accessible_and_sample_precedes_planning(
         self,

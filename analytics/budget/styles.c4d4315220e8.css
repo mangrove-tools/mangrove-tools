@@ -437,6 +437,84 @@
   font-weight: 400;
 }
 
+.budget-workspace .plan-value {
+  min-width: 0;
+  padding-block: var(--space-md);
+  border-block: 1px solid var(--line);
+}
+
+.budget-workspace .plan-value > h3 {
+  margin: 0 0 var(--space-sm);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: clamp(1.2rem, 3vw, 1.5rem);
+}
+
+.budget-workspace .plan-value-stack {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-md);
+  min-width: 0;
+}
+
+.budget-workspace .plan-value-panel {
+  min-width: 0;
+  padding: var(--space-md);
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+}
+
+.budget-workspace .plan-value-panel h4 {
+  margin: 0 0 var(--space-sm);
+  color: var(--ink);
+  font-size: 1rem;
+}
+
+.budget-workspace .plan-value-panel canvas {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: 300px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.budget-workspace .outcome-comparison canvas {
+  height: 220px;
+}
+
+.budget-workspace .plan-value-text {
+  display: grid;
+  gap: var(--space-2xs) var(--space-sm);
+  grid-template-columns: minmax(0, 1fr) auto;
+  margin: var(--space-sm) 0 0;
+}
+
+.budget-workspace .plan-value-text div {
+  display: contents;
+}
+
+.budget-workspace .plan-value-text dt {
+  min-width: 0;
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+  overflow-wrap: anywhere;
+}
+
+.budget-workspace .plan-value-text dd {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  text-align: right;
+}
+
+.budget-workspace .plan-value-scope {
+  margin: var(--space-sm) 0 0;
+  color: var(--ink-soft);
+  font-size: 0.84rem;
+}
+
 .budget-workspace .allocation-table {
   min-width: 64rem;
 }
@@ -642,6 +720,19 @@
 
   .budget-workspace .evidence-card-positions dd,
   .budget-workspace .channel-inspector-positions dd {
+    overflow-wrap: anywhere;
+  }
+
+  .budget-workspace .plan-value-panel {
+    padding: var(--space-sm);
+  }
+
+  .budget-workspace .plan-value-text {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .budget-workspace .plan-value-text dd {
+    text-align: left;
     overflow-wrap: anywhere;
   }
 

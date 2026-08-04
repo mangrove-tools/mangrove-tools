@@ -15,7 +15,7 @@
   });
   const STATUS_LABELS = Object.freeze({
     modelable: 'Modeled marginal response',
-    preserved: 'Preserved at recent spend'
+    preserved: 'Preserved from recent-period median'
   });
   const FIELD_LABELS = Object.freeze({
     period: 'Period',
@@ -296,9 +296,50 @@
       + (timingCaveat ? ' ' + timingCaveat : '');
     const totals = result.totals && typeof result.totals === 'object' ? result.totals : {};
     const metricLabel = typeof metric.label === 'string' ? metric.label : 'Selected outcome';
-    const outcomeValue = metric.key === 'conversions'
-      ? numberText(totals.predictedOutcome)
-      : money(totals.predictedOutcome);
+    const valueAllocationRows = rawRows.map(function valueRow(row) {
+      const modeled = row && row.status === 'modelable';
+      const excluded = row && row.constraint === 'excluded';
+      return {
+        channel: row && typeof row.channel === 'string' ? row.channel : 'Unnamed channel',
+        status: excluded ? 'excluded' : modeled ? 'modeled' : 'preserved',
+        currentSpend: finiteValue(row && row.currentSpend),
+        recommendedSpend: finiteValue(row && row.recommendedSpend)
+      };
+    });
+    const modeledValueRows = rawRows.filter(function modeledValueRow(row) {
+      return row && row.status === 'modelable';
+    });
+    const hasModeledOutcome = modeledValueRows.length > 0;
+    const outcomeValue = hasModeledOutcome
+      ? metric.key === 'conversions'
+        ? numberText(totals.predictedOutcome)
+        : money(totals.predictedOutcome)
+      : 'Unavailable';
+    const currentValue = finiteValue(totals.currentPredictedOutcome);
+    const recommendedValue = finiteValue(totals.predictedOutcome);
+    const difference = currentValue == null || recommendedValue == null
+      ? null
+      : recommendedValue - currentValue;
+    const valueOutcome = hasModeledOutcome
+      && currentValue != null
+      && recommendedValue != null
+      && difference != null
+      ? {
+        state: 'ready',
+        metricLabel: metricLabel,
+        unit: metric.key === 'conversions' ? '' : '$',
+        currentValue: currentValue,
+        recommendedValue: recommendedValue,
+        absoluteDifference: difference,
+        percentageDifference: currentValue > 0 ? difference / currentValue : null,
+        modeledCount: modeledValueRows.length,
+        unscoredCount: rawRows.length - modeledValueRows.length,
+        scopeCopy: 'Modeled channels only. Preserved and excluded unsupported channels remain in the allocation view but are not scored here.'
+      }
+      : {
+        state: 'not_estimable',
+        message: 'Modeled outcome comparison is unavailable because no channel has an admitted response curve.'
+      };
     const financialTreatment = metric.key !== 'financial'
       ? null
       : metric.costTreatment === 'before_marketing'
@@ -321,6 +362,10 @@
           + ' is unavailable because preserved channels have no fitted response.'
         : 'All planned channels are included in the predicted ' + metricLabel + '.',
       rows: rows,
+      valueVisualization: {
+        allocation: { rows: valueAllocationRows },
+        outcome: valueOutcome
+      },
       evidenceQuality: modeledRows.length + ' modelable channel' + (modeledRows.length === 1 ? '' : 's')
         + ' and ' + preservedRows.length + ' preserved channel' + (preservedRows.length === 1 ? '' : 's')
         + (failedGateCopy.length ? '. Failed gates: ' + failedGateCopy.join('; ') + '.' : '.'),
@@ -509,6 +554,7 @@
     let activeCorrectionText = null;
     let chartTimer = null;
     let repaintCharts = null;
+    let repaintValueCharts = null;
     let preservedDefaults = {};
 
     const decisionCanvas = document.getElementById('decision-canvas');
@@ -586,7 +632,7 @@
         parsing: 'Reading and checking history…',
         needs_correction: 'History needs correction before modeling.',
         ready: 'History is ready for a budget plan.',
-        partially_modelable: 'History is ready. Unsupported channels will be preserved at recent spend.',
+        partially_modelable: 'History is ready. Unsupported channels will use a recent-period median preserved baseline.',
         blocked: 'History is normalized, but no channel clears every response-curve gate.',
         result: 'Allocation ready.'
       };
@@ -630,6 +676,7 @@
       }
       chartTimer = null;
       repaintCharts = null;
+      repaintValueCharts = null;
     }
 
     function clearAllocationResult() {
@@ -1178,6 +1225,7 @@
 
     function renderResult(view, planDays) {
       clearElement(resultDetails);
+      repaintValueCharts = null;
       if (!view || view.state !== 'result') {
         const blocked = document.createElement('div');
         const message = document.createElement('p');
@@ -1223,6 +1271,18 @@
 
       const method = document.createElement('p');
       const summary = document.createElement('dl');
+      const planValue = document.createElement('section');
+      const planValueKicker = document.createElement('p');
+      const planValueTitle = document.createElement('h3');
+      const planValueStack = document.createElement('div');
+      const allocationPanel = document.createElement('section');
+      const allocationHeading = document.createElement('h4');
+      const allocationScope = document.createElement('p');
+      const allocationCanvas = document.createElement('canvas');
+      const allocationText = document.createElement('dl');
+      const outcomePanel = document.createElement('section');
+      const outcomeHeading = document.createElement('h4');
+      const outcomeText = document.createElement('dl');
       const tableScroll = document.createElement('div');
       const table = document.createElement('table');
       const caption = document.createElement('caption');
@@ -1251,6 +1311,107 @@
         wrapper.append(term, description);
         summary.appendChild(wrapper);
       }
+      const valueVisualization = view.valueVisualization && typeof view.valueVisualization === 'object'
+        ? view.valueVisualization
+        : {};
+      const valueAllocation = valueVisualization.allocation && typeof valueVisualization.allocation === 'object'
+        ? valueVisualization.allocation
+        : {};
+      const valueOutcome = valueVisualization.outcome && typeof valueVisualization.outcome === 'object'
+        ? valueVisualization.outcome
+        : {};
+      const valueRows = Array.isArray(valueAllocation.rows) ? valueAllocation.rows : [];
+      const outcomeMetricLabel = typeof valueOutcome.metricLabel === 'string'
+        ? valueOutcome.metricLabel
+        : typeof view.objectiveLabel === 'string'
+          ? view.objectiveLabel
+          : 'Outcome';
+      const valueUnit = valueOutcome.unit === '' ? '' : '$';
+      const valueFormat = valueUnit === '' ? numberText : money;
+      function addValueText(list, label, value) {
+        const wrapper = document.createElement('div');
+        const term = document.createElement('dt');
+        const description = document.createElement('dd');
+        term.textContent = label;
+        description.textContent = value;
+        wrapper.append(term, description);
+        list.appendChild(wrapper);
+      }
+      planValue.className = 'plan-value';
+      planValue.setAttribute('aria-labelledby', 'plan-value-title');
+      planValueKicker.className = 'results-kicker';
+      planValueKicker.textContent = 'Plan value';
+      planValueTitle.id = 'plan-value-title';
+      planValueTitle.textContent = 'See what changes';
+      planValueStack.className = 'plan-value-stack';
+      allocationPanel.className = 'plan-value-panel allocation-comparison';
+      allocationHeading.textContent = 'Where the budget moves';
+      allocationScope.className = 'plan-value-scope';
+      allocationScope.textContent = valueRows.some(function preservedValueRow(row) {
+        return row && row.status === 'preserved';
+      })
+        ? 'Current uses the latest observed spend rate. Preserved plan baselines default to the recent-period median and are not optimized; a manually entered preserved amount replaces that default.'
+        : 'Current uses the latest observed spend rate. Plan values show modeled recommendations and explicit exclusions.';
+      allocationCanvas.setAttribute('role', 'img');
+      allocationCanvas.setAttribute('aria-label', 'Current and plan allocation by channel');
+      allocationText.className = 'plan-value-text';
+      valueRows.forEach(function addAllocationText(row) {
+        const name = row && typeof row.channel === 'string' ? row.channel : 'Unnamed channel';
+        const planLabel = row && row.status === 'preserved'
+          ? 'Preserved plan baseline'
+          : row && row.status === 'excluded'
+            ? 'Excluded plan'
+            : 'Recommended plan';
+        addValueText(allocationText, 'Current (latest observed rate) — ' + name, money(row && row.currentSpend));
+        addValueText(allocationText, planLabel + ' — ' + name, money(row && row.recommendedSpend));
+      });
+      allocationPanel.append(allocationHeading, allocationScope, allocationCanvas, allocationText);
+      outcomePanel.className = 'plan-value-panel outcome-comparison';
+      outcomeHeading.textContent = 'Modeled-channel expected ' + outcomeMetricLabel.toLocaleLowerCase();
+      outcomeText.className = 'plan-value-text';
+      outcomePanel.append(outcomeHeading);
+      let outcomeCanvas = null;
+      if (valueOutcome.state === 'ready') {
+        outcomeCanvas = document.createElement('canvas');
+        outcomeCanvas.setAttribute('role', 'img');
+        outcomeCanvas.setAttribute(
+          'aria-label',
+          'Current and recommended modeled-channel ' + outcomeMetricLabel
+        );
+        const difference = Number.isFinite(valueOutcome.absoluteDifference)
+          ? valueOutcome.absoluteDifference
+          : null;
+        const signedDifference = difference == null
+          ? '—'
+          : difference > 0
+            ? '+' + valueFormat(difference)
+            : valueFormat(difference);
+        addValueText(outcomeText, 'Current ' + outcomeMetricLabel, valueFormat(valueOutcome.currentValue));
+        addValueText(outcomeText, 'Recommended ' + outcomeMetricLabel, valueFormat(valueOutcome.recommendedValue));
+        addValueText(outcomeText, 'Modeled difference', signedDifference);
+        addValueText(
+          outcomeText,
+          'Percentage difference',
+          valueOutcome.percentageDifference == null
+            ? 'Percentage difference unavailable from a zero or non-positive current modeled baseline.'
+            : numberText(valueOutcome.percentageDifference * 100) + '%'
+        );
+        addValueText(outcomeText, 'Modeled channels', String(valueOutcome.modeledCount));
+        addValueText(outcomeText, 'Unscored channels', String(valueOutcome.unscoredCount));
+        outcomePanel.append(outcomeCanvas, outcomeText);
+        const scope = document.createElement('p');
+        scope.className = 'plan-value-scope';
+        scope.textContent = valueOutcome.scopeCopy || '';
+        outcomePanel.appendChild(scope);
+      } else {
+        const unavailable = document.createElement('p');
+        unavailable.className = 'plan-value-scope';
+        unavailable.textContent = valueOutcome.message
+          || 'Modeled outcome comparison is unavailable because no channel has an admitted response curve.';
+        outcomePanel.appendChild(unavailable);
+      }
+      planValueStack.append(allocationPanel, outcomePanel);
+      planValue.append(planValueKicker, planValueTitle, planValueStack);
       tableScroll.className = 'table-scroll';
       table.className = 'data-table allocation-table';
       caption.textContent = 'Recommended allocation by channel';
@@ -1284,7 +1445,34 @@
       });
       table.append(caption, head, body);
       tableScroll.appendChild(table);
-      resultDetails.append(method, summary, tableScroll);
+      resultDetails.append(method, summary, planValue, tableScroll);
+      repaintValueCharts = function paintValueCharts() {
+        if (resultsPanel && resultsPanel.hidden) return;
+        if (typeof CHARTS.drawAllocationChart === 'function') {
+          CHARTS.drawAllocationChart(
+            allocationCanvas,
+            valueRows.map(function chartValueRow(row) {
+              return {
+                label: row.channel,
+                current: row.currentSpend,
+                recommended: row.recommendedSpend
+              };
+            }),
+            '$'
+          );
+        }
+        if (outcomeCanvas && valueOutcome.state === 'ready'
+          && typeof CHARTS.drawOutcomeComparisonChart === 'function') {
+          CHARTS.drawOutcomeComparisonChart(outcomeCanvas, {
+            current: valueOutcome.currentValue,
+            recommended: valueOutcome.recommendedValue,
+            difference: valueOutcome.absoluteDifference
+          }, {
+            unit: valueUnit,
+            metricLabel: outcomeMetricLabel
+          });
+        }
+      };
       if (view.financialTreatment) {
         const treatment = document.createElement('p');
         treatment.className = 'financial-result-note';
@@ -1332,7 +1520,7 @@
 
     function renderModelEvidence(model, allocation) {
       clearElement(modelEvidenceCharts);
-      cancelChartRepaint();
+      repaintCharts = null;
       const view = modelEvidenceView(model, allocation);
       if (!modelEvidenceCharts || view.state !== 'ready') return;
 
@@ -1783,6 +1971,7 @@
       }
       renderResult(view, planDays);
       syncPhase();
+      if (repaintValueCharts) repaintValueCharts();
       renderModelEvidence(model, state.allocation);
       if (downloadAllocation) downloadAllocation.disabled = false;
       if (MOTION.revealResult) MOTION.revealResult(resultsPanel);
@@ -1793,14 +1982,16 @@
 
     if (typeof root.addEventListener === 'function') {
       root.addEventListener('resize', function repaintAfterResize() {
-        if (!repaintCharts || (modelEvidence && modelEvidence.hidden)
-          || typeof root.setTimeout !== 'function') return;
+        const canPaintValue = repaintValueCharts && resultsPanel && !resultsPanel.hidden;
+        const canPaintEvidence = repaintCharts && modelEvidence && !modelEvidence.hidden;
+        if ((!canPaintValue && !canPaintEvidence) || typeof root.setTimeout !== 'function') return;
         if (chartTimer != null && typeof root.clearTimeout === 'function') {
           root.clearTimeout(chartTimer);
         }
         chartTimer = root.setTimeout(function repaintResultCharts() {
           chartTimer = null;
-          if (repaintCharts) repaintCharts();
+          if (repaintValueCharts && resultsPanel && !resultsPanel.hidden) repaintValueCharts();
+          if (repaintCharts && modelEvidence && !modelEvidence.hidden) repaintCharts();
         }, 150);
       });
     }

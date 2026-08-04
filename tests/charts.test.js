@@ -36,6 +36,7 @@ function loadCharts() {
 }
 
 function makeCanvas(width = 500, height = 260) {
+  const clears = [];
   const fillRects = [];
   const fills = [];
   const strokes = [];
@@ -49,7 +50,9 @@ function makeCanvas(width = 500, height = 260) {
     font: '',
     lineWidth: 1,
     scale() {},
-    clearRect() {},
+    clearRect(...args) {
+      clears.push(args);
+    },
     beginPath() {
       paths.push([]);
     },
@@ -89,17 +92,26 @@ function makeCanvas(width = 500, height = 260) {
     }
   };
 
-  return {
-    canvas: {
-      width: 0,
-      height: 0,
-      getContext() {
-        return context;
-      },
-      getBoundingClientRect() {
-        return { width, height };
-      }
+  const canvas = {
+    width: 0,
+    height: 0,
+    style: {},
+    getContext() {
+      return context;
     },
+    getBoundingClientRect() {
+      const inlineHeight = Number.parseFloat(this.style.height);
+      return {
+        width,
+        height: Number.isFinite(inlineHeight) && inlineHeight > 0 ? inlineHeight : height
+      };
+    }
+  };
+
+  return {
+    canvas,
+    context,
+    clears,
     fillRects,
     fills,
     strokes,
@@ -108,6 +120,21 @@ function makeCanvas(width = 500, height = 260) {
     fonts,
     labels
   };
+}
+
+function assertLabelsInside(view, width, height) {
+  for (const label of view.labels) {
+    const left = label.align === 'right'
+      ? label.x - label.width
+      : label.align === 'center'
+        ? label.x - label.width / 2
+        : label.x;
+    const right = left + label.width;
+    assert.ok(
+      left >= 0 && right <= width && label.y >= 0 && label.y <= height,
+      `${label.text} should stay inside the ${width}x${height}px canvas`
+    );
+  }
 }
 
 const responseOptions = {
@@ -132,6 +159,245 @@ test('allocation chart maps current to signal and recommended to pine', () => {
   assert.strictEqual(view.fillRects[0].style, cssValues['--signal']);
   assert.strictEqual(view.fillRects[1].style, cssValues['--accent']);
   assert.ok(view.fonts.every((font) => font.includes('IBM Plex Mono')));
+});
+
+test('allocation chart keeps labels, values, and legend inside 266px', () => {
+  // This catches fixed columns that clip long labels, values, or the legend on mobile.
+  const charts = loadCharts();
+  const view = makeCanvas(266, 300);
+  charts.drawAllocationChart(view.canvas, [
+    { label: 'Very long paid search channel', current: 12000, recommended: 9000 },
+    { label: 'Paid social', current: 8000, recommended: 11000 },
+    { label: 'Local partnerships', current: 4000, recommended: 4000 },
+    { label: 'Podcast sponsorships', current: 2000, recommended: 0 },
+    { label: 'Referral', current: 0, recommended: 2000 }
+  ], '$');
+
+  assertLabelsInside(view, 266, 300);
+  view.fillRects.forEach((rect) => {
+    assert.ok(rect.args[0] >= 0);
+    assert.ok(rect.args[1] >= 0);
+    assert.ok(rect.args[0] + rect.args[2] <= 266);
+    assert.ok(rect.args[1] + rect.args[3] <= 300);
+  });
+});
+
+test('allocation chart expands 12 rows and keeps each value-label pair separated at 266px', () => {
+  // This catches a fixed-height canvas compressing two 11px value labels until they overlap.
+  const charts = loadCharts();
+  const view = makeCanvas(266, 300);
+  const rows = Array.from({ length: 12 }, (_, index) => ({
+    label: `Channel ${index + 1}`,
+    current: 101 + index * 200,
+    recommended: 151 + index * 200
+  }));
+
+  charts.drawAllocationChart(view.canvas, rows, '$');
+
+  const renderedHeight = view.canvas.getBoundingClientRect().height;
+  assert.ok(renderedHeight > 300, '12 rows should expand the CSS layout height');
+  assert.equal(view.canvas.height, renderedHeight, 'bitmap height should match the expanded CSS height');
+  rows.forEach((row) => {
+    const current = view.labels.find(label => label.text === `$${row.current.toLocaleString()}`);
+    const recommended = view.labels.find(label => label.text === `$${row.recommended.toLocaleString()}`);
+    assert.ok(current, `missing current value for ${row.label}`);
+    assert.ok(recommended, `missing plan value for ${row.label}`);
+    assert.ok(
+      Math.abs(recommended.y - current.y) >= 11,
+      `${row.label} value-label centers should be at least 11px apart`
+    );
+  });
+  assertLabelsInside(view, 266, renderedHeight);
+});
+
+test('allocation chart exposes the full Current and Plan legend on desktop', () => {
+  // This catches the plan bar being mislabeled as an optimizer recommendation for preserved rows.
+  const charts = loadCharts();
+  const view = makeCanvas(500, 260);
+  charts.drawAllocationChart(view.canvas, [
+    { label: 'Paid search', current: 4200, recommended: 5100 }
+  ], '$');
+
+  assert.ok(view.labels.some(({ text }) => text === 'Current'));
+  assert.ok(view.labels.some(({ text }) => text === 'Plan'));
+  assert.ok(view.labels.every(({ text }) => text !== 'Recommended'));
+});
+
+test('allocation chart fits finite extreme-value labels inside a 266px canvas', () => {
+  // This catches a capped value column that lets a valid large amount extend beyond the left edge.
+  const charts = loadCharts();
+  const view = makeCanvas(266, 300);
+  charts.drawAllocationChart(view.canvas, [
+    { label: 'Paid search', current: Number.MAX_VALUE, recommended: Number.MAX_VALUE }
+  ], '$');
+
+  assertLabelsInside(view, 266, 300);
+});
+
+test('allocation chart rejects an invalid canvas context before mutation', () => {
+  // This catches partial contexts being cleared or resized before a later required canvas method throws.
+  const charts = loadCharts();
+  const allocation = makeCanvas();
+  delete allocation.context.fillRect;
+
+  assert.doesNotThrow(() => charts.drawAllocationChart(null, [
+    { label: 'Paid search', current: 100, recommended: 200 }
+  ], '$'));
+  assert.doesNotThrow(() => charts.drawAllocationChart(allocation.canvas, [
+    { label: 'Paid search', current: 100, recommended: 200 }
+  ], '$'));
+  assert.strictEqual(allocation.clears.length, 0);
+});
+
+test('outcome comparison rejects missing measurement and baseline capabilities before mutation', () => {
+  // This catches positive and negative outcomes clearing a partial context before their later render calls fail.
+  const charts = loadCharts();
+  const missingMeasurement = makeCanvas();
+  const missingBaselineStroke = makeCanvas();
+  delete missingMeasurement.context.measureText;
+  delete missingBaselineStroke.context.stroke;
+
+  assert.doesNotThrow(() => charts.drawOutcomeComparisonChart(missingMeasurement.canvas, {
+    current: 100,
+    recommended: 200,
+    difference: 100
+  }, { unit: '$', metricLabel: 'Contribution' }));
+  assert.doesNotThrow(() => charts.drawOutcomeComparisonChart(missingBaselineStroke.canvas, {
+    current: -100,
+    recommended: 200,
+    difference: 300
+  }, { unit: '$', metricLabel: 'Contribution' }));
+  assert.strictEqual(missingMeasurement.clears.length, 0);
+  assert.strictEqual(missingBaselineStroke.clears.length, 0);
+});
+
+test('outcome comparison rejects invalid dimensions without drawing', () => {
+  // This catches zero-sized canvases being cleared and then populated with invalid geometry.
+  const charts = loadCharts();
+  const invalidDimensions = makeCanvas(0, 300);
+
+  assert.doesNotThrow(() => charts.drawOutcomeComparisonChart(invalidDimensions.canvas, {
+    current: 100,
+    recommended: 200,
+    difference: 100
+  }, { unit: '$', metricLabel: 'Contribution' }));
+  assert.strictEqual(invalidDimensions.clears.length, 0);
+});
+
+test('outcome comparison draws currency and count values in Current then Recommended order', () => {
+  // This catches swapped rows and formatting that loses the selected unit.
+  const charts = loadCharts();
+  const currency = makeCanvas();
+  const counts = makeCanvas();
+
+  charts.drawOutcomeComparisonChart(currency.canvas, {
+    current: 1200,
+    recommended: 1545,
+    difference: 345
+  }, { unit: '$', metricLabel: 'Contribution' });
+  charts.drawOutcomeComparisonChart(counts.canvas, {
+    current: 120,
+    recommended: 128,
+    difference: 8
+  }, { unit: '', metricLabel: 'Conversions' });
+
+  assert.deepStrictEqual(
+    currency.labels.filter(({ text }) => text === 'Current' || text === 'Recommended').map(({ text }) => text),
+    ['Current', 'Recommended']
+  );
+  assert.ok(currency.labels.some(({ text }) => text === '$1,200'));
+  assert.ok(currency.labels.some(({ text }) => text === '$1,545'));
+  assert.ok(currency.labels.some(({ text }) => text === '+$345'));
+  assert.ok(counts.labels.some(({ text }) => text === '120'));
+  assert.ok(counts.labels.some(({ text }) => text === '128'));
+  assert.ok(counts.labels.some(({ text }) => text === '+8'));
+});
+
+test('outcome comparison preserves positive, flat, and negative modeled differences', () => {
+  // This catches a formatter that drops the direction of an outcome change.
+  const charts = loadCharts();
+  const cases = [
+    [{ current: 100, recommended: 140, difference: 40 }, '+$40'],
+    [{ current: 100, recommended: 100, difference: 0 }, '$0'],
+    [{ current: 140, recommended: 100, difference: -40 }, '-$40']
+  ];
+
+  for (const [comparison, expectedDifference] of cases) {
+    const view = makeCanvas();
+    charts.drawOutcomeComparisonChart(view.canvas, comparison, { unit: '$', metricLabel: 'Revenue' });
+    assert.ok(view.labels.some(({ text }) => text === expectedDifference));
+  }
+});
+
+test('outcome comparison supports signed financial values and draws a muted zero baseline', () => {
+  // This catches signed bars being drawn from the plot edge instead of the zero baseline.
+  const charts = loadCharts();
+  const view = makeCanvas();
+
+  charts.drawOutcomeComparisonChart(view.canvas, {
+    current: -200,
+    recommended: 100,
+    difference: 300
+  }, { unit: '$', metricLabel: 'Contribution' });
+
+  assert.ok(view.strokes.some((stroke) => stroke.style === cssValues['--ink-soft']));
+  assert.ok(view.labels.some((label) => label.text === 'Current'));
+  assert.ok(view.labels.some((label) => label.text === 'Recommended'));
+  assert.ok(view.labels.some((label) => label.text.includes('+$300')));
+  assert.ok(view.labels.some((label) => label.text === '-$200'));
+  assert.ok(view.labels.some((label) => label.text === '$100'));
+  assert.strictEqual(view.fillRects[0].style, cssValues['--signal']);
+  assert.strictEqual(view.fillRects[1].style, cssValues['--accent']);
+});
+
+test('outcome comparison keeps a zero current baseline and narrow geometry inside the canvas', () => {
+  // This catches zero values disappearing and narrow charts overflowing their drawing box.
+  const charts = loadCharts();
+  const view = makeCanvas(266, 300);
+
+  charts.drawOutcomeComparisonChart(view.canvas, {
+    current: 0,
+    recommended: 2000,
+    difference: 2000
+  }, { unit: '$', metricLabel: 'Incremental contribution after long-term costs' });
+
+  assert.strictEqual(view.fillRects[0].args[2], 0, 'zero current value draws from the zero baseline');
+  assertLabelsInside(view, 266, 300);
+  for (const rect of view.fillRects) {
+    assert.ok(rect.args[0] >= 0 && rect.args[0] + rect.args[2] <= 266);
+    assert.ok(rect.args[1] >= 0 && rect.args[1] + rect.args[3] <= 300);
+  }
+});
+
+test('outcome comparison fits finite extreme-value labels inside a 266px canvas', () => {
+  // This catches an oversized modeled amount escaping the value column despite finite input.
+  const charts = loadCharts();
+  const view = makeCanvas(266, 300);
+  charts.drawOutcomeComparisonChart(view.canvas, {
+    current: Number.MAX_VALUE,
+    recommended: Number.MAX_VALUE,
+    difference: Number.MAX_VALUE
+  }, { unit: '$', metricLabel: 'Contribution' });
+
+  assertLabelsInside(view, 266, 300);
+});
+
+test('outcome comparison skips invalid or nonfinite comparison data', () => {
+  // This catches fabricated bars or labels when modeled values are unusable.
+  const charts = loadCharts();
+  const invalidCases = [
+    { current: 100, recommended: Number.NaN, difference: 20 },
+    { current: Infinity, recommended: 120, difference: 20 },
+    { current: 100, recommended: 120, difference: -Infinity }
+  ];
+
+  for (const comparison of invalidCases) {
+    const view = makeCanvas();
+    charts.drawOutcomeComparisonChart(view.canvas, comparison, { unit: '$', metricLabel: 'Revenue' });
+    assert.strictEqual(view.fillRects.length, 0);
+    assert.strictEqual(view.labels.length, 0);
+    assert.strictEqual(view.clears.length, 0);
+  }
 });
 
 test('forecast chart maps confidence to signal and forecast to pine', () => {

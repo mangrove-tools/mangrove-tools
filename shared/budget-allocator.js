@@ -134,9 +134,12 @@
         return false;
       }
       if (row.status === 'preserved') {
-        return row.predictedOutcome === null && row.marginalMetric === null;
+        return row.currentPredictedOutcome === null
+          && row.predictedOutcome === null
+          && row.marginalMetric === null;
       }
-      return Number.isFinite(row.predictedOutcome)
+      return Number.isFinite(row.currentPredictedOutcome)
+        && Number.isFinite(row.predictedOutcome)
         && validPublishedMetric(
           row.marginalMetric,
           expectedMetricKey,
@@ -148,6 +151,7 @@
       && Number.isFinite(result.totals.allocatedBudget)
       && Number.isFinite(result.totals.optimizedBudget)
       && Number.isFinite(result.totals.preservedBudget)
+      && Number.isFinite(result.totals.currentPredictedOutcome)
       && Number.isFinite(result.totals.predictedOutcome);
   }
 
@@ -186,6 +190,20 @@
     if (rate === 0) return 0;
     const value = curve.a * Math.pow(rate, curve.b);
     return Number.isFinite(value) && value >= 0 ? value : null;
+  }
+
+  function planOutcome(metric, curve, planSpend, horizonFactor) {
+    if (!Number.isFinite(planSpend) || planSpend < 0
+      || !Number.isFinite(horizonFactor) || horizonFactor <= 0) return null;
+    const predictedRateOutcome = predict(curve, planSpend / horizonFactor);
+    const rawOutcome = predictedRateOutcome == null
+      ? null
+      : predictedRateOutcome * horizonFactor;
+    if (!Number.isFinite(rawOutcome)) return null;
+    const outcome = metric.key === 'financial' && metric.costTreatment === 'before_marketing'
+      ? rawOutcome - planSpend
+      : rawOutcome;
+    return Number.isFinite(outcome) ? outcome : null;
   }
 
   function marginalOutcome(curve, rate) {
@@ -851,6 +869,7 @@
       if (!allocations.has(item.channel)) allocations.set(item.channel, Object.assign({}, item, { allocatedCents: item.minimumCents }));
     });
 
+    let currentPredictedOutcome = 0;
     let predictedOutcome = 0;
     let predictionFailed = false;
     const allocation = items.map(function resultRow(item) {
@@ -864,27 +883,36 @@
           currentSpend: allocated.currentSpend,
           recommendedSpend: recommendedSpend,
           recommendedSpendRate: recommendedSpendRate,
+          currentPredictedOutcome: null,
           predictedOutcome: null,
           marginalMetric: null,
           constraint: allocationConstraint(allocated)
         };
       }
-      const predictedRateOutcome = predict(allocated.curve, recommendedSpendRate);
-      const rawOutcome = predictedRateOutcome == null
-        ? null
-        : predictedRateOutcome * horizonFactor;
+      const currentOutcome = planOutcome(
+        model.metric,
+        allocated.curve,
+        allocated.currentSpend,
+        horizonFactor
+      );
+      const outcome = planOutcome(
+        model.metric,
+        allocated.curve,
+        recommendedSpend,
+        horizonFactor
+      );
       const rawMarginal = marginalOutcome(allocated.curve, recommendedSpendRate);
-      const outcome = rawOutcome == null
+      const nextCurrentPredictedOutcome = currentOutcome == null
         ? null
-        : model.metric.key === 'financial' && model.metric.costTreatment === 'before_marketing'
-          ? rawOutcome - recommendedSpend
-          : rawOutcome;
+        : currentPredictedOutcome + currentOutcome;
       const nextPredictedOutcome = outcome == null ? null : predictedOutcome + outcome;
-      if (!Number.isFinite(rawOutcome) || !Number.isFinite(outcome)
+      if (!Number.isFinite(currentOutcome) || !Number.isFinite(outcome)
+        || !Number.isFinite(nextCurrentPredictedOutcome)
         || !Number.isFinite(nextPredictedOutcome)) {
         predictionFailed = true;
         return null;
       }
+      currentPredictedOutcome = nextCurrentPredictedOutcome;
       predictedOutcome = nextPredictedOutcome;
       return {
         channel: allocated.channel,
@@ -892,6 +920,7 @@
         currentSpend: allocated.currentSpend,
         recommendedSpend: recommendedSpend,
         recommendedSpendRate: recommendedSpendRate,
+        currentPredictedOutcome: currentOutcome,
         predictedOutcome: outcome,
         marginalMetric: metricFor(model.metric, rawMarginal),
         constraint: allocationConstraint(allocated)
@@ -913,6 +942,7 @@
         allocatedBudget: fromCents(requestedCents),
         optimizedBudget: fromCents(optimizedCents),
         preservedBudget: fromCents(preservedCents),
+        currentPredictedOutcome: currentPredictedOutcome,
         predictedOutcome: predictedOutcome
       },
       conflicts: []

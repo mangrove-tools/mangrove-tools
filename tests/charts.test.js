@@ -92,17 +92,24 @@ function makeCanvas(width = 500, height = 260) {
     }
   };
 
-  return {
-    canvas: {
-      width: 0,
-      height: 0,
-      getContext() {
-        return context;
-      },
-      getBoundingClientRect() {
-        return { width, height };
-      }
+  const canvas = {
+    width: 0,
+    height: 0,
+    style: {},
+    getContext() {
+      return context;
     },
+    getBoundingClientRect() {
+      const inlineHeight = Number.parseFloat(this.style.height);
+      return {
+        width,
+        height: Number.isFinite(inlineHeight) && inlineHeight > 0 ? inlineHeight : height
+      };
+    }
+  };
+
+  return {
+    canvas,
     context,
     clears,
     fillRects,
@@ -175,8 +182,36 @@ test('allocation chart keeps labels, values, and legend inside 266px', () => {
   });
 });
 
-test('allocation chart exposes the full Current and Recommended legend on desktop', () => {
-  // This catches a legend regression that hides the comparison meaning behind abbreviations.
+test('allocation chart expands 12 rows and keeps each value-label pair separated at 266px', () => {
+  // This catches a fixed-height canvas compressing two 11px value labels until they overlap.
+  const charts = loadCharts();
+  const view = makeCanvas(266, 300);
+  const rows = Array.from({ length: 12 }, (_, index) => ({
+    label: `Channel ${index + 1}`,
+    current: 101 + index * 200,
+    recommended: 151 + index * 200
+  }));
+
+  charts.drawAllocationChart(view.canvas, rows, '$');
+
+  const renderedHeight = view.canvas.getBoundingClientRect().height;
+  assert.ok(renderedHeight > 300, '12 rows should expand the CSS layout height');
+  assert.equal(view.canvas.height, renderedHeight, 'bitmap height should match the expanded CSS height');
+  rows.forEach((row) => {
+    const current = view.labels.find(label => label.text === `$${row.current.toLocaleString()}`);
+    const recommended = view.labels.find(label => label.text === `$${row.recommended.toLocaleString()}`);
+    assert.ok(current, `missing current value for ${row.label}`);
+    assert.ok(recommended, `missing plan value for ${row.label}`);
+    assert.ok(
+      Math.abs(recommended.y - current.y) >= 11,
+      `${row.label} value-label centers should be at least 11px apart`
+    );
+  });
+  assertLabelsInside(view, 266, renderedHeight);
+});
+
+test('allocation chart exposes the full Current and Plan legend on desktop', () => {
+  // This catches the plan bar being mislabeled as an optimizer recommendation for preserved rows.
   const charts = loadCharts();
   const view = makeCanvas(500, 260);
   charts.drawAllocationChart(view.canvas, [
@@ -184,7 +219,8 @@ test('allocation chart exposes the full Current and Recommended legend on deskto
   ], '$');
 
   assert.ok(view.labels.some(({ text }) => text === 'Current'));
-  assert.ok(view.labels.some(({ text }) => text === 'Recommended'));
+  assert.ok(view.labels.some(({ text }) => text === 'Plan'));
+  assert.ok(view.labels.every(({ text }) => text !== 'Recommended'));
 });
 
 test('allocation chart fits finite extreme-value labels inside a 266px canvas', () => {

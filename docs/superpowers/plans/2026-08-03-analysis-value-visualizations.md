@@ -286,7 +286,7 @@ test('allocation chart keeps labels, values, and legend inside 266px', () => {
 });
 ```
 
-Also assert the legend still exposes the full words `Current` and `Recommended` through canvas text at desktop width; mobile may use a controlled abbreviated visible legend only if the accessible/text equivalent retains the full labels.
+Also assert the legend exposes the full words `Current` and `Plan` through canvas text at desktop width. Add a 12-row case at 266px that checks the canvas CSS and bitmap heights expand together and every current/plan value-label center remains at least 11px from its pair.
 
 - [x] **Step 2: Add failing outcome comparison tests**
 
@@ -337,7 +337,8 @@ Refactor only its layout math:
 - truncate channel labels by measured width, not a fixed character count;
 - right-align values at `W - 4`;
 - keep all rectangles inside `[0, W]` and `[0, H]`;
-- keep current before recommended in every row.
+- keep current before plan in every row;
+- set the allocation canvas to at least `max(300, rows.length * 28 + 28)` CSS pixels before bitmap sizing so 12 or more rows do not compress paired labels.
 
 Add a small private `fitCanvasText(ctx, text, maxWidth)` helper that returns a measured ellipsis form and is reused by both chart functions. Do not mutate the input rows.
 
@@ -592,13 +593,14 @@ Create the block with semantic headings:
   <h3 id="plan-value-title">See what changes</h3>
   <div class="plan-value-stack">
     <section class="plan-value-panel allocation-comparison">
-      <h4>Current and recommended allocation</h4>
-      <canvas role="img" aria-label="Current and recommended plan allocation by channel"></canvas>
+      <h4>Where the budget moves</h4>
+      <p>Current uses the latest observed spend rate. Preserved plan baselines default to the recent-period median and are not optimized; a manually entered preserved amount replaces that default.</p>
+      <canvas role="img" aria-label="Current and plan allocation by channel"></canvas>
       <dl class="plan-value-text"></dl>
     </section>
     <section class="plan-value-panel outcome-comparison">
-      <h4>Modeled-channel expected outcome</h4>
-      <canvas role="img" aria-label="Current and recommended modeled-channel expected outcome"></canvas>
+      <h4>Modeled-channel expected revenue</h4>
+      <canvas role="img" aria-label="Current and recommended modeled-channel Revenue"></canvas>
       <dl class="plan-value-text"></dl>
       <p class="plan-value-scope"></p>
     </section>
@@ -606,9 +608,9 @@ Create the block with semantic headings:
 </section>
 ```
 
-Because results are dynamically rebuilt, generate a unique heading ID per render or keep the single rendered block invariant. Set each canvas to `role="img"`, with an allocation-specific or metric-specific `aria-label`. Add visible `<dl>` or `<p>` equivalents for every displayed chart value and the expected-difference statement.
+The outcome heading is metric-specific: the revenue sample above renders **Modeled-channel expected revenue**, and the conversions objective renders **Modeled-channel expected conversions**. Because results are dynamically rebuilt, generate a unique heading ID per render or keep the single rendered block invariant. Set each canvas to `role="img"`, with an allocation-specific or metric-specific `aria-label`. Add visible `<dl>` or `<p>` equivalents for every displayed chart value and the expected-difference statement. Allocation text labels current values as latest-observed rates and preserved plan values as preserved baselines; it must not call a preserved baseline recommended.
 
-For a ready outcome, show percentage only when `percentageDifference != null`; otherwise render `Percentage difference unavailable from a zero or non-positive current modeled baseline.` Do not render an empty outcome canvas for `not_estimable`.
+For a ready outcome, show percentage only when `percentageDifference != null`; otherwise render `Percentage difference unavailable from a zero or non-positive current modeled baseline.` For `not_estimable`, show `Unavailable` in the modeled-outcome summary, render the controlled explanation, and do not render an empty outcome canvas or details list.
 
 Update successful submission order to:
 

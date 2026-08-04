@@ -116,6 +116,7 @@ function successfulAllocation(metricKey, overrides) {
         currentSpend: 100,
         recommendedSpend: 100,
         recommendedSpendRate: 50,
+        currentPredictedOutcome: null,
         predictedOutcome: null,
         marginalMetric: null,
         constraint: 'preserved'
@@ -670,7 +671,7 @@ test('readiness view returns display values and controlled gate labels without r
       {
         name: 'Channel 2',
         status: 'preserved',
-        statusLabel: 'Preserved at recent spend',
+        statusLabel: 'Preserved from recent-period median',
         failedGates: [
           'Needs at least 12 complete periods',
           'Needs at least 20% robust spend variation'
@@ -908,6 +909,62 @@ test('Plan value reports a controlled not-estimable outcome when no curve was ad
   assert.equal(
     view.valueVisualization.outcome.message,
     'Modeled outcome comparison is unavailable because no channel has an admitted response curve.'
+  );
+});
+
+test('fixed plan with zero modeled rows marks the modeled outcome summary unavailable', () => {
+  // This catches allocator-shaped zero totals being presented as a modeled $0 prediction.
+  const allocation = successfulAllocation('revenue', {
+    allocation: [{
+      channel: 'Paid search <em>unsafe</em>',
+      status: 'preserved',
+      currentSpend: 200,
+      recommendedSpend: 180,
+      recommendedSpendRate: 90,
+      currentPredictedOutcome: null,
+      predictedOutcome: null,
+      marginalMetric: null,
+      constraint: 'preserved'
+    }],
+    totals: {
+      requestedBudget: 180,
+      allocatedBudget: 180,
+      optimizedBudget: 0,
+      preservedBudget: 180,
+      currentPredictedOutcome: 0,
+      predictedOutcome: 0
+    }
+  });
+  const view = plain(app.resultView(planningModel(null, ['preserved']), allocation));
+  const predictedSummary = view.summary.find(item => item.label === 'Predicted modeled-channel Revenue');
+
+  assert.equal(view.valueVisualization.outcome.state, 'not_estimable');
+  assert.equal(predictedSummary.value, 'Unavailable');
+});
+
+test('fixed plan DOM omits empty modeled-outcome details', () => {
+  // This catches the not-estimable state leaving an empty definition list in the accessibility tree.
+  const { elements } = loadDomApp();
+  const lines = ['period,channel,spend,conversions'];
+  for (let week = 1; week <= 12; week += 1) {
+    lines.push(`2024-W${String(week).padStart(2, '0')},Local partnerships,100,10`);
+  }
+  elements['history-paste'].value = lines.join('\n');
+  elements['parse-pasted-history'].trigger('click');
+  elements['total-budget'].value = '428.57';
+  elements['plan-form'].trigger('submit');
+
+  const details = elementByClass(elements.results, 'result-details');
+  const summary = elementByClass(details, 'result-summary');
+  const predictedWrapper = summary.children.find(wrapper => (
+    wrapper.children[0] && wrapper.children[0].textContent === 'Predicted modeled-channel Conversions'
+  ));
+  const outcomePanel = elementByClass(details, 'outcome-comparison');
+  assert.equal(elementsByTag(outcomePanel, 'dl').length, 0, 'not-estimable state should not render an empty details list');
+  assert.equal(predictedWrapper.children[1].textContent, 'Unavailable');
+  assert.match(
+    outcomePanel.textContent,
+    /Modeled outcome comparison is unavailable because no channel has an admitted response curve\./
   );
 });
 
@@ -1385,7 +1442,7 @@ test('successful allocation builds an accessible Plan value block before reveal 
   assert.equal(canvases[0].getAttribute('role'), 'img');
   assert.equal(
     canvases[0].getAttribute('aria-label'),
-    'Current and recommended plan allocation by channel'
+    'Current and plan allocation by channel'
   );
   assert.equal(canvases[1].getAttribute('role'), 'img');
   assert.match(canvases[1].getAttribute('aria-label'), /Current and recommended modeled-channel Revenue/i);
@@ -1399,6 +1456,56 @@ test('successful allocation builds an accessible Plan value block before reveal 
   assert.ok(chartCalls.allocation.every(call => call.visible));
   assert.ok(chartCalls.outcome.every(call => call.visible));
   assert.match(motion.revealSnapshots[0], /Plan value.*See what changes/);
+});
+
+test('Plan value identifies a distinct recent-median preserved baseline as not optimized', () => {
+  // This catches the latest observed current spend and automatic preserved median being mislabeled as an optimizer move.
+  const { elements, chartCalls } = loadDomApp();
+  elements['use-sample-data'].trigger('click');
+  assert.match(elements['readiness-channel-rows'].textContent, /Preserved from recent-period median/);
+  assert.equal(
+    elements['import-status'].textContent,
+    'History is ready. Unsupported channels will use a recent-period median preserved baseline.'
+  );
+  elements['plan-form'].trigger('submit');
+
+  const planValue = elementByClass(elements.results, 'plan-value');
+  const allocationPanel = elementByClass(planValue, 'allocation-comparison');
+  const terms = elementsByTag(allocationPanel, 'dt').map(term => term.textContent);
+  const preservedChartRow = chartCalls.allocation[0].rows.find(row => row.label === 'Local partnerships');
+
+  assert.deepEqual(
+    { current: preservedChartRow.current, plan: preservedChartRow.recommended },
+    { current: 5460, plan: 5415 },
+    'sample data should exercise distinct latest-observed and recent-median spends'
+  );
+  assert.ok(terms.includes('Current (latest observed rate) — Local partnerships'));
+  assert.ok(terms.includes('Preserved plan baseline — Local partnerships'));
+  assert.match(allocationPanel.textContent, /recent-period median/i);
+  assert.match(allocationPanel.textContent, /not optimized/i);
+  assert.doesNotMatch(allocationPanel.textContent, /Recommended — Local partnerships/);
+});
+
+test('Plan value uses the approved allocation heading and metric-specific outcome headings', () => {
+  // This catches generic panel headings that hide what each comparison measures.
+  const { elements } = loadDomApp();
+  elements['use-sample-data'].trigger('click');
+  elements['plan-form'].trigger('submit');
+
+  let planValue = elementByClass(elements.results, 'plan-value');
+  assert.deepEqual(
+    elementsByTag(planValue, 'h4').map(heading => heading.textContent),
+    ['Where the budget moves', 'Modeled-channel expected revenue']
+  );
+
+  elements.objective.value = 'conversions';
+  elements.objective.trigger('change');
+  elements['plan-form'].trigger('submit');
+  planValue = elementByClass(elements.results, 'plan-value');
+  assert.deepEqual(
+    elementsByTag(planValue, 'h4').map(heading => heading.textContent),
+    ['Where the budget moves', 'Modeled-channel expected conversions']
+  );
 });
 
 test('Plan value text remains when chart functions are unavailable and hides an unestimable outcome canvas', () => {

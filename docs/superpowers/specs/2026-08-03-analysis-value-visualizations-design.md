@@ -12,7 +12,7 @@ Every successful Mangrove analysis must include a primary visualization that sho
 
 Budget Advisor will add two stacked value visualizations inside its successful result, before the detailed allocation table:
 
-1. current plan-rate spend versus recommended spend for every channel;
+1. latest-observed current plan-rate spend versus the resulting plan spend for every channel;
 2. current versus recommended expected outcome for modeled channels only.
 
 Revenue Forecaster already satisfies the broader product rule with its historical-versus-forecast chart. This change will preserve that behavior and add a durable repository contract for future analysis tools.
@@ -77,7 +77,7 @@ This rule will be recorded in `AGENTS.md` and covered by a repository contract t
 The selected layout is the stacked decision story:
 
 1. **Where the budget moves**
-2. **Modeled-channel expected outcome**
+2. **Modeled-channel expected {selected metric}**
 
 Both panels use the available width of the successful Budget result and appear after the numeric summary but before the detailed allocation table. On mobile they retain the same order and stack without a secondary layout mode.
 
@@ -100,10 +100,10 @@ This order separates three questions:
 The first panel is titled **Where the budget moves** and uses the existing allocation-chart grammar:
 
 - one channel per row;
-- current plan-rate spend as the first labeled bar;
-- recommended spend as the second labeled bar;
+- current plan-rate spend from the latest observation as the first labeled bar;
+- resulting plan spend as the second labeled bar;
 - requested plan budget stated in adjacent text;
-- fixed legend order and textual value summary.
+- fixed **Current / Plan** legend order and textual value summary.
 
 Every allocation row is included:
 
@@ -111,13 +111,13 @@ Every allocation row is included:
 - preserved;
 - explicitly excluded.
 
-Preserved channels therefore show equal current and recommended bars unless the user set a different preserved minimum. Excluded channels show the current plan-rate spend and a zero recommendation.
+Preserved channels may show different current and plan bars without any optimizer-driven change. Their current bar uses the latest observed spend rate projected over the plan horizon, while their automatic preserved plan baseline uses the recent-period median projected over that horizon. A manually entered preserved amount replaces that automatic baseline. Excluded channels show the latest-observed current plan-rate spend and a zero plan amount.
 
 ### Semantics
 
-“Current” means the channel's recent spend rate projected over the selected plan horizon. It is not historical total spend and must not be labeled as such.
+“Current” means the channel's latest observed spend rate projected over the selected plan horizon. It is not historical total spend and must not be labeled as such.
 
-“Recommended” means the bounded allocation returned by the current optimizer for the same plan horizon.
+“Plan” is an umbrella label: it means the bounded optimizer recommendation for modeled channels, the preserved baseline or manual preserved amount for unsupported channels, and zero for an explicit exclusion. Preserved plan amounts must be labeled as preserved and not optimizer recommendations.
 
 The chart does not claim that a larger allocation is intrinsically better. It visualizes the decision returned under the selected objective and constraints.
 
@@ -303,7 +303,7 @@ The chart is not responsible for estimating outcomes or deciding whether the res
 
 - Both canvases use `role="img"` and specific accessible names.
 - All chart values and the expected-difference statement also appear as visible text.
-- Current and recommended states are distinguished by labels, order, and legend in addition to color.
+- Current and plan states are distinguished by labels, order, and legend in addition to color; preserved plan text explicitly states that the channel was not optimized.
 - Heading order remains valid within the Budget result.
 - The not-estimable state is plain text and does not leave an empty canvas in the accessibility tree.
 - The layout has no horizontal page overflow at 390px.
@@ -359,8 +359,9 @@ Implementation will follow test-driven development.
 
 ### Shared chart tests
 
-- current and recommended allocation colors and labels remain stable;
+- current and plan allocation colors and labels remain stable;
 - allocation labels and values fit a 266px canvas;
+- allocation canvases expand for 12 or more rows so paired 11px value-label centers remain at least 11px apart;
 - outcome comparison labels and values fit a 266px canvas;
 - currency and conversion formats remain controlled;
 - zero and negative differences render without invalid geometry.

@@ -43,12 +43,12 @@ function chartValue(value, unit, signed) {
   return prefix + (unit === '$' ? '$' : '') + absolute;
 }
 
-function prepareCanvas(canvas) {
+function prepareCanvas(canvas, minimumHeight) {
   if (!canvas || typeof canvas.getContext !== 'function' || typeof canvas.getBoundingClientRect !== 'function') {
     return null;
   }
   const ctx = canvas.getContext('2d');
-  const rect = canvas.getBoundingClientRect();
+  let rect = canvas.getBoundingClientRect();
   const requiredMethods = [
     'scale', 'clearRect', 'measureText', 'fillText', 'fillRect',
     'beginPath', 'moveTo', 'lineTo', 'stroke'
@@ -57,6 +57,15 @@ function prepareCanvas(canvas) {
     || rect.width <= 0 || rect.height <= 0
     || !requiredMethods.every((method) => typeof ctx[method] === 'function')) {
     return null;
+  }
+  if (Number.isFinite(minimumHeight) && minimumHeight > rect.height
+    && canvas.style && typeof canvas.style === 'object') {
+    canvas.style.height = minimumHeight + 'px';
+    rect = canvas.getBoundingClientRect();
+    if (!rect || !Number.isFinite(rect.width) || !Number.isFinite(rect.height)
+      || rect.width <= 0 || rect.height < minimumHeight) {
+      return null;
+    }
   }
 
   const dpr = window.devicePixelRatio || 1;
@@ -82,7 +91,8 @@ function drawAllocationChart(canvas, data, unit) {
   ));
   if (!validRows) return;
 
-  const view = prepareCanvas(canvas);
+  const minimumHeight = Math.max(300, rows.length * 28 + 28);
+  const view = prepareCanvas(canvas, minimumHeight);
   if (!view) return;
   const ctx = view.ctx;
   const W = view.width;
@@ -146,7 +156,7 @@ function drawAllocationChart(canvas, data, unit) {
 
   ctx.font = '500 11px IBM Plex Mono, monospace';
   const currentLegend = 'Current';
-  const recommendedLegend = 'Recommended';
+  const recommendedLegend = 'Plan';
   const legendWidth = 12 + 4 + ctx.measureText(currentLegend).width + 14
     + 12 + 4 + ctx.measureText(recommendedLegend).width;
   const legendX = Math.max(outer, Math.min((W - legendWidth) / 2, W - legendWidth - outer));

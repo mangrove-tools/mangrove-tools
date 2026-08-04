@@ -15,7 +15,7 @@
   });
   const STATUS_LABELS = Object.freeze({
     modelable: 'Modeled marginal response',
-    preserved: 'Preserved at recent spend'
+    preserved: 'Preserved from recent-period median'
   });
   const FIELD_LABELS = Object.freeze({
     period: 'Period',
@@ -296,9 +296,6 @@
       + (timingCaveat ? ' ' + timingCaveat : '');
     const totals = result.totals && typeof result.totals === 'object' ? result.totals : {};
     const metricLabel = typeof metric.label === 'string' ? metric.label : 'Selected outcome';
-    const outcomeValue = metric.key === 'conversions'
-      ? numberText(totals.predictedOutcome)
-      : money(totals.predictedOutcome);
     const valueAllocationRows = rawRows.map(function valueRow(row) {
       const modeled = row && row.status === 'modelable';
       const excluded = row && row.constraint === 'excluded';
@@ -312,12 +309,18 @@
     const modeledValueRows = rawRows.filter(function modeledValueRow(row) {
       return row && row.status === 'modelable';
     });
+    const hasModeledOutcome = modeledValueRows.length > 0;
+    const outcomeValue = hasModeledOutcome
+      ? metric.key === 'conversions'
+        ? numberText(totals.predictedOutcome)
+        : money(totals.predictedOutcome)
+      : 'Unavailable';
     const currentValue = finiteValue(totals.currentPredictedOutcome);
     const recommendedValue = finiteValue(totals.predictedOutcome);
     const difference = currentValue == null || recommendedValue == null
       ? null
       : recommendedValue - currentValue;
-    const valueOutcome = modeledValueRows.length > 0
+    const valueOutcome = hasModeledOutcome
       && currentValue != null
       && recommendedValue != null
       && difference != null
@@ -629,7 +632,7 @@
         parsing: 'Reading and checking history…',
         needs_correction: 'History needs correction before modeling.',
         ready: 'History is ready for a budget plan.',
-        partially_modelable: 'History is ready. Unsupported channels will be preserved at recent spend.',
+        partially_modelable: 'History is ready. Unsupported channels will use a recent-period median preserved baseline.',
         blocked: 'History is normalized, but no channel clears every response-curve gate.',
         result: 'Allocation ready.'
       };
@@ -1274,6 +1277,7 @@
       const planValueStack = document.createElement('div');
       const allocationPanel = document.createElement('section');
       const allocationHeading = document.createElement('h4');
+      const allocationScope = document.createElement('p');
       const allocationCanvas = document.createElement('canvas');
       const allocationText = document.createElement('dl');
       const outcomePanel = document.createElement('section');
@@ -1317,6 +1321,11 @@
         ? valueVisualization.outcome
         : {};
       const valueRows = Array.isArray(valueAllocation.rows) ? valueAllocation.rows : [];
+      const outcomeMetricLabel = typeof valueOutcome.metricLabel === 'string'
+        ? valueOutcome.metricLabel
+        : typeof view.objectiveLabel === 'string'
+          ? view.objectiveLabel
+          : 'Outcome';
       const valueUnit = valueOutcome.unit === '' ? '' : '$';
       const valueFormat = valueUnit === '' ? numberText : money;
       function addValueText(list, label, value) {
@@ -1336,18 +1345,29 @@
       planValueTitle.textContent = 'See what changes';
       planValueStack.className = 'plan-value-stack';
       allocationPanel.className = 'plan-value-panel allocation-comparison';
-      allocationHeading.textContent = 'Current and recommended allocation';
+      allocationHeading.textContent = 'Where the budget moves';
+      allocationScope.className = 'plan-value-scope';
+      allocationScope.textContent = valueRows.some(function preservedValueRow(row) {
+        return row && row.status === 'preserved';
+      })
+        ? 'Current uses the latest observed spend rate. Preserved plan baselines default to the recent-period median and are not optimized; a manually entered preserved amount replaces that default.'
+        : 'Current uses the latest observed spend rate. Plan values show modeled recommendations and explicit exclusions.';
       allocationCanvas.setAttribute('role', 'img');
-      allocationCanvas.setAttribute('aria-label', 'Current and recommended plan allocation by channel');
+      allocationCanvas.setAttribute('aria-label', 'Current and plan allocation by channel');
       allocationText.className = 'plan-value-text';
       valueRows.forEach(function addAllocationText(row) {
         const name = row && typeof row.channel === 'string' ? row.channel : 'Unnamed channel';
-        addValueText(allocationText, 'Current — ' + name, money(row && row.currentSpend));
-        addValueText(allocationText, 'Recommended — ' + name, money(row && row.recommendedSpend));
+        const planLabel = row && row.status === 'preserved'
+          ? 'Preserved plan baseline'
+          : row && row.status === 'excluded'
+            ? 'Excluded plan'
+            : 'Recommended plan';
+        addValueText(allocationText, 'Current (latest observed rate) — ' + name, money(row && row.currentSpend));
+        addValueText(allocationText, planLabel + ' — ' + name, money(row && row.recommendedSpend));
       });
-      allocationPanel.append(allocationHeading, allocationCanvas, allocationText);
+      allocationPanel.append(allocationHeading, allocationScope, allocationCanvas, allocationText);
       outcomePanel.className = 'plan-value-panel outcome-comparison';
-      outcomeHeading.textContent = 'Modeled-channel expected outcome';
+      outcomeHeading.textContent = 'Modeled-channel expected ' + outcomeMetricLabel.toLocaleLowerCase();
       outcomeText.className = 'plan-value-text';
       outcomePanel.append(outcomeHeading);
       let outcomeCanvas = null;
@@ -1356,7 +1376,7 @@
         outcomeCanvas.setAttribute('role', 'img');
         outcomeCanvas.setAttribute(
           'aria-label',
-          'Current and recommended modeled-channel ' + (valueOutcome.metricLabel || 'expected outcome')
+          'Current and recommended modeled-channel ' + outcomeMetricLabel
         );
         const difference = Number.isFinite(valueOutcome.absoluteDifference)
           ? valueOutcome.absoluteDifference
@@ -1366,8 +1386,8 @@
           : difference > 0
             ? '+' + valueFormat(difference)
             : valueFormat(difference);
-        addValueText(outcomeText, 'Current ' + (valueOutcome.metricLabel || 'outcome'), valueFormat(valueOutcome.currentValue));
-        addValueText(outcomeText, 'Recommended ' + (valueOutcome.metricLabel || 'outcome'), valueFormat(valueOutcome.recommendedValue));
+        addValueText(outcomeText, 'Current ' + outcomeMetricLabel, valueFormat(valueOutcome.currentValue));
+        addValueText(outcomeText, 'Recommended ' + outcomeMetricLabel, valueFormat(valueOutcome.recommendedValue));
         addValueText(outcomeText, 'Modeled difference', signedDifference);
         addValueText(
           outcomeText,
@@ -1388,7 +1408,7 @@
         unavailable.className = 'plan-value-scope';
         unavailable.textContent = valueOutcome.message
           || 'Modeled outcome comparison is unavailable because no channel has an admitted response curve.';
-        outcomePanel.append(unavailable, outcomeText);
+        outcomePanel.appendChild(unavailable);
       }
       planValueStack.append(allocationPanel, outcomePanel);
       planValue.append(planValueKicker, planValueTitle, planValueStack);
@@ -1449,7 +1469,7 @@
             difference: valueOutcome.absoluteDifference
           }, {
             unit: valueUnit,
-            metricLabel: valueOutcome.metricLabel || 'Expected outcome'
+            metricLabel: outcomeMetricLabel
           });
         }
       };
